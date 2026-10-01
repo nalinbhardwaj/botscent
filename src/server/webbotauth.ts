@@ -53,6 +53,9 @@ function originHost(value: string | null): string | null {
   return m[2] === undefined || Number(m[2]) === 443 ? host : `${host}:${Number(m[2])}`
 }
 
+/** Seconds a signature's created time may lie ahead of the verifier's clock. Expiry gets none. */
+export const CLOCK_SKEW_S = 5
+
 const keyCache = new Map<string, Promise<CryptoKey | null>>()
 function importKey(x: string): Promise<CryptoKey | null> {
   let key = keyCache.get(x)
@@ -117,13 +120,19 @@ export async function verifySignatures(
   const signatureHeader = req.header('signature')
   if (inputHeader === null || signatureHeader === null) return []
   let inputs: Dictionary
-  let signatures: Dictionary
   try {
     inputs = parseDictionary(inputHeader)
+  } catch (error) {
+    log?.(`Signature-Input does not parse (${(error as Error).message}): no evidence`)
+    return []
+  }
+  // A Signature header that does not parse leaves each signature declared, not absent:
+  // the request still declared a Web Bot Auth signer (a proxy can mangle the bytes).
+  let signatures: Dictionary = new Map()
+  try {
     signatures = parseDictionary(signatureHeader)
   } catch (error) {
-    log?.(`signature headers do not parse (${(error as Error).message}): no evidence`)
-    return []
+    log?.(`Signature does not parse (${(error as Error).message})`)
   }
   // Signature-Agent: a dictionary, or the legacy bare string (contract section 7).
   const agentHeader = req.header('signature-agent')
@@ -198,7 +207,7 @@ async function one(
     const key = keys.find((k) => k.thumbprint === keyid || k.kid === keyid)
     if (!key) return fail(`keyid ${keyid} is not in the bundled directory`)
     const now = nowMs / 1000
-    if (now < created || now > expires)
+    if (now < created - CLOCK_SKEW_S || now > expires)
       return fail(
         `outside its window: created ${Math.round(now - created)} s ago, expires ${Math.round(expires - now)} s from now`,
       )

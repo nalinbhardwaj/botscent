@@ -278,9 +278,21 @@ const cases: Case[] = [
     verdict: agent([DECLARED], 'test-signer'),
   },
   {
-    name: 'created after the request time',
+    name: 'created 3 s after the request time: inside the clock allowance',
     headers: legacy('https://signature-agent.test'),
-    now: (CREATED - 5) * 1000,
+    now: (CREATED - 3) * 1000,
+    verdict: agent([VERIFIED], 'test-signer'),
+  },
+  {
+    name: 'created 10 s after the request time: outside the clock allowance',
+    headers: legacy('https://signature-agent.test'),
+    now: (CREATED - 10) * 1000,
+    verdict: agent([DECLARED], 'test-signer'),
+  },
+  {
+    name: 'one second past expires: no allowance',
+    headers: legacy('https://signature-agent.test'),
+    now: (EXPIRES + 1) * 1000,
     verdict: agent([DECLARED], 'test-signer'),
   },
   {
@@ -329,6 +341,16 @@ const cases: Case[] = [
       legacy('https://signature-agent.test'),
       'signature',
       legacy('https://signature-agent.test')[3]![1].replace(/:(.)/, (_, c) => `:${c === 'A' ? 'B' : 'A'}`),
+    ),
+    now: NOW,
+    verdict: agent([DECLARED], 'test-signer'),
+  },
+  {
+    name: 'a Signature header mangled on the way: still a declared signer',
+    headers: replace(
+      legacy('https://signature-agent.test'),
+      'signature',
+      'sig1=:CylMEf/+fgS0UTU9ARBr/:token/lV2WUpUOk1ze4MeGS4MAZpoDQ==:',
     ),
     now: NOW,
     verdict: agent([DECLARED], 'test-signer'),

@@ -124,6 +124,9 @@ def is_headless_chrome(ua: str) -> bool:
 
 # --- Web Bot Auth ---------------------------------------------------------------
 
+# Seconds a signature's created time may lie ahead of the verifier's clock. Expiry gets none.
+CLOCK_SKEW_S = 5
+
 _ORIGIN = re.compile(r"https://([A-Za-z0-9.-]+)(?::([0-9]{1,5}))?/?")
 
 
@@ -212,10 +215,16 @@ def verify_signatures(req: RequestView, now_ms: float, registry: Registry, debug
         return []
     try:
         inputs = parse_dictionary(input_header)
+    except SfError as error:
+        debug and debug(f"Signature-Input does not parse ({error}): no evidence")
+        return []
+    # A Signature header that does not parse leaves each signature declared, not absent:
+    # the request still declared a Web Bot Auth signer (a proxy can mangle the bytes).
+    signatures = {}
+    try:
         signatures = parse_dictionary(signature_header)
     except SfError as error:
-        debug and debug(f"signature headers do not parse ({error}): no evidence")
-        return []
+        debug and debug(f"Signature does not parse ({error})")
     agents = legacy = None
     agent_header = req.header("signature-agent")
     if agent_header is not None:
@@ -281,7 +290,7 @@ def _one(req, now_ms, registry, label, inp: InnerList, signatures, agents, legac
         if key is None:
             return fail(f"keyid {keyid} is not in the bundled directory")
         now = now_ms / 1000
-        if now < created or now > expires:
+        if now < created - CLOCK_SKEW_S or now > expires:
             return fail(
                 f"outside its window: created {_round(now - created)} s ago, expires {_round(expires - now)} s from now"
             )

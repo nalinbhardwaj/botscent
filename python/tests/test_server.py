@@ -97,7 +97,9 @@ def test_navigation_and_server_timing():
         == 'db;dur=53, app;desc="a, b; c";dur=1'
     )
     assert scrub_server_timing('BotScent;desc="1;x;;y"') is None
-    assert scrub_server_timing('a;desc="quote \\" and, comma", botscent;desc="1;;;x"') == 'a;desc="quote \\" and, comma"'
+    assert (
+        scrub_server_timing('a;desc="quote \\" and, comma", botscent;desc="1;;;x"') == 'a;desc="quote \\" and, comma"'
+    )
     assert not has_our_entry('a;desc="botscent;desc=x"')
     verdict = decide([botscent._core.Evidence("signer.web-bot-auth.verified", "chatgpt", "declaration")])
     assert (
