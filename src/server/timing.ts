@@ -4,11 +4,17 @@
 import type { Verdict } from '../core/verdict.ts'
 import { encode } from '../core/wire.ts'
 
-/** Sec-Fetch-Dest: document, or, from a client without fetch metadata, a GET that accepts HTML. */
+/** Sec-Fetch-Dest: document; or, from a client without fetch metadata, a browser's GET that
+ * accepts HTML. Every browser's user agent begins with Mozilla/; link previewers, crawlers that
+ * name themselves and HTTP clients do not, and none of them runs the page half. */
 export function isNavigation(header: (name: string) => string | null, method: string): boolean {
   const dest = header('sec-fetch-dest')
   if (dest !== null) return dest.trim().toLowerCase() === 'document'
-  return method.toUpperCase() === 'GET' && /(^|[\s,;])text\/html(?=$|[\s,;])/i.test(header('accept') ?? '')
+  return (
+    method.toUpperCase() === 'GET' &&
+    /(^|[\s,;])text\/html(?=$|[\s,;])/i.test(header('accept') ?? '') &&
+    /^\s*mozilla\//i.test(header('user-agent') ?? '')
+  )
 }
 
 /** Server-Timing entries, split at commas outside quoted strings. */

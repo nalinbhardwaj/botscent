@@ -408,12 +408,18 @@ def inspect(request, *, cf=None, now=None) -> Verdict:
 
 
 def is_navigation(header: Callable[[str], str | None], method: str) -> bool:
-    """Sec-Fetch-Dest: document, or, from a client without fetch metadata, a GET that accepts HTML."""
+    """Sec-Fetch-Dest: document; or, from a client without fetch metadata, a browser's GET that
+    accepts HTML. Every browser's user agent begins with Mozilla/; link previewers, crawlers that
+    name themselves and HTTP clients do not, and none of them runs the page half."""
     dest = header("sec-fetch-dest")
     if dest is not None:
         return dest.strip().lower() == "document"
     accept = header("accept") or ""
-    return method.upper() == "GET" and re.search(r"(^|[\s,;])text/html(?=$|[\s,;])", accept, re.IGNORECASE) is not None
+    return (
+        method.upper() == "GET"
+        and re.search(r"(^|[\s,;])text/html(?=$|[\s,;])", accept, re.IGNORECASE) is not None
+        and re.match(r"\s*mozilla/", header("user-agent") or "", re.IGNORECASE) is not None
+    )
 
 
 def _entries(value: str) -> list[str]:

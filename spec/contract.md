@@ -113,7 +113,7 @@ ext     = *( %x21-7E except ";" )         ; ignored: room for later minor versio
 
 ## 10. Server to page: the `Server-Timing` entry
 
-29. Adapters write `Server-Timing: botscent;desc="<entry>"` only when the request verdict is an agent and the request is a document navigation (`Sec-Fetch-Dest: document`, or, without fetch metadata, a GET whose `Accept` includes `text/html`).
+29. Adapters write `Server-Timing: botscent;desc="<entry>"` only when the request verdict is an agent and the request is a document navigation: `Sec-Fetch-Dest: document`, or, without fetch metadata, a GET whose `Accept` includes `text/html` from a client whose `User-Agent` begins with `Mozilla/`, as every browser's does. Link previewers, crawlers that name themselves and HTTP clients never run the page half, so they get no entry and no `no-store`.
 30. They write it after the shared-cache lookup, at most once per response, together with `Cache-Control: no-store`, and remove every inherited `botscent` entry from every response they pass, keeping all other entries.
 31. Origin adapters, which cannot see whether a shared cache stores their HTML, write the entry only when the developer opts in.
 32. The page accepts one entry whose time lies between 10 seconds before and 120 seconds after its own navigation start. More than one `botscent` entry, a malformed one, or one outside the window is ignored. An absent entry is no evidence. An accepted entry contributes its reasons and, as a declaration, its name.

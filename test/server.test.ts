@@ -97,16 +97,31 @@ test('tokens match only as whole tokens', () => {
   )
 })
 
-test('navigations: fetch metadata first, then a GET that accepts HTML', () => {
+test("navigations: fetch metadata first, then a browser's GET that accepts HTML", () => {
   const h = (o: Record<string, string>) => (n: string) => o[n] ?? null
+  const html = 'text/html,application/xhtml+xml,*/*;q=0.8'
+  const browser =
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36'
   assert.equal(isNavigation(h({ 'sec-fetch-dest': 'document' }), 'GET'), true)
   assert.equal(isNavigation(h({ 'sec-fetch-dest': 'document' }), 'POST'), true, 'a form submission navigates too')
+  assert.equal(isNavigation(h({ 'sec-fetch-dest': 'document', 'user-agent': '' }), 'GET'), true, 'metadata decides')
   assert.equal(isNavigation(h({ 'sec-fetch-dest': 'empty', accept: 'text/html' }), 'GET'), false)
   assert.equal(isNavigation(h({ 'sec-fetch-dest': 'iframe' }), 'GET'), false)
-  assert.equal(isNavigation(h({ accept: 'text/html,application/xhtml+xml,*/*;q=0.8' }), 'GET'), true)
-  assert.equal(isNavigation(h({ accept: '*/*' }), 'GET'), false, 'curl')
-  assert.equal(isNavigation(h({ accept: 'text/x-component' }), 'GET'), false, 'a React Server Component request')
-  assert.equal(isNavigation(h({ accept: 'text/html' }), 'POST'), false)
+  // Without fetch metadata: Kitesurf's navigations, and browsers too old to send it.
+  assert.equal(isNavigation(h({ accept: html, 'user-agent': browser }), 'GET'), true)
+  assert.equal(
+    isNavigation(
+      h({ accept: html, 'user-agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)' }),
+      'GET',
+    ),
+    false,
+    'a link previewer never runs the page half',
+  )
+  assert.equal(isNavigation(h({ accept: html, 'user-agent': 'curl/8.7.1' }), 'GET'), false, 'an HTTP client')
+  assert.equal(isNavigation(h({ accept: html }), 'GET'), false, 'no user agent')
+  assert.equal(isNavigation(h({ accept: '*/*', 'user-agent': browser }), 'GET'), false)
+  assert.equal(isNavigation(h({ accept: 'text/x-component', 'user-agent': browser }), 'GET'), false, 'an RSC request')
+  assert.equal(isNavigation(h({ accept: 'text/html', 'user-agent': browser }), 'POST'), false)
 })
 
 test('Server-Timing: scrub every botscent entry, keep everything else as written', () => {

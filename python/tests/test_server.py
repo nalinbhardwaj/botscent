@@ -89,9 +89,14 @@ def test_navigation_and_server_timing():
     h = lambda d: lambda n: d.get(n)
     assert is_navigation(h({"sec-fetch-dest": "document"}), "POST")
     assert not is_navigation(h({"sec-fetch-dest": "empty", "accept": "text/html"}), "GET")
-    assert is_navigation(h({"accept": "text/html,application/xhtml+xml,*/*;q=0.8"}), "GET")
-    assert not is_navigation(h({"accept": "*/*"}), "GET")
-    assert not is_navigation(h({"accept": "text/x-component"}), "GET")
+    assert is_navigation(h({"sec-fetch-dest": "document", "user-agent": ""}), "GET")
+    html, browser = "text/html,application/xhtml+xml,*/*;q=0.8", "Mozilla/5.0 (X11; Linux x86_64) Chrome/154.0.0.0"
+    assert is_navigation(h({"accept": html, "user-agent": browser}), "GET")
+    assert not is_navigation(h({"accept": html, "user-agent": "facebookexternalhit/1.1"}), "GET")
+    assert not is_navigation(h({"accept": html, "user-agent": "curl/8.7.1"}), "GET")
+    assert not is_navigation(h({"accept": html}), "GET")
+    assert not is_navigation(h({"accept": "*/*", "user-agent": browser}), "GET")
+    assert not is_navigation(h({"accept": "text/x-component", "user-agent": browser}), "GET")
     assert (
         scrub_server_timing('db;dur=53, botscent;desc="1;chatgpt;1;x", app;desc="a, b; c";dur=1')
         == 'db;dur=53, app;desc="a, b; c";dur=1'
