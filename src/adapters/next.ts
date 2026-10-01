@@ -4,10 +4,9 @@
 // the page in Server-Timing. Self-hosted, the proxy cannot see whether a CDN
 // stores the HTML, so it sends the entry only when told to (transport: 'always').
 import { NextResponse, type NextFetchEvent, type NextRequest } from 'next/server.js'
-import { logger, type Debug } from '../server/log.ts'
-import { inspect } from '../server/index.ts'
-import { isNavigation } from '../server/timing.ts'
-import { applyTransport, mutable, type TransportMode } from '../server/transport.ts'
+import type { Debug } from '../server/log.ts'
+import { applyTransport, inspect } from '../server/index.ts'
+import { mutable, type TransportMode } from '../server/transport.ts'
 
 export type { TransportMode } from '../server/transport.ts'
 export { inspect, isVerified, readReport, combine, VERSION, type Verdict } from '../server/index.ts'
@@ -34,19 +33,11 @@ export function withBotscent(existing?: NextProxy, options: BotscentNextOptions 
   return async (request, event) => {
     const response = (existing ? await existing(request, event) : undefined) ?? NextResponse.next()
     try {
-      const log = logger(options.debug)
       const verdict = await inspect(request, { debug: options.debug })
       const mode = options.transport ?? 'auto'
       const send = mode === 'always' || (mode === 'auto' && onVercel())
       const out = mutable(response)
-      applyTransport(
-        out.headers,
-        verdict,
-        isNavigation((n) => request.headers.get(n), request.method),
-        send,
-        Date.now(),
-        log,
-      )
+      applyTransport(out.headers, verdict, request, { send, debug: options.debug })
       return out
     } catch {
       return response

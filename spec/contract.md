@@ -45,6 +45,8 @@ function inspect(request: RequestLike, options?: InspectOptions): Promise<Verdic
 function readReport(value: string | Verdict | null | undefined): Verdict | null
 function combine(request: Verdict, report: Verdict | null): Verdict
 function isVerified(verdict: Verdict): boolean
+function isNavigation(request: RequestLike): boolean
+function applyTransport(headers: Headers, verdict: Verdict, request: RequestLike, options: { send: boolean; now?: number; debug?: Debug }): 'decorated' | 'scrubbed' | 'untouched'
 const VERSION: string
 
 type RequestLike = Request | { headers: Headers | Record<string, string | string[] | undefined>; method?: string; url?: string }
