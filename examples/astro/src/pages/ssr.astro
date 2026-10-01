@@ -1,0 +1,7 @@
+---
+import Verdict from '../components/Verdict.astro'
+// Rendered on demand: the middleware put this request's verdict on Astro.locals.
+const server = Astro.locals.botscent
+---
+<html lang="en"><head><meta charset="utf-8" /><title>On demand</title></head>
+<body><h1>On demand</h1><pre id="server">{JSON.stringify(server)}</pre><Verdict /></body></html>

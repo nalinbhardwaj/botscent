@@ -1,0 +1,7 @@
+---
+import Verdict from '../components/Verdict.astro'
+// Built once at build time: no visitor's request, so no server verdict.
+export const prerender = true
+---
+<html lang="en"><head><meta charset="utf-8" /><title>Static</title></head>
+<body><h1>Prerendered</h1><Verdict /></body></html>

@@ -4,9 +4,9 @@ import { execFileSync } from 'node:child_process'
 import { copyFileSync, readdirSync, rmSync } from 'node:fs'
 
 const root = new URL('../', import.meta.url).pathname
-const run = (command: string, args: string[], cwd = root) => {
+const run = (command: string, args: string[], cwd = root, env: Record<string, string> = {}) => {
   console.log(`$ (${cwd.replace(root, '') || '.'}) ${command} ${args.join(' ')}`)
-  execFileSync(command, args, { cwd, stdio: 'inherit' })
+  execFileSync(command, args, { cwd, stdio: 'inherit', env: { ...process.env, ...env } })
 }
 
 run('npm', ['pack', '--silent', '--pack-destination', 'examples'])
@@ -19,6 +19,8 @@ const wheel = readdirSync(`${root}python/dist`).find((f) => f.endsWith('.whl'))!
 
 run('npm', ['install', '--no-audit', '--no-fund', '--force', '../botscent.tgz'], `${root}examples/next`)
 run('node_modules/.bin/next', ['build'], `${root}examples/next`)
+run('npm', ['install', '--no-audit', '--no-fund', '--force', '../botscent.tgz'], `${root}examples/astro`)
+run('node_modules/.bin/astro', ['build'], `${root}examples/astro`, { BOTSCENT_EXAMPLE_TRANSPORT: 'always' })
 run('uv', ['venv', '-q', '--allow-existing', '.venv'], `${root}examples/fastapi`)
 run(
   'uv',
@@ -37,4 +39,10 @@ run(
   ],
   `${root}examples/fastapi`,
 )
-run(process.execPath, ['--test', '--test-reporter=spec', '--test-timeout=90000', 'examples/test/slice.test.ts'])
+run(process.execPath, [
+  '--test',
+  '--test-reporter=spec',
+  '--test-timeout=90000',
+  'examples/test/slice.test.ts',
+  'examples/test/astro.test.ts',
+])

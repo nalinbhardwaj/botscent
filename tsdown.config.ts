@@ -13,11 +13,16 @@ export default defineConfig([
       express: 'src/adapters/express.ts',
       hono: 'src/adapters/hono.ts',
       workers: 'src/adapters/workers.ts',
+      vercel: 'src/adapters/vercel.ts',
+      astro: 'src/adapters/astro.ts',
+      'astro-middleware': 'src/adapters/astro-middleware.ts',
     },
     format: 'esm',
     platform: 'neutral',
     target: 'es2022',
     dts: true,
+    // Resolved by the application's Vite build (botscent/astro).
+    external: [/^virtual:botscent\//],
   },
   {
     // The standalone script for <script defer src="/botscent.js">.

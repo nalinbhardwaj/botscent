@@ -1,0 +1,8 @@
+<pre id="verdict"></pre>
+<script>
+  // The page half started itself (botscent/astro injects botscent/auto); show its verdict.
+  import { subscribe, verdict } from 'botscent'
+  const show = () => (document.getElementById('verdict')!.textContent = JSON.stringify(verdict()))
+  show()
+  subscribe(show)
+</script>
