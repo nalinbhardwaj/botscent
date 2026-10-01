@@ -1,22 +1,107 @@
 {
   "$comment": "Reason ids the library can report, strongest first: a verdict lists its reasons in this order. Ids are a public contract: added, never renamed within a major version. half: where the evidence is read. names: whether the reason can name an agent (signer, token, page-declaration, a product name) or never does (null).",
   "reasons": [
-    { "id": "signer.web-bot-auth.verified", "half": "request", "names": "signer", "summary": "A Web Bot Auth signature on the request verified against a key bundled with this release." },
-    { "id": "signer.edge-verified-bot", "half": "request", "names": null, "summary": "The hosting platform verified the request as a known bot (Cloudflare's verified-bot category)." },
-    { "id": "signer.web-bot-auth.declared", "half": "request", "names": "signer", "summary": "The request carries a Web Bot Auth signature that did not verify here: an unknown or expired key, a signature outside its window, or a check that failed." },
-    { "id": "ua.declared-agent-token", "half": "request", "names": "token", "summary": "The user agent contains a token that declares software: an agent, fetcher, crawler, link previewer or HTTP client." },
-    { "id": "ua.page-declared-engine", "half": "page", "names": "page-declaration", "summary": "The page's own navigator declares a hosted browser engine." },
-    { "id": "browser.webdriver-flag", "half": "page", "names": null, "summary": "navigator.webdriver is true: the browser declares that automation controls it." },
-    { "id": "ua.headless-chrome", "half": "request", "names": null, "summary": "The user agent declares headless Chrome." },
-    { "id": "muse.credentials.accessor-family", "half": "page", "names": "muse", "summary": "The credential methods are replaced by the accessor family Muse's cloud browser installs." },
-    { "id": "instinct.credentials.wrappers", "half": "page", "names": "instinct", "summary": "The credential methods are wrapped the way Instinct's cloud desktop wraps them; counts only together with the GeeTest pair." },
-    { "id": "instinct.geetest.accessor-pair", "half": "page", "names": "instinct", "summary": "The GeeTest initialisers are the accessor pair Instinct installs; counts only together with the credential wrappers." },
-    { "id": "codex.prompt.anonymous-native", "half": "page", "names": "codex-browser", "summary": "window.prompt has the Codex in-app browser's shape; counts only with a second Codex shell signal." },
-    { "id": "codex.keyboard.empty-layout-map", "half": "page", "names": "codex-browser", "summary": "The keyboard layout map is empty, as in the Codex in-app browser; counts only with a second Codex shell signal." },
-    { "id": "codex.overlay.shadow-root", "half": "page", "names": "codex-browser", "summary": "The Codex in-app browser's overlay is attached to the document; counts only with a second Codex shell signal." },
-    { "id": "chatgpt.badge.active", "half": "page", "names": "chatgpt-chrome", "summary": "ChatGPT for Chrome's activity badge was drawn on the page while its agent acted." },
-    { "id": "claude.marker.active", "half": "page", "names": "claude-chrome", "summary": "Claude for Chrome's activity marker was drawn on the page while its agent acted." },
-    { "id": "hidden.input.focus-emulated", "half": "page", "names": null, "summary": "Trusted input arrived while the document was hidden yet reported focus, which needs focus emulation." },
-    { "id": "hidden.input.trusted-pointerdown", "half": "page", "names": null, "summary": "A trusted pointerdown arrived while the document was hidden, which no person can produce." }
+    {
+      "id": "signer.web-bot-auth.verified",
+      "half": "request",
+      "names": "signer",
+      "summary": "A Web Bot Auth signature on the request verified against a key bundled with this release."
+    },
+    {
+      "id": "signer.edge-verified-bot",
+      "half": "request",
+      "names": null,
+      "summary": "The hosting platform verified the request as a known bot (Cloudflare's verified-bot category)."
+    },
+    {
+      "id": "signer.web-bot-auth.declared",
+      "half": "request",
+      "names": "signer",
+      "summary": "The request carries a Web Bot Auth signature that did not verify here: an unknown or expired key, a signature outside its window, or a check that failed."
+    },
+    {
+      "id": "ua.declared-agent-token",
+      "half": "request",
+      "names": "token",
+      "summary": "The user agent contains a token that declares software: an agent, fetcher, crawler, link previewer or HTTP client."
+    },
+    {
+      "id": "ua.page-declared-engine",
+      "half": "page",
+      "names": "page-declaration",
+      "summary": "The page's own navigator declares a hosted browser engine."
+    },
+    {
+      "id": "browser.webdriver-flag",
+      "half": "page",
+      "names": null,
+      "summary": "navigator.webdriver is true: the browser declares that automation controls it."
+    },
+    {
+      "id": "ua.headless-chrome",
+      "half": "request",
+      "names": null,
+      "summary": "The user agent declares headless Chrome."
+    },
+    {
+      "id": "muse.credentials.accessor-family",
+      "half": "page",
+      "names": "muse",
+      "summary": "The credential methods are replaced by the accessor family Muse's cloud browser installs."
+    },
+    {
+      "id": "instinct.credentials.wrappers",
+      "half": "page",
+      "names": "instinct",
+      "summary": "The credential methods are wrapped the way Instinct's cloud desktop wraps them; counts only together with the GeeTest pair."
+    },
+    {
+      "id": "instinct.geetest.accessor-pair",
+      "half": "page",
+      "names": "instinct",
+      "summary": "The GeeTest initialisers are the accessor pair Instinct installs; counts only together with the credential wrappers."
+    },
+    {
+      "id": "codex.prompt.anonymous-native",
+      "half": "page",
+      "names": "codex-browser",
+      "summary": "window.prompt has the Codex in-app browser's shape; counts only with a second Codex shell signal."
+    },
+    {
+      "id": "codex.keyboard.empty-layout-map",
+      "half": "page",
+      "names": "codex-browser",
+      "summary": "The keyboard layout map is empty, as in the Codex in-app browser; counts only with a second Codex shell signal."
+    },
+    {
+      "id": "codex.overlay.shadow-root",
+      "half": "page",
+      "names": "codex-browser",
+      "summary": "The Codex in-app browser's overlay is attached to the document; counts only with a second Codex shell signal."
+    },
+    {
+      "id": "chatgpt.badge.active",
+      "half": "page",
+      "names": "chatgpt-chrome",
+      "summary": "ChatGPT for Chrome's activity badge was drawn on the page while its agent acted."
+    },
+    {
+      "id": "claude.marker.active",
+      "half": "page",
+      "names": "claude-chrome",
+      "summary": "Claude for Chrome's activity marker was drawn on the page while its agent acted."
+    },
+    {
+      "id": "hidden.input.focus-emulated",
+      "half": "page",
+      "names": null,
+      "summary": "Trusted input arrived while the document was hidden yet reported focus, which needs focus emulation."
+    },
+    {
+      "id": "hidden.input.trusted-pointerdown",
+      "half": "page",
+      "names": null,
+      "summary": "A trusted pointerdown arrived while the document was hidden, which no person can produce."
+    }
   ]
 }

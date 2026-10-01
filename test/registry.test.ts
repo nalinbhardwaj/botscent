@@ -8,8 +8,13 @@ const { reasons } = read('registry/reasons.json') as { reasons: { id: string; ha
 const { names } = read('registry/names.json') as { names: Record<string, { display: string; kind: string }> }
 const { signers } = read('registry/signers.json') as { signers: Record<string, string> }
 const { tokens } = read('registry/tokens.json') as { tokens: { token: string; name: string }[] }
-const page = read('registry/page.json') as { user_agent_prefixes: Record<string, string>; platforms: Record<string, string> }
-const keys = read('registry/keys.json') as { directories: Record<string, { kty: string; crv: string; x: string; kid?: string }[]> }
+const page = read('registry/page.json') as {
+  user_agent_prefixes: Record<string, string>
+  platforms: Record<string, string>
+}
+const keys = read('registry/keys.json') as {
+  directories: Record<string, { kty: string; crv: string; x: string; kid?: string }[]>
+}
 
 const NAME = /^[a-z0-9]+(-[a-z0-9]+)*$/
 const KINDS = ['computer-use-agent', 'fetcher', 'crawler', 'previewer', 'automation', 'client']
@@ -20,7 +25,10 @@ test('reason ids are unique and fit the wire grammar', () => {
   for (const r of reasons) {
     assert.match(r.id, /^[a-z0-9._-]{1,80}$/, r.id)
     assert.ok(['request', 'page'].includes(r.half), r.id)
-    assert.ok(r.names === null || ['signer', 'token', 'page-declaration'].includes(r.names) || r.names in names, `${r.id} names ${r.names}`)
+    assert.ok(
+      r.names === null || ['signer', 'token', 'page-declaration'].includes(r.names) || r.names in names,
+      `${r.id} names ${r.names}`,
+    )
   }
 })
 
@@ -61,5 +69,7 @@ test('every signer has a bundled directory of Ed25519 keys', () => {
 })
 
 test('generated modules are current', () => {
-  execFileSync(process.execPath, [new URL('../scripts/generate.ts', import.meta.url).pathname, '--check'], { stdio: 'pipe' })
+  execFileSync(process.execPath, [new URL('../scripts/generate.ts', import.meta.url).pathname, '--check'], {
+    stdio: 'pipe',
+  })
 })

@@ -35,11 +35,14 @@
     "generate": "node scripts/generate.ts",
     "build": "tsdown",
     "typecheck": "tsc",
-    "test": "node --test 'test/**/*.test.ts'"
+    "test": "node --test 'test/**/*.test.ts'",
+    "format": "prettier --write . && cd python && uv run ruff format .",
+    "lint": "prettier --check . && node scripts/generate.ts --check"
   },
   "devDependencies": {
     "@arethetypeswrong/core": "^0.18.5",
     "@types/node": "^24.0.0",
+    "prettier": "^3.9.9",
     "publint": "^0.3.24",
     "tsdown": "^0.23.0",
     "typescript": "^7.0.2"

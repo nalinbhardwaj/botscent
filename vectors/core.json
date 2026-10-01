@@ -1,0 +1,401 @@
+{
+  "$comment": "Shared by both implementations: readReport, combine and isVerified must give exactly these results. Verdicts compare as JSON with keys in the order type, agent_name, reasons.",
+  "reports": [
+    {
+      "value": "1;chatgpt;;signer.web-bot-auth.verified",
+      "report": {
+        "type": "agent",
+        "agent_name": "chatgpt",
+        "reasons": ["page.signer.web-bot-auth.verified"]
+      },
+      "note": "a forged verified reason arrives prefixed, so isVerified rejects it"
+    },
+    {
+      "value": "1;;;browser.webdriver-flag",
+      "report": {
+        "type": "agent",
+        "reasons": ["page.browser.webdriver-flag"]
+      }
+    },
+    {
+      "value": "1;cloudflare-browser-run;1759300000123;signer.web-bot-auth.verified,ua.page-declared-engine",
+      "report": {
+        "type": "agent",
+        "agent_name": "cloudflare-browser-run",
+        "reasons": ["page.signer.web-bot-auth.verified", "page.ua.page-declared-engine"]
+      },
+      "note": "the time field is read and dropped"
+    },
+    {
+      "value": "1.4;muse;;muse.credentials.accessor-family;future;fields",
+      "report": {
+        "type": "agent",
+        "agent_name": "muse",
+        "reasons": ["page.muse.credentials.accessor-family"]
+      },
+      "note": "a newer minor version and its extra fields parse"
+    },
+    {
+      "value": "1;;;some.future-rule",
+      "report": {
+        "type": "agent",
+        "reasons": ["page.some.future-rule"]
+      },
+      "note": "unknown reasons are kept"
+    },
+    {
+      "value": "1;;;a.b,c.d,a.b",
+      "report": {
+        "type": "agent",
+        "reasons": ["page.a.b", "page.c.d"]
+      },
+      "note": "duplicates are dropped, order kept"
+    },
+    {
+      "value": "001;;;a",
+      "report": {
+        "type": "agent",
+        "reasons": ["page.a"]
+      },
+      "note": "the major version is compared as a number"
+    },
+    {
+      "value": "1;;;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc,ddddddddd",
+      "report": {
+        "type": "agent",
+        "reasons": [
+          "page.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "page.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "page.cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "page.ddddddddd"
+        ]
+      },
+      "note": "256 bytes is the limit"
+    },
+    {
+      "value": "",
+      "report": null
+    },
+    {
+      "value": "1;;;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "report": null,
+      "note": "257 bytes"
+    },
+    {
+      "value": "2;chatgpt;;x",
+      "report": null,
+      "note": "unknown major version"
+    },
+    {
+      "value": "1;chatgpt;;",
+      "report": null,
+      "note": "no reasons"
+    },
+    {
+      "value": "1;chatgpt;x",
+      "report": null,
+      "note": "too few fields"
+    },
+    {
+      "value": "1;ChatGPT;;x",
+      "report": null,
+      "note": "upper-case name"
+    },
+    {
+      "value": "1;nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn;;x",
+      "report": null,
+      "note": "name over 64 characters"
+    },
+    {
+      "value": "1;chatgpt;abc;x",
+      "report": null,
+      "note": "time not digits"
+    },
+    {
+      "value": "1;chatgpt;1234567890123456;x",
+      "report": null,
+      "note": "time over 15 digits"
+    },
+    {
+      "value": "1;chatgpt;;x y",
+      "report": null,
+      "note": "space in a reason"
+    },
+    {
+      "value": "1;chatgpt;;x,",
+      "report": null,
+      "note": "trailing comma"
+    },
+    {
+      "value": "1;chatgpt;;rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+      "report": null,
+      "note": "reason over 80 characters"
+    },
+    {
+      "value": "1;chatgpt;;x, 1;manus;;y",
+      "report": null,
+      "note": "two reports joined by a proxy"
+    },
+    {
+      "value": "1;;;x\n",
+      "report": null,
+      "note": "trailing newline"
+    },
+    {
+      "value": " 1;;;x",
+      "report": null,
+      "note": "leading space"
+    },
+    {
+      "value": "1;;;x;é",
+      "report": null,
+      "note": "non-ASCII extension"
+    },
+    {
+      "value": null,
+      "report": null
+    },
+    {
+      "value": {
+        "type": "agent",
+        "agent_name": "chatgpt",
+        "reasons": ["signer.web-bot-auth.verified"]
+      },
+      "report": {
+        "type": "agent",
+        "agent_name": "chatgpt",
+        "reasons": ["page.signer.web-bot-auth.verified"]
+      }
+    },
+    {
+      "value": {
+        "type": "human",
+        "reasons": []
+      },
+      "report": null,
+      "note": "a person sends nothing"
+    },
+    {
+      "value": {
+        "type": "agent",
+        "reasons": ["ok.reason", "Bad Reason"]
+      },
+      "report": {
+        "type": "agent",
+        "reasons": ["page.ok.reason"]
+      },
+      "note": "a reason that cannot travel is dropped"
+    },
+    {
+      "value": {
+        "type": "agent",
+        "agent_name": "Bad Name",
+        "reasons": ["x"]
+      },
+      "report": {
+        "type": "agent",
+        "reasons": ["page.x"]
+      },
+      "note": "a name that cannot travel is dropped"
+    },
+    {
+      "value": {
+        "type": "agent",
+        "agent_name": 5,
+        "reasons": ["x"]
+      },
+      "report": null
+    },
+    {
+      "value": {
+        "type": "agent",
+        "reasons": "x"
+      },
+      "report": null
+    },
+    {
+      "value": {
+        "type": "agent",
+        "reasons": [
+          "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+          "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+          "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+          "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr"
+        ]
+      },
+      "report": {
+        "type": "agent",
+        "reasons": ["page.rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr"]
+      },
+      "note": "duplicates dropped"
+    },
+    {
+      "value": {
+        "type": "agent",
+        "reasons": [
+          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+        ]
+      },
+      "report": {
+        "type": "agent",
+        "reasons": [
+          "page.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "page.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "page.cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        ]
+      },
+      "note": "the weakest reasons are dropped until the entry fits"
+    }
+  ],
+  "combine": [
+    {
+      "request": {
+        "type": "human",
+        "reasons": []
+      },
+      "report": null,
+      "combined": {
+        "type": "human",
+        "reasons": []
+      }
+    },
+    {
+      "request": {
+        "type": "human",
+        "reasons": []
+      },
+      "report": {
+        "type": "agent",
+        "agent_name": "claude-chrome",
+        "reasons": ["page.claude.marker.active"]
+      },
+      "combined": {
+        "type": "agent",
+        "agent_name": "claude-chrome",
+        "reasons": ["page.claude.marker.active"]
+      }
+    },
+    {
+      "request": {
+        "type": "agent",
+        "agent_name": "chatgpt",
+        "reasons": ["signer.web-bot-auth.verified"]
+      },
+      "report": {
+        "type": "agent",
+        "agent_name": "claude-chrome",
+        "reasons": ["page.claude.marker.active"]
+      },
+      "combined": {
+        "type": "agent",
+        "agent_name": "chatgpt",
+        "reasons": ["signer.web-bot-auth.verified", "page.claude.marker.active"]
+      },
+      "note": "the request's name wins"
+    },
+    {
+      "request": {
+        "type": "agent",
+        "reasons": ["ua.headless-chrome"]
+      },
+      "report": {
+        "type": "agent",
+        "agent_name": "cloudflare-browser-run",
+        "reasons": ["page.ua.page-declared-engine"]
+      },
+      "combined": {
+        "type": "agent",
+        "agent_name": "cloudflare-browser-run",
+        "reasons": ["ua.headless-chrome", "page.ua.page-declared-engine"]
+      }
+    },
+    {
+      "request": {
+        "type": "agent",
+        "agent_name": "curl",
+        "reasons": ["ua.declared-agent-token"]
+      },
+      "report": null,
+      "combined": {
+        "type": "agent",
+        "agent_name": "curl",
+        "reasons": ["ua.declared-agent-token"]
+      }
+    },
+    {
+      "request": {
+        "type": "agent",
+        "agent_name": "manus",
+        "reasons": ["signer.web-bot-auth.declared"]
+      },
+      "report": {
+        "type": "agent",
+        "agent_name": "manus",
+        "reasons": ["page.signer.web-bot-auth.declared", "page.signer.web-bot-auth.declared"]
+      },
+      "combined": {
+        "type": "agent",
+        "agent_name": "manus",
+        "reasons": ["signer.web-bot-auth.declared", "page.signer.web-bot-auth.declared"]
+      }
+    }
+  ],
+  "is_verified": [
+    {
+      "verdict": {
+        "type": "agent",
+        "agent_name": "chatgpt",
+        "reasons": ["signer.web-bot-auth.verified"]
+      },
+      "verified": true
+    },
+    {
+      "verdict": {
+        "type": "agent",
+        "reasons": ["signer.edge-verified-bot"]
+      },
+      "verified": true
+    },
+    {
+      "verdict": {
+        "type": "agent",
+        "agent_name": "devin",
+        "reasons": ["ua.declared-agent-token", "signer.edge-verified-bot"]
+      },
+      "verified": true
+    },
+    {
+      "verdict": {
+        "type": "agent",
+        "agent_name": "chatgpt",
+        "reasons": ["signer.web-bot-auth.declared"]
+      },
+      "verified": false
+    },
+    {
+      "verdict": {
+        "type": "agent",
+        "agent_name": "chatgpt",
+        "reasons": ["page.signer.web-bot-auth.verified"]
+      },
+      "verified": false
+    },
+    {
+      "verdict": {
+        "type": "agent",
+        "reasons": ["page.signer.edge-verified-bot"]
+      },
+      "verified": false
+    },
+    {
+      "verdict": {
+        "type": "human",
+        "reasons": []
+      },
+      "verified": false
+    }
+  ]
+}

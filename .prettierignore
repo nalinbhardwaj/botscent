@@ -1,0 +1,5 @@
+dist
+node_modules
+python
+src/generated.ts
+package-lock.json
