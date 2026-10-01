@@ -3,8 +3,10 @@
 //   export default { fetch: withBotscent((request, env, ctx, verdict) => ...) }
 //
 // The handler receives the request's verdict as a fourth argument. A Worker runs per
-// request in front of any cache, so the Server-Timing transport is on by default;
-// a Worker that stores HTML with the Cache API should set transport: 'never'.
+// request in front of any cache, so the Server-Timing transport is on by default. With
+// Workers Cache in front of the Worker it stays safe: a decorated response carries
+// no-store, which that cache honours (measured: BYPASS), so a cached page reaches an
+// agent without an entry rather than with another visitor's.
 import type { Verdict } from '../core/verdict.ts'
 import type { Debug } from '../server/log.ts'
 import { applyTransport, inspect, type CloudflareHints } from '../server/index.ts'

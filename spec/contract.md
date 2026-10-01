@@ -123,17 +123,17 @@ ext     = *( %x21-7E except ";" )         ; ignored: room for later minor versio
 - An adapter preserves status codes, redirects, cookies, streaming responses, request bodies and the application's own exceptions; never turns a statically rendered route into a dynamic one; adds no detection logic of its own; and fails to "no evidence", never into the application.
 - It gives the application the request verdict where the framework keeps per-request state, and its `transport` option is `'auto'` (send where the adapter knows it runs per request after the shared cache), `'always'` (the developer states that no shared cache stores the HTML), or `'never'`. The Python adapters take `transport=True` (Django: the `BOTSCENT_TRANSPORT` setting). Origin adapters default to off.
 
-| Server entry       | What it is                                                     | The request verdict                         | Transport by default                                           |
-| ------------------ | -------------------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------------- |
-| `botscent/next`    | Next.js proxy: `proxy`, `middleware`, `withBotscent(existing)` | route handlers call `inspect(request)`      | on Vercel only                                                 |
-| `botscent/vercel`  | Vercel Routing Middleware, for projects that are not Next.js   | not passed on; the middleware continues     | on                                                             |
-| `botscent/workers` | `withBotscent(handler)` around a Worker's `fetch`              | the handler's fourth argument               | on; `'never'` for a Worker that stores HTML with the Cache API |
-| `botscent/hono`    | Hono middleware                                                | `c.get('botscent')`                         | on Cloudflare Workers only                                     |
-| `botscent/express` | Express and Connect middleware                                 | `req.botscent`                              | off                                                            |
-| `botscent/astro`   | Astro integration, both halves                                 | `Astro.locals.botscent` on on-demand routes | off                                                            |
-| `botscent.asgi`    | ASGI middleware (FastAPI, Starlette)                           | `request.state.botscent`                    | off                                                            |
-| `botscent.django`  | Django middleware                                              | `request.botscent`                          | off                                                            |
-| `botscent.flask`   | Flask extension                                                | `flask.g.botscent`                          | off                                                            |
+| Server entry       | What it is                                                     | The request verdict                         | Transport by default                                  |
+| ------------------ | -------------------------------------------------------------- | ------------------------------------------- | ----------------------------------------------------- |
+| `botscent/next`    | Next.js proxy: `proxy`, `middleware`, `withBotscent(existing)` | route handlers call `inspect(request)`      | on Vercel only                                        |
+| `botscent/vercel`  | Vercel Routing Middleware, for projects that are not Next.js   | not passed on; the middleware continues     | on                                                    |
+| `botscent/workers` | `withBotscent(handler)` around a Worker's `fetch`              | the handler's fourth argument               | on; behind Workers Cache, cached pages carry no entry |
+| `botscent/hono`    | Hono middleware                                                | `c.get('botscent')`                         | on Cloudflare Workers only                            |
+| `botscent/express` | Express and Connect middleware                                 | `req.botscent`                              | off                                                   |
+| `botscent/astro`   | Astro integration, both halves                                 | `Astro.locals.botscent` on on-demand routes | off                                                   |
+| `botscent.asgi`    | ASGI middleware (FastAPI, Starlette)                           | `request.state.botscent`                    | off                                                   |
+| `botscent.django`  | Django middleware                                              | `request.botscent`                          | off                                                   |
+| `botscent.flask`   | Flask extension                                                | `flask.g.botscent`                          | off                                                   |
 
 | Page entry        | What it does                                                                                                                     |
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------- |

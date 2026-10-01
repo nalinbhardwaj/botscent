@@ -134,6 +134,16 @@ function serverHalf(o: Observations): Check {
         cause: 'a hop between the origin and the public URL removes Server-Timing',
         fix: 'let Server-Timing through that proxy or CDN, or use an adapter that runs at the edge',
       }
+    const hit = cacheHit(o.self.headers)
+    if (hit)
+      return {
+        id,
+        outcome: 'unknown',
+        observed: `no botscent entry on check's own request, which a cache answered (${hit})`,
+        cause:
+          'a cache in front of the server half served the page, and a cached page carries no entry: safe, but agents arriving while it is cached lose the request evidence',
+        fix: 'decorate after the cache lookup (Vercel Routing Middleware, a Worker without Workers Cache), or run check again once the cached copy expires to see a miss',
+      }
     return {
       id,
       outcome: 'unknown',

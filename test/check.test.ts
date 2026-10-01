@@ -137,6 +137,15 @@ test('a decorated response without no-store fails', () => {
   assert.equal(find(checks, 'no-store').outcome, 'fail')
 })
 
+test('no entry on a cache hit is told apart from a missing install', () => {
+  const checks = evaluate(observe({ self: page({ 'cf-cache-status': 'HIT', age: '31' }) }))
+  const server = find(checks, 'server-half')
+  assert.equal(server.outcome, 'unknown')
+  assert.match(server.observed, /a cache answered \(Age: 31\)/)
+  assert.match(server.cause!, /cached page carries no entry/)
+  assert.equal(exitCode(checks), 0, 'the page half still confirms the install')
+})
+
 test('a stripping hop is named only when both sides were observed', () => {
   const origin = page({ 'server-timing': timing(entry()), 'cache-control': 'no-store' })
   const both = evaluate(observe({ origin }))
