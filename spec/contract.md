@@ -155,7 +155,7 @@ type Diagnostics = {
 ```
 
 42. `diagnostics()` never contains raw observed values and is never part of a verdict.
-43. Debug output, off by default, writes one line per decision, prefixed `[botscent]`: in the page, through `console.debug`, each probe result, the transport outcome and each verdict change with its time since navigation start; on the server, each request's tokens, signatures (with the reason one did not verify), hints, verdict and transport decision. Python logs the same lines to the `botscent` logger at `DEBUG`.
+43. Debug output, off by default, writes one line per decision, prefixed `[botscent]`: in the page, through `console.debug`, each probe result, the transport outcome and each verdict change with its time since navigation start; on the server, each request's tokens, signatures (with the reason one did not verify), hints, verdict and transport decision. Python logs the same lines, without the prefix, to the `botscent` logger at `DEBUG`.
 
 ## 14. Releases
 

@@ -42,17 +42,15 @@ const param = (m: Item['params'], key: string): string | null => {
   return v && (v.t === 'str' || v.t === 'tok') ? v.v : null
 }
 
-/** The host of a Signature-Agent value when it is an https origin, else null. */
+/** The host of a Signature-Agent value when it is an https origin, else null.
+ * One strict ASCII pattern rather than a URL parser, so every implementation
+ * reads every value the same way. A default port is dropped; host case is not significant. */
+const ORIGIN = /^https:\/\/([A-Za-z0-9.-]+)(?::([0-9]{1,5}))?\/?$/
 function originHost(value: string | null): string | null {
-  if (!value) return null
-  try {
-    const url = new URL(value)
-    if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash) return null
-    if (url.pathname !== '/' && url.pathname !== '') return null
-    return url.host
-  } catch {
-    return null
-  }
+  const m = value === null ? null : ORIGIN.exec(value)
+  if (!m) return null
+  const host = m[1]!.toLowerCase()
+  return m[2] === undefined || Number(m[2]) === 443 ? host : `${host}:${Number(m[2])}`
 }
 
 const keyCache = new Map<string, Promise<CryptoKey | null>>()

@@ -212,6 +212,48 @@ const cases: Case[] = [
     verdict: human,
   },
   {
+    name: 'origin: host case is not significant',
+    headers: legacy('https://Signature-Agent.TEST'),
+    now: NOW,
+    verdict: agent([VERIFIED], 'test-signer'),
+  },
+  {
+    name: 'origin: the default port is dropped',
+    headers: legacy('https://signature-agent.test:443'),
+    now: NOW,
+    verdict: agent([VERIFIED], 'test-signer'),
+  },
+  {
+    name: 'origin: another port is another signer',
+    headers: legacy('https://signature-agent.test:8443'),
+    now: NOW,
+    verdict: agent([DECLARED]),
+  },
+  {
+    name: 'origin: a trailing dot is another host',
+    headers: legacy('https://signature-agent.test.'),
+    now: NOW,
+    verdict: agent([DECLARED]),
+  },
+  {
+    name: 'origin: credentials are not an origin',
+    headers: legacy('https://user@signature-agent.test'),
+    now: NOW,
+    verdict: agent([DECLARED]),
+  },
+  {
+    name: 'origin: a backslash is not an origin',
+    headers: legacy('https:\\\\signature-agent.test'),
+    now: NOW,
+    verdict: agent([DECLARED]),
+  },
+  {
+    name: 'origin: a trailing slash is still the origin',
+    headers: legacy('https://signature-agent.test/'),
+    now: NOW,
+    verdict: agent([VERIFIED], 'test-signer'),
+  },
+  {
     name: 'unparseable Signature-Input: no evidence',
     headers: replace(legacy('https://signature-agent.test'), 'signature-input', 'sig1=("@authority" "signature-agent"'),
     now: NOW,
