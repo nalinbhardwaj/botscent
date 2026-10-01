@@ -15,6 +15,17 @@ export type Cdp = {
   close(): void
 }
 
+/** Rejects with what was being waited for, instead of hanging a test run. */
+function within<T>(ms: number, what: string, promise: Promise<T>): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>
+  return Promise.race([
+    promise.finally(() => clearTimeout(timer)),
+    new Promise<T>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`timed out after ${ms} ms waiting for ${what}`)), ms)
+    }),
+  ])
+}
+
 export async function launch(): Promise<Cdp> {
   const args = [
     '--headless=new',
@@ -28,16 +39,24 @@ export async function launch(): Promise<Cdp> {
   if (process.platform === 'linux') args.unshift('--no-sandbox') // CI runners restrict the namespaces the sandbox needs
   const chrome: ChildProcess = spawn(chromium.executablePath(), args, { stdio: ['ignore', 'ignore', 'pipe'] })
   let stderr = ''
-  const url = await new Promise<string>((resolve, reject) => {
-    chrome.stderr!.on('data', (d) => {
-      stderr += String(d)
-      const m = /DevTools listening on (ws:\/\/\S+)/.exec(String(d))
-      if (m) resolve(m[1]!)
-    })
-    chrome.on('exit', (code) => reject(new Error(`chromium exited (${code}): ${stderr.slice(-500)}`)))
-  })
+  const url = await within(
+    15_000,
+    `Chromium to start (stderr: ${stderr.slice(-300)})`,
+    new Promise<string>((resolve, reject) => {
+      chrome.stderr!.on('data', (d) => {
+        stderr += String(d)
+        const m = /DevTools listening on (ws:\/\/\S+)/.exec(String(d))
+        if (m) resolve(m[1]!)
+      })
+      chrome.on('exit', (code) => reject(new Error(`chromium exited (${code}): ${stderr.slice(-500)}`)))
+    }),
+  )
   const socket = new WebSocket(url)
-  await new Promise((resolve) => socket.addEventListener('open', resolve))
+  await within(
+    10_000,
+    'the DevTools socket to open',
+    new Promise((resolve) => socket.addEventListener('open', resolve)),
+  )
   let next = 0
   const pending = new Map<number, (message: { result?: any; error?: { message: string } }) => void>()
   socket.addEventListener('message', (event) => {
@@ -46,11 +65,15 @@ export async function launch(): Promise<Cdp> {
     pending.delete(message.id)
   })
   const send = (method: string, params: object = {}, sessionId?: string): Promise<any> =>
-    new Promise((resolve, reject) => {
-      const id = ++next
-      pending.set(id, (m) => (m.error ? reject(new Error(`${method}: ${m.error.message}`)) : resolve(m.result)))
-      socket.send(JSON.stringify({ id, method, params, sessionId }))
-    })
+    within(
+      10_000,
+      method,
+      new Promise((resolve, reject) => {
+        const id = ++next
+        pending.set(id, (m) => (m.error ? reject(new Error(`${method}: ${m.error.message}`)) : resolve(m.result)))
+        socket.send(JSON.stringify({ id, method, params, sessionId }))
+      }),
+    )
   return {
     async tab(url) {
       const { targetId } = await send('Target.createTarget', { url: 'about:blank', newWindow: false })
@@ -67,7 +90,7 @@ export async function launch(): Promise<Cdp> {
         socket.addEventListener('message', onLoad)
       })
       await send('Page.navigate', { url }, sessionId)
-      await loaded
+      await within(10_000, `the load event of ${url}`, loaded)
       const evaluate = async <T>(expression: string): Promise<T> =>
         (await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true }, sessionId)).result
           .value as T
