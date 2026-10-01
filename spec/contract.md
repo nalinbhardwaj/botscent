@@ -206,4 +206,4 @@ npx botscent check <url> [--origin <url>] [--project <dir>] [--chrome <path>] [-
 ## 14. Releases
 
 44. Every release publishes an output-change report, and any change to outputs is a minor version.
-45. npm and PyPI releases share a version number, a tag and a vectors hash, and bundle the same, latest signer key directories.
+45. npm and PyPI releases are cut from one tag with one version, their release notes give the sha256 of the vectors both passed, and both bundle the same signer key directories.

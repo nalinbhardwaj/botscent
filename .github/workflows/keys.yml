@@ -1,0 +1,47 @@
+name: keys
+
+# Every day: compare the signers' published key directories with the bundled ones
+# (scripts/keys.ts), and when a key was added, removed or changed its validity,
+# open or update a pull request that also carries a changeset, since a key change
+# moves verdicts between verified and declared and so is a minor release.
+
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+      - id: watch
+        run: |
+          node scripts/keys.ts --write > "$RUNNER_TEMP/keys.md"
+          cat "$RUNNER_TEMP/keys.md"
+          if git diff --quiet; then echo "changed=false" >> "$GITHUB_OUTPUT"; else echo "changed=true" >> "$GITHUB_OUTPUT"; fi
+      - if: steps.watch.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          { printf -- '---\n"botscent": minor\n---\n\n'; grep '^- ' "$RUNNER_TEMP/keys.md" | grep -v 'rolling expiry'; } > ".changeset/signer-keys-$(date -u +%Y%m%d).md"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -C keys
+          git add -A
+          git commit -s -m 'Signer keys changed'
+          git push --force origin keys
+          if gh pr view keys --json state --jq .state 2>/dev/null | grep -q OPEN; then
+            gh pr edit keys --body-file "$RUNNER_TEMP/keys.md"
+          else
+            gh pr create --base main --head keys --title 'Signer keys changed' --body-file "$RUNNER_TEMP/keys.md"
+          fi

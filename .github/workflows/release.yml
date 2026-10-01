@@ -1,0 +1,169 @@
+name: release
+
+# On every push to main. With pending changesets, open or update the release pull
+# request: versions bumped everywhere (scripts/version.ts), the changelog written,
+# and the output-change report in its body. With none, publish the version npm
+# does not have yet, with provenance through trusted publishing (no token), tag
+# it, create the GitHub release, and publish the same commit to PyPI from the
+# `pypi` environment, which PyPI's trusted publisher names.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.plan.outputs.version }}
+      pending: ${{ steps.plan.outputs.pending }}
+      npm: ${{ steps.plan.outputs.npm }}
+      pypi: ${{ steps.plan.outputs.pypi }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+      - id: plan
+        run: |
+          version=$(node -p "require('./package.json').version")
+          pending=false
+          for f in .changeset/*.md; do
+            if [ -e "$f" ] && [ "$(basename "$f")" != README.md ]; then pending=true; fi
+          done
+          on_npm=false
+          npm view "botscent@$version" version > /dev/null 2>&1 && on_npm=true
+          on_pypi=false
+          curl -sf "https://pypi.org/pypi/botscent/$version/json" > /dev/null && on_pypi=true
+          release=false
+          if [ "$pending" = false ] && [ "$version" != 0.0.0 ]; then release=true; fi
+          npm=false; pypi=false
+          if [ "$release" = true ] && [ "$on_npm" = false ]; then npm=true; fi
+          if [ "$release" = true ] && [ "$on_pypi" = false ]; then pypi=true; fi
+          {
+            echo "version=$version"
+            echo "pending=$pending"
+            echo "npm=$npm"
+            echo "pypi=$pypi"
+          } >> "$GITHUB_OUTPUT"
+          echo "version $version; pending changesets: $pending; on npm: $on_npm; on PyPI: $on_pypi"
+
+  pull-request:
+    needs: plan
+    if: needs.plan.outputs.pending == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: astral-sh/setup-uv@v6
+      - run: npm ci
+      - run: npm run release:version
+      - id: body
+        run: |
+          version=$(node -p "require('./package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          {
+            echo "Merging this publishes botscent $version to npm and PyPI from one commit."
+            echo
+            echo "Before merging: replay the benchmark snapshots in the research repository (analysis/library) and add what moved below."
+            echo
+            node scripts/output-change.ts
+          } > "$RUNNER_TEMP/body.md"
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.body.outputs.version }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -C release
+          git add -A
+          git commit -s -m "Release $VERSION"
+          git push --force origin release
+          if gh pr view release --json state --jq .state 2>/dev/null | grep -q OPEN; then
+            gh pr edit release --title "Release $VERSION" --body-file "$RUNNER_TEMP/body.md"
+          else
+            gh pr create --base main --head release --title "Release $VERSION" --body-file "$RUNNER_TEMP/body.md"
+          fi
+
+  npm:
+    needs: plan
+    if: needs.plan.outputs.npm == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+      - uses: astral-sh/setup-uv@v6
+      # Trusted publishing needs npm 11.5.1 or later.
+      - run: npm install -g npm@latest
+      - run: npm ci
+      - run: npm run lint && npm run typecheck && npm test && npm run build
+      - name: One version everywhere
+        env:
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: |
+          grep -qx "version = \"$VERSION\"" python/pyproject.toml
+          grep -q "VERSION: string = \"$VERSION\"" src/generated/core.ts
+          grep -qx "VERSION = \"$VERSION\"" python/src/botscent/_generated.py
+      - name: The report, before the new tag exists
+        run: node scripts/output-change.ts > "$RUNNER_TEMP/changes.md"
+      - run: npm publish --access public
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: |
+          git tag "v$VERSION"
+          git push origin "v$VERSION"
+          awk -v heading="## $VERSION" '$0 == heading { keep = 1; next } /^## / { keep = 0 } keep' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+          { echo; cat "$RUNNER_TEMP/changes.md"; } >> "$RUNNER_TEMP/notes.md"
+          gh release create "v$VERSION" --title "v$VERSION" --notes-file "$RUNNER_TEMP/notes.md"
+
+  pypi:
+    needs: [plan, npm]
+    # After npm, or on its own when npm already has this version (a rerun after a PyPI failure).
+    if: always() && needs.plan.outputs.pypi == 'true' && (needs.npm.result == 'success' || needs.npm.result == 'skipped')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+      - run: uv build
+        working-directory: python
+      - name: The version npm published
+        env:
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: test -f "python/dist/botscent-$VERSION-py3-none-any.whl"
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: python/dist/
