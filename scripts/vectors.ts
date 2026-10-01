@@ -4,7 +4,7 @@
 // involved; each signature base is written out here by hand, independently of
 // the library's own construction. The first vectors are the IETF draft's own.
 import { createPrivateKey, sign } from 'node:crypto'
-import { writeFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 
 const TEST_KEY = {
   kty: 'OKP',
@@ -472,5 +472,14 @@ const vectors = {
   },
   cases,
 }
-writeFileSync(new URL('../vectors/requests.json', import.meta.url), JSON.stringify(vectors, null, 1) + '\n')
-console.log(`wrote vectors/requests.json: ${cases.length} cases`)
+const out = new URL('../vectors/requests.json', import.meta.url)
+const content = JSON.stringify(vectors, null, 1) + '\n'
+if (process.argv.includes('--check')) {
+  if (readFileSync(out, 'utf8') !== content) {
+    console.error('stale: vectors/requests.json (run npm run vectors)')
+    process.exit(1)
+  }
+} else {
+  writeFileSync(out, content)
+  console.log(`wrote vectors/requests.json: ${cases.length} cases`)
+}

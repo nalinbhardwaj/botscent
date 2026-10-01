@@ -41,7 +41,7 @@
     "typecheck": "tsc",
     "test": "node --test 'test/**/*.test.ts'",
     "format": "prettier --write . && cd python && uv run ruff format .",
-    "lint": "prettier --check . && node scripts/generate.ts --check",
+    "lint": "prettier --check . && node scripts/generate.ts --check && node scripts/vectors.ts --check",
     "vectors": "node scripts/vectors.ts"
   },
   "devDependencies": {
