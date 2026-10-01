@@ -122,8 +122,8 @@ jobs:
           cache: npm
           registry-url: 'https://registry.npmjs.org'
       - uses: astral-sh/setup-uv@v6
-      # Trusted publishing needs npm 11.5.1 or later.
-      - run: npm install -g npm@latest
+      # Trusted publishing needs npm 11.5.1 or later; 12 is a new major with a narrower Node range.
+      - run: npm install -g npm@11
       - run: npm ci
       - run: npm run lint && npm run typecheck && npm test && npm run build
       - name: One version everywhere
