@@ -25,13 +25,16 @@ export async function launch(): Promise<Cdp> {
     '--no-default-browser-check',
     'about:blank',
   ]
+  if (process.platform === 'linux') args.unshift('--no-sandbox') // CI runners restrict the namespaces the sandbox needs
   const chrome: ChildProcess = spawn(chromium.executablePath(), args, { stdio: ['ignore', 'ignore', 'pipe'] })
+  let stderr = ''
   const url = await new Promise<string>((resolve, reject) => {
     chrome.stderr!.on('data', (d) => {
+      stderr += String(d)
       const m = /DevTools listening on (ws:\/\/\S+)/.exec(String(d))
       if (m) resolve(m[1]!)
     })
-    chrome.on('exit', () => reject(new Error('chromium exited')))
+    chrome.on('exit', (code) => reject(new Error(`chromium exited (${code}): ${stderr.slice(-500)}`)))
   })
   const socket = new WebSocket(url)
   await new Promise((resolve) => socket.addEventListener('open', resolve))
