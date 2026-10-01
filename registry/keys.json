@@ -1,0 +1,50 @@
+{
+  "$comment": "Key directories fetched from each signer's /.well-known/http-message-signatures-directory and frozen into the release. Only Ed25519 OKP keys are used. The scheduled key-watching job refreshes this file.",
+  "fetched_at": "2026-10-01T14:10:00Z",
+  "directories": {
+    "chatgpt.com": [
+      {
+        "crv": "Ed25519",
+        "kty": "OKP",
+        "x": "P_1c4SX6fCavDcq6FRegWcVvaOKsp_aXHPEN1FcKDIA",
+        "kid": "ArwjqcCqtA5oxEWkzXGC-To_0A9whHmajCHtfe8I9aY",
+        "nbf": 1735689600,
+        "exp": 1791468407
+      }
+    ],
+    "cursorusercontent.com": [
+      {
+        "kty": "OKP",
+        "crv": "Ed25519",
+        "x": "STDZXOMW-Cg7paRpv_BtjujEHIQVNbzidfjY9M9w6hc",
+        "kid": "Vuxu4khgzIe0b30Nd6hq2envAuVBFMTDqorSNIUb_Oo",
+        "nbf": 1786403101,
+        "exp": 1817939101
+      }
+    ],
+    "api.manus.im": [
+      {
+        "crv": "Ed25519",
+        "kty": "OKP",
+        "x": "KcGM6sqzNes25V0hn96KsrIwL6pbut1KQMGmyFwpboM"
+      }
+    ],
+    "web-bot-auth.cloudflare-browser-rendering-085.workers.dev": [
+      {
+        "kty": "OKP",
+        "crv": "Ed25519",
+        "x": "pv_pTt9kUUO_1vl4JGNEdVo6r42LvuXDEwnZJGLFDq4"
+      },
+      {
+        "kty": "OKP",
+        "crv": "Ed25519",
+        "x": "c-5EYjQKU5ZO3uIfQL8xdvb9RKSHJNcGFB9beEpx824"
+      },
+      {
+        "kty": "OKP",
+        "crv": "Ed25519",
+        "x": "8znwZmIRuD6s4tQ54-OiPB32fY6k-XeyVsdU6aqFd_k"
+      }
+    ]
+  }
+}

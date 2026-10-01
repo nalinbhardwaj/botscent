@@ -1,0 +1,16 @@
+{
+  "$comment": "Agent names the library can report. A name is a public contract: added, never renamed within a major version. kind: computer-use-agent, fetcher, crawler, previewer, automation or client. sources: the identity-grade evidence that can produce the name. Signer names are operator-level: they name the infrastructure that signed, which can serve several products.",
+  "names": {
+    "chatgpt": { "display": "ChatGPT", "vendor": "OpenAI", "kind": "computer-use-agent", "sources": ["signer chatgpt.com"] },
+    "cursor": { "display": "Cursor", "vendor": "Anysphere", "kind": "computer-use-agent", "sources": ["signer cursorusercontent.com"] },
+    "manus": { "display": "Manus", "vendor": "Manus", "kind": "computer-use-agent", "sources": ["signer api.manus.im", "token Manus-User"] },
+    "devin": { "display": "Devin", "vendor": "Cognition", "kind": "computer-use-agent", "sources": ["token Devin"] },
+    "cloudflare-browser-run": { "display": "Cloudflare Browser Run", "vendor": "Cloudflare", "kind": "automation", "sources": ["signer web-bot-auth.cloudflare-browser-rendering-085.workers.dev", "page user agent Kitesurf/", "page platform Cloudflare Workers"] },
+    "muse": { "display": "Muse", "vendor": "Meta", "kind": "computer-use-agent", "sources": ["page muse.credentials.accessor-family"] },
+    "instinct": { "display": "Instinct", "vendor": "", "kind": "computer-use-agent", "sources": ["page instinct.credentials.wrappers with instinct.geetest.accessor-pair"] },
+    "codex-browser": { "display": "Codex in-app browser", "vendor": "OpenAI", "kind": "computer-use-agent", "sources": ["page two of codex.prompt.anonymous-native, codex.keyboard.empty-layout-map, codex.overlay.shadow-root"] },
+    "chatgpt-chrome": { "display": "ChatGPT for Chrome", "vendor": "OpenAI", "kind": "computer-use-agent", "sources": ["page chatgpt.badge.active"] },
+    "claude-chrome": { "display": "Claude for Chrome", "vendor": "Anthropic", "kind": "computer-use-agent", "sources": ["page claude.marker.active"] },
+    "botscent-check": { "display": "Botscent check", "vendor": "Botscent", "kind": "client", "sources": ["token botscent-check"] }
+  }
+}

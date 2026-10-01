@@ -32,6 +32,7 @@
     "node": ">=22.12"
   },
   "scripts": {
+    "generate": "node scripts/generate.ts",
     "build": "tsdown",
     "typecheck": "tsc",
     "test": "node --test 'test/**/*.test.ts'"

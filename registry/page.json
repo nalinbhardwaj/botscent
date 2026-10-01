@@ -1,0 +1,5 @@
+{
+  "$comment": "What a page's own navigator can declare: a product token at the start of navigator.userAgent, or a navigator.platform that names a hosting runtime.",
+  "user_agent_prefixes": { "Kitesurf/": "cloudflare-browser-run" },
+  "platforms": { "Cloudflare Workers": "cloudflare-browser-run" }
+}
