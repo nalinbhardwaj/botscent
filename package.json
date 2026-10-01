@@ -92,7 +92,7 @@
     "typecheck": "tsc",
     "test": "node --test 'test/*.test.ts' 'test/adapters/*.test.ts'",
     "format": "prettier --write . && cd python && uv run ruff format .",
-    "lint": "prettier --check . && node scripts/generate.ts --check && node scripts/vectors.ts --check",
+    "lint": "prettier --check . && node scripts/generate.ts --check && node scripts/vectors.ts --check && node scripts/docs.ts --check",
     "vectors": "node scripts/vectors.ts",
     "test:browser": "node --test 'test/browser/*.test.ts'",
     "test:examples": "npm run build && node scripts/examples.ts",
