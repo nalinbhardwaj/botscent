@@ -42,6 +42,14 @@
       "types": "./dist/react.d.ts",
       "default": "./dist/react.js"
     },
+    "./vue": {
+      "types": "./dist/vue.d.ts",
+      "default": "./dist/vue.js"
+    },
+    "./svelte": {
+      "types": "./dist/svelte.d.ts",
+      "default": "./dist/svelte.js"
+    },
     "./express": {
       "types": "./dist/express.d.ts",
       "default": "./dist/express.js"
@@ -90,14 +98,18 @@
     "publint": "^0.3.24",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "svelte": "^5.57.1",
     "tsdown": "^0.23.0",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vue": "^3.5.43"
   },
   "peerDependencies": {
+    "express": ">=4",
+    "hono": ">=4",
     "next": ">=14",
     "react": ">=18",
-    "express": ">=4",
-    "hono": ">=4"
+    "vue": ">=3.3",
+    "svelte": ">=4"
   },
   "peerDependenciesMeta": {
     "next": {
@@ -110,6 +122,12 @@
       "optional": true
     },
     "hono": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    },
+    "svelte": {
       "optional": true
     }
   }
