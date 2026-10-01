@@ -29,17 +29,17 @@ jobs:
 
   browsers:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    # Playwright's own image carries the three browsers and their system libraries, so no
+    # install step can stall the job (installing them with --with-deps sometimes did).
+    container: mcr.microsoft.com/playwright:v1.63.0-noble
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version: '24'
-          cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium webkit firefox
       - run: npm run build
       - run: npm run test:browser
+        env:
+          HOME: /root
 
   python:
     runs-on: ubuntu-latest
