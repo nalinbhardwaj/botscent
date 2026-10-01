@@ -166,7 +166,7 @@ const VERSION: string
 34. One instance runs per page. The running instance is published at `globalThis[Symbol.for('botscent')]`, and a second copy uses it.
 35. `verdict()` returns the current snapshot. An unchanged state returns the same object. Before `start()`, and during server rendering, it is `{ type: 'human', reasons: [] }`.
 36. `subscribe` calls its listener after every change of the snapshot, or, given a selector first, after every change of the selected value (compared with `Object.is`); it does not call it on subscription. The selector comes first so that TypeScript can infer the selected type. Every change also dispatches a `botscent` event on `window` whose `detail` is the new verdict, so code that runs before the library loads can listen.
-37. The script build (`<script defer src="/botscent.js">`) starts itself, reads `data-debug` from its tag, and exposes the functions above at `window.botscent`.
+37. The script build (`<script defer src="/botscent.js">`) exposes the functions above at `window.botscent`, then starts itself, reading `data-debug` from its tag; a listener for its first `botscent` event can therefore already call them.
 
 ## 12. Page to server: the carriers
 

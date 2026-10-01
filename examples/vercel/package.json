@@ -1,0 +1,8 @@
+{
+  "name": "botscent-example-vercel",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "botscent": "file:../botscent.tgz"
+  }
+}

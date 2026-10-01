@@ -1,0 +1,16 @@
+{
+  "name": "botscent-example-vue",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build"
+  },
+  "dependencies": {
+    "botscent": "file:../botscent.tgz",
+    "vue": "3.5.43"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "6.0.9",
+    "vite": "8.3.2"
+  }
+}

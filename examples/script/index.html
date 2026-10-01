@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Botscent with a script tag</title>
+    <!-- The page half: node_modules/botscent/dist/botscent.js, served from your site. -->
+    <script defer src="/botscent.js"></script>
+  </head>
+  <body>
+    <h1>Botscent with a script tag</h1>
+    <pre id="verdict"></pre>
+    <button id="send">Send a request</button>
+    <pre id="answer"></pre>
+    <script>
+      // The script build starts itself and exposes window.botscent; deferred scripts run
+      // before DOMContentLoaded, and the botscent event follows every change.
+      const show = () => (document.getElementById('verdict').textContent = JSON.stringify(botscent.verdict()))
+      addEventListener('DOMContentLoaded', show)
+      addEventListener('botscent', show)
+      // The headers carrier: same-origin requests get the page's report when it is an agent.
+      document.getElementById('send').onclick = async () => {
+        const response = await fetch('/api/visit', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', ...botscent.headers('/api/visit') },
+          body: '{}',
+        })
+        document.getElementById('answer').textContent = await response.text()
+      }
+    </script>
+  </body>
+</html>

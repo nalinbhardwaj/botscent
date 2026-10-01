@@ -39,6 +39,11 @@ export async function sharedCache(upstream: string) {
     origin: `http://localhost:${(server.address() as AddressInfo).port}`,
     store,
     log,
-    close: () => new Promise<void>((resolve) => server.close(() => resolve())),
+    // Ends every connection too: server.close() alone waits for a client's open ones.
+    close: () =>
+      new Promise<void>((resolve) => {
+        server.close(() => resolve())
+        server.closeAllConnections()
+      }),
   }
 }

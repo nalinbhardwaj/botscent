@@ -11,3 +11,5 @@ playwright-report/
 .size/
 examples/botscent.tgz
 examples/next/package-lock.json
+examples/*/package-lock.json
+examples/*/.wrangler/

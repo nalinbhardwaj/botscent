@@ -1,0 +1,7 @@
+{
+  "name": "botscent-example-script",
+  "private": true,
+  "dependencies": {
+    "botscent": "file:../botscent.tgz"
+  }
+}

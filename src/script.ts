@@ -1,9 +1,10 @@
-// The script build: <script defer src="/botscent.js" data-debug>. Starts itself
-// and exposes the page API at window.botscent.
+// The script build: <script defer src="/botscent.js" data-debug>. Exposes the page
+// API at window.botscent, then starts itself.
 import { diagnostics, headers, isVerified, start, subscribe, verdict, VERSION } from './index.ts'
 
 const tag = document.currentScript
-start({ debug: !!tag && tag.hasAttribute('data-debug') })
+// Published before start(), whose first verdict event can come at once: a listener
+// added before this script loaded may call window.botscent from that event.
 ;(window as unknown as { botscent?: unknown }).botscent = {
   verdict,
   subscribe,
@@ -13,3 +14,4 @@ start({ debug: !!tag && tag.hasAttribute('data-debug') })
   start,
   VERSION,
 }
+start({ debug: !!tag && tag.hasAttribute('data-debug') })

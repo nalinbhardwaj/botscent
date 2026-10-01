@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { headers } from 'botscent'
+import { useBotscent } from 'botscent/vue'
 
-// useBotscent() is auto-imported by the module. It renders the server's value
-// ({ type: 'human', reasons: [] }) and follows the page's verdict after hydration.
+// A read-only ref that follows the page's verdict.
 const verdict = useBotscent()
 const answer = ref('')
 
@@ -13,13 +14,13 @@ async function send() {
     headers: { 'content-type': 'application/json', ...headers('/api/visit') },
     body: '{}',
   })
-  answer.value = JSON.stringify(await response.json())
+  answer.value = await response.text()
 }
 </script>
 
 <template>
   <main>
-    <h1>Botscent on Nuxt</h1>
+    <h1>Botscent on Vue</h1>
     <pre id="verdict">{{ JSON.stringify(verdict) }}</pre>
     <button id="send" @click="send">Send a request</button>
     <pre id="answer">{{ answer }}</pre>

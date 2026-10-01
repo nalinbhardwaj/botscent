@@ -1,0 +1,12 @@
+{
+  "name": "botscent-example-hono",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "botscent": "file:../botscent.tgz",
+    "hono": "4.13.12"
+  }
+}

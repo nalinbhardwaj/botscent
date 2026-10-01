@@ -114,9 +114,10 @@ describe('the vertical slice', { timeout: 60_000 }, () => {
       for (const stored of cdn.store.values())
         assert.doesNotMatch(String(stored.headers['server-timing'] ?? ''), /botscent/)
     } finally {
-      await cdn.close()
+      // The pages first, so that no request of theirs is still passing through the cache.
       await agent.close()
       await person.close()
+      await cdn.close()
     }
   })
 

@@ -17,30 +17,44 @@ rmSync(`${root}python/dist`, { recursive: true, force: true })
 run('uv', ['build', '-q'], `${root}python`)
 const wheel = readdirSync(`${root}python/dist`).find((f) => f.endsWith('.whl'))!
 
-run('npm', ['install', '--no-audit', '--no-fund', '--force', '../botscent.tgz'], `${root}examples/next`)
+const install = (example: string) =>
+  run('npm', ['install', '--no-audit', '--no-fund', '--force', '../botscent.tgz'], `${root}examples/${example}`)
+install('next')
 run('node_modules/.bin/next', ['build'], `${root}examples/next`)
-run('npm', ['install', '--no-audit', '--no-fund', '--force', '../botscent.tgz'], `${root}examples/astro`)
+install('astro')
 run('node_modules/.bin/astro', ['build'], `${root}examples/astro`, { BOTSCENT_EXAMPLE_TRANSPORT: 'always' })
-run('npm', ['install', '--no-audit', '--no-fund', '--force', '../botscent.tgz'], `${root}examples/nuxt`)
+install('nuxt')
 run('node_modules/.bin/nuxt', ['build'], `${root}examples/nuxt`, { NUXT_TELEMETRY_DISABLED: '1' })
-run('uv', ['venv', '-q', '--allow-existing', '.venv'], `${root}examples/fastapi`)
-run(
-  'uv',
-  [
-    'pip',
-    'install',
-    '-q',
-    '--python',
-    '.venv/bin/python',
-    '--reinstall-package',
-    'botscent',
-    'fastapi',
-    'uvicorn',
-    'python-multipart',
-    `../../python/dist/${wheel}`,
-  ],
-  `${root}examples/fastapi`,
-)
+install('sveltekit')
+run('node_modules/.bin/vite', ['build'], `${root}examples/sveltekit`)
+install('vue')
+run('node_modules/.bin/vite', ['build'], `${root}examples/vue`)
+install('react')
+run('node_modules/.bin/vite', ['build'], `${root}examples/react`)
+for (const example of ['express', 'hono', 'workers', 'vercel', 'script']) install(example)
+// Each Python example gets its own environment with the built wheel.
+for (const [example, packages] of [
+  ['fastapi', ['fastapi', 'uvicorn', 'python-multipart']],
+  ['django', ['django']],
+  ['flask', ['flask']],
+] as const) {
+  run('uv', ['venv', '-q', '--allow-existing', '.venv'], `${root}examples/${example}`)
+  run(
+    'uv',
+    [
+      'pip',
+      'install',
+      '-q',
+      '--python',
+      '.venv/bin/python',
+      '--reinstall-package',
+      'botscent',
+      ...packages,
+      `../../python/dist/${wheel}`,
+    ],
+    `${root}examples/${example}`,
+  )
+}
 run(process.execPath, [
   '--test',
   '--test-reporter=spec',
@@ -48,4 +62,6 @@ run(process.execPath, [
   'examples/test/slice.test.ts',
   'examples/test/astro.test.ts',
   'examples/test/nuxt.test.ts',
+  'examples/test/servers.test.ts',
+  'examples/test/pages.test.ts',
 ])

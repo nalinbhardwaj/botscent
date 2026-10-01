@@ -8,3 +8,11 @@ examples/next/.next
 examples/next/next-env.d.ts
 examples/fastapi/.venv
 examples/*.tgz
+examples/*/build
+examples/*/dist
+examples/*/.svelte-kit
+examples/*/.output
+examples/*/.nuxt
+examples/*/.wrangler
+examples/*/.venv
+examples/*/.astro

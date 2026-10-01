@@ -1,0 +1,12 @@
+{
+  "name": "botscent-example-express",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "botscent": "file:../botscent.tgz",
+    "express": "5.2.1"
+  }
+}

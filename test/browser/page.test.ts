@@ -45,6 +45,21 @@ const settle = (page: Page, test: string, timeout = 8000) =>
   page.waitForFunction(test, undefined, { timeout, polling: 50 }).then(() => verdict(page))
 
 describe('chromium', () => {
+  test('a listener for the first verdict event can already call window.botscent', async () => {
+    // The webdriver flag makes the first change happen while the script starts.
+    server.route('/listener', {
+      body: html({
+        head: `<script>addEventListener('botscent', () => {
+          try { window.__seen = botscent.verdict().type } catch (e) { window.__seen = String(e) }
+        }, { once: true })</script>`,
+      }),
+    })
+    const { page, errors } = await open('chromium', '/listener')
+    await page.waitForFunction(() => (window as any).__seen !== undefined)
+    assert.equal(await page.evaluate(() => (window as any).__seen), 'agent')
+    assert.deepEqual(errors, [])
+  })
+
   test('a person: no evidence, no side effects, no errors', async () => {
     const { page, errors } = await open('chromium-clean', '/plain')
     await page.waitForTimeout(300)
