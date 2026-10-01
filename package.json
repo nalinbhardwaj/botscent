@@ -42,6 +42,18 @@
       "types": "./dist/react.d.ts",
       "default": "./dist/react.js"
     },
+    "./express": {
+      "types": "./dist/express.d.ts",
+      "default": "./dist/express.js"
+    },
+    "./hono": {
+      "types": "./dist/hono.d.ts",
+      "default": "./dist/hono.js"
+    },
+    "./workers": {
+      "types": "./dist/workers.d.ts",
+      "default": "./dist/workers.js"
+    },
     "./botscent.js": "./dist/botscent.js",
     "./package.json": "./package.json"
   },
@@ -55,18 +67,23 @@
     "generate": "node scripts/generate.ts",
     "build": "tsdown && publint && attw --pack . --profile esm-only --exclude-entrypoints botscent.js --quiet && node scripts/size.ts",
     "typecheck": "tsc",
-    "test": "node --test 'test/*.test.ts'",
+    "test": "node --test 'test/*.test.ts' 'test/adapters/*.test.ts'",
     "format": "prettier --write . && cd python && uv run ruff format .",
     "lint": "prettier --check . && node scripts/generate.ts --check && node scripts/vectors.ts --check",
     "vectors": "node scripts/vectors.ts",
     "test:browser": "node --test 'test/browser/*.test.ts'",
-    "test:examples": "npm run build && node scripts/examples.ts"
+    "test:examples": "npm run build && node scripts/examples.ts",
+    "test:runtimes": "node scripts/runtimes.ts && deno run --allow-read test/runtime/run.ts && bun test/runtime/run.ts"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
     "@arethetypeswrong/core": "^0.18.5",
+    "@types/express": "^5.0.6",
     "@types/node": "^24.0.0",
     "@types/react": "^19.3.0",
+    "express": "^5.2.1",
+    "hono": "^4.13.12",
+    "miniflare": "^4.20260730.0",
     "next": "^16.3.8",
     "playwright": "^1.63.0",
     "prettier": "^3.9.9",
@@ -78,13 +95,21 @@
   },
   "peerDependencies": {
     "next": ">=14",
-    "react": ">=18"
+    "react": ">=18",
+    "express": ">=4",
+    "hono": ">=4"
   },
   "peerDependenciesMeta": {
     "next": {
       "optional": true
     },
     "react": {
+      "optional": true
+    },
+    "express": {
+      "optional": true
+    },
+    "hono": {
       "optional": true
     }
   }
