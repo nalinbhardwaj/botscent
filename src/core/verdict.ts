@@ -1,6 +1,6 @@
 // The verdict and the one decision every half shares: from a set of evidence to
 // { type, agent_name?, reasons }. Pure; no I/O, no globals.
-import { REASONS, type KnownReason } from '../generated.ts'
+import { REASONS, type KnownReason } from '../generated/core.ts'
 
 export type Reason = KnownReason | (string & {})
 

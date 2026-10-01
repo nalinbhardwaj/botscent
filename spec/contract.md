@@ -77,14 +77,14 @@ VERSION: str
 
 ## 7. Web Bot Auth signatures
 
-21. A request carries a Web Bot Auth signature when `Signature-Input` and `Signature` parse as structured-field dictionaries (RFC 9651) and some member of `Signature-Input` has the parameter `tag="web-bot-auth"`. Anything else, including unparseable headers, is no evidence.
-22. Each such signature's signer is its `Signature-Agent`: the member whose key is the signature's label when the header is a dictionary, or the whole value when it is a bare string (the legacy form, applied to every label). The signer host is the lower-cased host of the value parsed as an `https` URL, compared exactly with `registry/signers.json`.
+21. A request carries a Web Bot Auth signature when `Signature-Input` and `Signature` parse as structured-field dictionaries (RFC 9651) and some member of `Signature-Input` is an inner list with the parameter `tag="web-bot-auth"`. Anything else, including unparseable headers, is no evidence.
+22. A signature's signer comes from `Signature-Agent` (draft-ietf-webbotauth-httpsig-protocol-00, section 5.2.1). When the header is a dictionary, the signer is the member named by the `key` parameter of the signature's covered `signature-agent` component; when that component has no `key`, the member under the signature's label, or the only member. A member whose `type` parameter is present and is not `directory` is ignored. When the header is a bare string (the legacy form), that string is the signer of every signature. The signer host is the host of the value parsed as a URL, which must be an `https` origin (no path, query, fragment or credentials), compared exactly with `registry/signers.json`.
 23. A signature verifies when all of these hold, and otherwise it is declared:
-    - its covered components include `@authority` and the `signature-agent` field (with `key` naming its label when `Signature-Agent` is a dictionary);
-    - every covered component can be derived from the request: `@method`, `@authority`, `@scheme`, `@target-uri`, `@path`, `@query`, or a header field, with no component parameter other than `key` and `sf`;
-    - its `keyid` names an Ed25519 key in the signer's bundled directory (`registry/keys.json`), by `kid` or by the key's JWK thumbprint (RFC 7638), and its `alg`, when present, is `ed25519`;
+    - its covered components include `@authority` or `@target-uri`, and the `signature-agent` component that attributes it (with `key` when `Signature-Agent` is a dictionary of several members);
+    - every covered component can be derived from the request: `@method`, `@authority`, `@scheme`, `@target-uri`, `@path`, `@query`, or a header field, with no component parameter other than `key`;
+    - its `keyid` is the JWK thumbprint (RFC 7638) or `kid` of an Ed25519 key in the signer's own bundled directory (`registry/keys.json`), and its `alg`, when present, is `ed25519`;
     - `created` and `expires` are present and the request time lies in [`created`, `expires`]; the key's `nbf` and `exp`, when present, contain `created`;
-    - the Ed25519 signature verifies over the signature base built as in RFC 9421 section 2.5.
+    - the Ed25519 signature verifies over the signature base built as in RFC 9421 section 2.5, with `@authority` lower-cased and without a default port.
 24. The request gets `signer.web-bot-auth.verified` when any Web Bot Auth signature verifies, otherwise `signer.web-bot-auth.declared` when any is present. Each signature's signer host is a declaration for naming, verified or not.
 25. Why a signature did not verify goes to the debug output only, never into the verdict.
 26. The library makes no request to refresh keys. Between a signer's rotation and an upgrade, its signatures are declared rather than verified.

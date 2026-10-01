@@ -1,11 +1,18 @@
 """The generated module carries the registry exactly (scripts/generate.ts writes it)."""
 
+import base64
+import hashlib
 import json
 import pathlib
 
 from botscent import _generated as g
 
 ROOT = pathlib.Path(__file__).parents[2]
+
+
+def thumbprint(x):
+    digest = hashlib.sha256(f'{{"crv":"Ed25519","kty":"OKP","x":"{x}"}}'.encode()).digest()
+    return base64.urlsafe_b64encode(digest).decode().rstrip("=")
 
 
 def read(path):
@@ -18,7 +25,16 @@ def test_generated_module_matches_the_registry():
     assert g.TOKENS == tuple((t["token"], t["name"]) for t in read("registry/tokens.json")["tokens"])
     directories = read("registry/keys.json")["directories"]
     assert g.KEYS == {
-        host: [{"x": k["x"], "kid": k.get("kid"), "nbf": k.get("nbf"), "exp": k.get("exp")} for k in keys]
+        host: [
+            {
+                "x": k["x"],
+                "thumbprint": thumbprint(k["x"]),
+                "kid": k.get("kid"),
+                "nbf": k.get("nbf"),
+                "exp": k.get("exp"),
+            }
+            for k in keys
+        ]
         for host, keys in directories.items()
     }
     assert g.VERSION == read("package.json")["version"]
