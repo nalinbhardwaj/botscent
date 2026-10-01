@@ -10,6 +10,7 @@ export const R = {
   muse: 'muse.credentials.accessor-family',
   wrappers: 'instinct.credentials.wrappers',
   geetest: 'instinct.geetest.accessor-pair',
+  grok: 'grok.computer.profile',
   prompt: 'codex.prompt.anonymous-native',
   keyboard: 'codex.keyboard.empty-layout-map',
   overlay: 'codex.overlay.shadow-root',
@@ -52,6 +53,11 @@ export function isInstinctWrappers(c: Credentials): boolean {
 export const isGeetestPair = (a: GlobalShape, b: GlobalShape): boolean =>
   [a, b].every((g) => g.present && g.own && g.getter && g.setter && g.enumerable === false && g.configurable)
 
+/** Grok Bot's cloud computer, one VM image, as computerProfile() writes it: a 1280x800 screen with a
+ * 57 px panel at the bottom, the browser maximised at (0,0), device pixel ratio 1, and UTC. Every part
+ * alone is a person's setup too; together, and with no media devices at all, they are that image. */
+export const GROK_COMPUTER = '1280,800,1280,743,0,0,1280,743,0,0,1,UTC'
+
 /** The Codex in-app browser's window.prompt: an anonymous native function whose source is 29 characters. */
 export const isCodexPrompt = (s: SourceShape | null): boolean =>
   !!s && s.fnName === '' && s.nativeLike === true && s.sourceLength === 29 && s.fnLength === 0
@@ -70,6 +76,7 @@ const NAMES: Partial<Record<string, string>> = {
   [R.muse]: 'muse',
   [R.wrappers]: 'instinct',
   [R.geetest]: 'instinct',
+  [R.grok]: 'grok-bot',
   [R.prompt]: 'codex-browser',
   [R.keyboard]: 'codex-browser',
   [R.overlay]: 'codex-browser',
@@ -90,6 +97,7 @@ export function evidenceOf(held: ReadonlySet<string>, declaredName?: string): Ev
     shape(R.wrappers)
     shape(R.geetest)
   }
+  if (held.has(R.grok)) shape(R.grok)
   const codex = [R.prompt, R.keyboard, R.overlay].filter((r) => held.has(r))
   if (codex.length >= 2) codex.forEach(shape)
   if (held.has(R.badge)) shape(R.badge)

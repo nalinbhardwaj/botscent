@@ -198,6 +198,7 @@ Reasons, strongest first. A reason that names gives `agent_name` when every nami
 | `muse.credentials.accessor-family` | page    | yes, muse             | The credential methods are replaced by the accessor family Muse's cloud browser installs.                                                                 |
 | `instinct.credentials.wrappers`    | page    | yes, instinct         | The credential methods are wrapped the way Instinct's cloud desktop wraps them; counts only together with the GeeTest pair.                               |
 | `instinct.geetest.accessor-pair`   | page    | yes, instinct         | The GeeTest initialisers are the accessor pair Instinct installs; counts only together with the credential wrappers.                                      |
+| `grok.computer.profile`            | page    | yes, grok-bot         | The page runs on Grok Bot's cloud computer: its exact screen, window, pixel ratio and time zone, with no media devices.                                   |
 | `codex.prompt.anonymous-native`    | page    | yes, codex-browser    | window.prompt has the Codex in-app browser's shape; counts only with a second Codex shell signal.                                                         |
 | `codex.keyboard.empty-layout-map`  | page    | yes, codex-browser    | The keyboard layout map is empty, as in the Codex in-app browser; counts only with a second Codex shell signal.                                           |
 | `codex.overlay.shadow-root`        | page    | yes, codex-browser    | The Codex in-app browser's overlay is attached to the document; counts only with a second Codex shell signal.                                             |
@@ -222,9 +223,9 @@ Named agents: 100, from [the registry](registry/names.json). Software the regist
 | ChatGPT for Chrome   | OpenAI    | `chatgpt-chrome` | page: `chatgpt.badge.active`                                                                                 |
 | Claude for Chrome    | Anthropic | `claude-chrome`  | page: `claude.marker.active`                                                                                 |
 | Codex in-app browser | OpenAI    | `codex-browser`  | page: two of `codex.prompt.anonymous-native`, `codex.keyboard.empty-layout-map`, `codex.overlay.shadow-root` |
-| Cursor               | Anysphere | `cursor`         | signature from `cursorusercontent.com`                                                                       |
 | Devin                | Cognition | `devin`          | user agent `Devin`                                                                                           |
 | Google-Agent         | Google    | `google-agent`   | user agent `Google-Agent`                                                                                    |
+| Grok Bot             | Anysphere | `grok-bot`       | signature from `cursorusercontent.com`; page: `grok.computer.profile`                                        |
 | Instinct             | —         | `instinct`       | page: `instinct.credentials.wrappers` with `instinct.geetest.accessor-pair`                                  |
 | Manus                | Manus     | `manus`          | signature from `api.manus.im`; user agent `Manus-User`                                                       |
 | Muse                 | Meta      | `muse`           | page: `muse.credentials.accessor-family`                                                                     |

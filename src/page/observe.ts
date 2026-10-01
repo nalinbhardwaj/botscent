@@ -4,6 +4,7 @@
 // a probe status and no evidence.
 import { PAGE_PLATFORMS, PAGE_USER_AGENT_PREFIXES } from '../generated/page.ts'
 import {
+  GROK_COMPUTER,
   R,
   isCodexOverlay,
   isCodexPrompt,
@@ -12,7 +13,7 @@ import {
   isMuse,
   type Credentials,
 } from './rules.ts'
-import { CLAUDE_ACTIVE, elementShape, globalShape, methodShape, sourceShape } from './shapes.ts'
+import { CLAUDE_ACTIVE, computerProfile, elementShape, globalShape, methodShape, sourceShape } from './shapes.ts'
 
 export type ProbeStatus = 'pending' | 'ok' | 'unsupported' | 'failed'
 
@@ -74,6 +75,19 @@ export function observe(sink: Sink): () => void {
       if (isCodexPrompt(sourceShape(window, 'prompt'))) sink.hold(R.prompt)
     })
 
+  // Only a page whose screen already matches asks for the device list: no work for anyone else.
+  const computer = () =>
+    run('computer', () => {
+      if (computerProfile() !== GROK_COMPUTER) return
+      if (!navigator.mediaDevices) return false
+      navigator.mediaDevices.enumerateDevices().then(
+        (list) => {
+          if (!list.length) sink.hold(R.grok)
+        },
+        () => sink.status('computer', 'failed'),
+      )
+    })
+
   const keyboard = () =>
     run('keyboard', () => {
       const kb = (navigator as { keyboard?: { getLayoutMap?: () => Promise<{ size: number }> } }).keyboard
@@ -119,6 +133,7 @@ export function observe(sink: Sink): () => void {
 
   // At start.
   navigatorDeclarations()
+  computer()
   keyboard()
   pass()
 

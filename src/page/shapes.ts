@@ -130,3 +130,24 @@ export function elementShape(el: Element): ElementShape {
     pointerEvents: style.pointerEvents,
   }
 }
+
+/** The screen (size, available area and its origin), the window (size and position), the pixel ratio
+ * and the time zone, joined into one comparable string. availLeft and availTop are not in every
+ * engine; missing, they leave a gap no profile matches. */
+export function computerProfile(): string {
+  const s = screen as Screen & { availLeft?: number; availTop?: number }
+  return [
+    s.width,
+    s.height,
+    s.availWidth,
+    s.availHeight,
+    s.availLeft,
+    s.availTop,
+    outerWidth,
+    outerHeight,
+    screenX,
+    screenY,
+    devicePixelRatio,
+    Intl.DateTimeFormat().resolvedOptions().timeZone,
+  ].join()
+}

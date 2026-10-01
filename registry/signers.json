@@ -2,7 +2,7 @@
   "$comment": "Web Bot Auth signers: the exact host of a Signature-Agent value, after URL parsing, and the operator-level name it gives.",
   "signers": {
     "chatgpt.com": "chatgpt",
-    "cursorusercontent.com": "cursor",
+    "cursorusercontent.com": "grok-bot",
     "api.manus.im": "manus",
     "web-bot-auth.cloudflare-browser-rendering-085.workers.dev": "cloudflare-browser-run"
   }

@@ -7,11 +7,11 @@
       "kind": "computer-use-agent",
       "sources": ["signer chatgpt.com"]
     },
-    "cursor": {
-      "display": "Cursor",
+    "grok-bot": {
+      "display": "Grok Bot",
       "vendor": "Anysphere",
       "kind": "computer-use-agent",
-      "sources": ["signer cursorusercontent.com"]
+      "sources": ["signer cursorusercontent.com", "page grok.computer.profile"]
     },
     "manus": {
       "display": "Manus",

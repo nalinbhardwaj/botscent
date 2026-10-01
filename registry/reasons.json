@@ -62,6 +62,12 @@
       "summary": "The GeeTest initialisers are the accessor pair Instinct installs; counts only together with the credential wrappers."
     },
     {
+      "id": "grok.computer.profile",
+      "half": "page",
+      "names": "grok-bot",
+      "summary": "The page runs on Grok Bot's cloud computer: its exact screen, window, pixel ratio and time zone, with no media devices."
+    },
+    {
       "id": "codex.prompt.anonymous-native",
       "half": "page",
       "names": "codex-browser",
