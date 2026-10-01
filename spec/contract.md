@@ -71,7 +71,7 @@ VERSION: str
 
 ## 6. Declared user-agent tokens
 
-18. A token from `registry/tokens.json` matches when it occurs in the `User-Agent` value, case-sensitively, preceded by the start of the value or one of space, tab, `;`, `(`, `,`, `+`, and followed by the end of the value or one of `/`, space, tab, `;`, `)`, `,`. Every matching token is a declaration (section 4).
+18. Each token in `registry/tokens.json` matches case-sensitively, in one of three ways. By default it matches where it occurs in the `User-Agent` value preceded by the start of the value or one of space, tab, `;`, `(`, `,`, `+`, and followed by the end of the value or one of `/`, space, tab, `;`, `)`, `,`. A `versioned` token matches the same way but only when followed by `/` (short words such as `curl`, `Bun` or `Yeti` that could be free text). An `exact` token matches only the whole value (defaults that are a bare word, such as Node's `node`). Every matching token is a declaration (section 4), so a value that declares two products names neither.
 19. `ua.headless-chrome` holds when the `User-Agent` contains `HeadlessChrome/`.
 20. A missing, empty or unfamiliar user agent is no evidence. There is no generic pattern such as `bot` or `crawler`.
 

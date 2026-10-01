@@ -7,7 +7,7 @@ const read = (path: string) => JSON.parse(readFileSync(new URL(`../${path}`, imp
 const { reasons } = read('registry/reasons.json') as { reasons: { id: string; half: string; names: string | null }[] }
 const { names } = read('registry/names.json') as { names: Record<string, { display: string; kind: string }> }
 const { signers } = read('registry/signers.json') as { signers: Record<string, string> }
-const { tokens } = read('registry/tokens.json') as { tokens: { token: string; name: string }[] }
+const { tokens } = read('registry/tokens.json') as { tokens: { token: string; name: string; match?: string }[] }
 const page = read('registry/page.json') as {
   user_agent_prefixes: Record<string, string>
   platforms: Record<string, string>
@@ -54,6 +54,8 @@ test('tokens are unique and contain no boundary character', () => {
   const list = tokens.map((t) => t.token)
   assert.equal(new Set(list).size, list.length)
   for (const token of list) assert.match(token, /^[^\s/;(),+]+$/, token)
+  for (const t of tokens)
+    assert.ok(t.match === undefined || t.match === 'versioned' || t.match === 'exact', `${t.token}: match ${t.match}`)
 })
 
 test('every signer has a bundled directory of Ed25519 keys', () => {

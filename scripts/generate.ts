@@ -10,7 +10,7 @@ const read = (path: string) => JSON.parse(readFileSync(new URL(path, root), 'utf
 const { version } = read('package.json')
 const { reasons } = read('registry/reasons.json') as { reasons: { id: string }[] }
 const { signers } = read('registry/signers.json') as { signers: Record<string, string> }
-const { tokens } = read('registry/tokens.json') as { tokens: { token: string; name: string }[] }
+const { tokens } = read('registry/tokens.json') as { tokens: { token: string; name: string; match?: string }[] }
 const page = read('registry/page.json') as {
   user_agent_prefixes: Record<string, string>
   platforms: Record<string, string>
@@ -53,8 +53,9 @@ const server = `${header}
 /** Web Bot Auth signer host -> operator-level name (registry/signers.json). */
 export const SIGNERS: Readonly<Record<string, string>> = ${json(signers)}
 
-/** Declared user-agent tokens and the names they give, in registry order (registry/tokens.json). */
-export const TOKENS: readonly (readonly [token: string, name: string])[] = ${json(tokens.map((t) => [t.token, t.name]))}
+/** Declared user-agent tokens, the names they give and how they match (registry/tokens.json). */
+export const TOKENS: readonly Token[] = ${json(tokens.map((t) => [t.token, t.name, t.match ?? 'token']))}
+export type Token = readonly [token: string, name: string, match: 'token' | 'versioned' | 'exact']
 
 /** Bundled Ed25519 keys per signer host, fetched ${keys.fetched_at} (registry/keys.json). */
 export const KEYS: Readonly<Record<string, readonly SignerKey[]>> = ${json(keyEntries)}
@@ -88,8 +89,8 @@ REASONS = (${reasons.map((r) => json(r.id)).join(', ')},)
 # Web Bot Auth signer host -> operator-level name (registry/signers.json).
 SIGNERS = ${py(signers)}
 
-# Declared user-agent tokens and the names they give, in registry order (registry/tokens.json).
-TOKENS = (${tokens.map((t) => `(${json(t.token)}, ${json(t.name)})`).join(', ')},)
+# Declared user-agent tokens, the names they give and how they match (registry/tokens.json).
+TOKENS = (${tokens.map((t) => `(${json(t.token)}, ${json(t.name)}, ${json(t.match ?? 'token')})`).join(', ')},)
 
 # Bundled Ed25519 keys per signer host, fetched ${keys.fetched_at} (registry/keys.json).
 KEYS = ${py(keyEntries)}

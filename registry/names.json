@@ -19,7 +19,12 @@
       "kind": "computer-use-agent",
       "sources": ["signer api.manus.im", "token Manus-User"]
     },
-    "devin": { "display": "Devin", "vendor": "Cognition", "kind": "computer-use-agent", "sources": ["token Devin"] },
+    "devin": {
+      "display": "Devin",
+      "vendor": "Cognition",
+      "kind": "computer-use-agent",
+      "sources": ["token Devin"]
+    },
     "cloudflare-browser-run": {
       "display": "Cloudflare Browser Run",
       "vendor": "Cloudflare",
@@ -67,6 +72,540 @@
       "vendor": "Botscent",
       "kind": "client",
       "sources": ["token botscent-check"]
+    },
+    "curl": {
+      "display": "curl",
+      "vendor": "curl project",
+      "kind": "client",
+      "sources": ["token curl"]
+    },
+    "wget": {
+      "display": "GNU Wget",
+      "vendor": "GNU",
+      "kind": "client",
+      "sources": ["token Wget"]
+    },
+    "python-requests": {
+      "display": "Python requests",
+      "vendor": "Python Software Foundation",
+      "kind": "client",
+      "sources": ["token python-requests"]
+    },
+    "python-httpx": {
+      "display": "HTTPX",
+      "vendor": "Encode",
+      "kind": "client",
+      "sources": ["token python-httpx"]
+    },
+    "aiohttp": {
+      "display": "aiohttp",
+      "vendor": "aio-libs",
+      "kind": "client",
+      "sources": ["token aiohttp"]
+    },
+    "python-urllib": {
+      "display": "Python urllib",
+      "vendor": "Python Software Foundation",
+      "kind": "client",
+      "sources": ["token Python-urllib"]
+    },
+    "python-urllib3": {
+      "display": "urllib3",
+      "vendor": "urllib3",
+      "kind": "client",
+      "sources": ["token python-urllib3"]
+    },
+    "go-http-client": {
+      "display": "Go net/http",
+      "vendor": "Go project",
+      "kind": "client",
+      "sources": ["token Go-http-client"]
+    },
+    "node": {
+      "display": "Node.js fetch",
+      "vendor": "OpenJS Foundation",
+      "kind": "client",
+      "sources": ["token node"]
+    },
+    "undici": {
+      "display": "undici fetch",
+      "vendor": "OpenJS Foundation",
+      "kind": "client",
+      "sources": ["token undici"]
+    },
+    "node-fetch": {
+      "display": "node-fetch",
+      "vendor": "node-fetch",
+      "kind": "client",
+      "sources": ["token node-fetch"]
+    },
+    "axios": {
+      "display": "axios",
+      "vendor": "axios",
+      "kind": "client",
+      "sources": ["token axios"]
+    },
+    "okhttp": {
+      "display": "OkHttp",
+      "vendor": "Square",
+      "kind": "client",
+      "sources": ["token okhttp"]
+    },
+    "java-http-client": {
+      "display": "Java HttpClient",
+      "vendor": "OpenJDK",
+      "kind": "client",
+      "sources": ["token Java-http-client"]
+    },
+    "java": {
+      "display": "Java HttpURLConnection",
+      "vendor": "OpenJDK",
+      "kind": "client",
+      "sources": ["token Java"]
+    },
+    "apache-httpclient": {
+      "display": "Apache HttpClient",
+      "vendor": "Apache Software Foundation",
+      "kind": "client",
+      "sources": ["token Apache-HttpClient"]
+    },
+    "libwww-perl": {
+      "display": "libwww-perl",
+      "vendor": "libwww-perl",
+      "kind": "client",
+      "sources": ["token libwww-perl"]
+    },
+    "postmanruntime": {
+      "display": "Postman",
+      "vendor": "Postman",
+      "kind": "client",
+      "sources": ["token PostmanRuntime"]
+    },
+    "httpie": {
+      "display": "HTTPie",
+      "vendor": "HTTPie",
+      "kind": "client",
+      "sources": ["token HTTPie"]
+    },
+    "ruby": {
+      "display": "Ruby Net::HTTP",
+      "vendor": "Ruby",
+      "kind": "client",
+      "sources": ["token Ruby"]
+    },
+    "guzzlehttp": {
+      "display": "Guzzle",
+      "vendor": "Guzzle",
+      "kind": "client",
+      "sources": ["token GuzzleHttp"]
+    },
+    "deno": {
+      "display": "Deno",
+      "vendor": "Deno Land",
+      "kind": "client",
+      "sources": ["token Deno"]
+    },
+    "bun": {
+      "display": "Bun",
+      "vendor": "Oven",
+      "kind": "client",
+      "sources": ["token Bun"]
+    },
+    "scrapy": {
+      "display": "Scrapy",
+      "vendor": "Zyte",
+      "kind": "crawler",
+      "sources": ["token Scrapy"]
+    },
+    "oai-searchbot": {
+      "display": "OAI-SearchBot",
+      "vendor": "OpenAI",
+      "kind": "crawler",
+      "sources": ["token OAI-SearchBot"]
+    },
+    "gptbot": {
+      "display": "GPTBot",
+      "vendor": "OpenAI",
+      "kind": "crawler",
+      "sources": ["token GPTBot"]
+    },
+    "chatgpt-user": {
+      "display": "ChatGPT-User",
+      "vendor": "OpenAI",
+      "kind": "fetcher",
+      "sources": ["token ChatGPT-User"]
+    },
+    "oai-adsbot": {
+      "display": "OAI-AdsBot",
+      "vendor": "OpenAI",
+      "kind": "crawler",
+      "sources": ["token OAI-AdsBot"]
+    },
+    "claudebot": {
+      "display": "ClaudeBot",
+      "vendor": "Anthropic",
+      "kind": "crawler",
+      "sources": ["token ClaudeBot"]
+    },
+    "claude-user": {
+      "display": "Claude-User",
+      "vendor": "Anthropic",
+      "kind": "fetcher",
+      "sources": ["token Claude-User"]
+    },
+    "claude-searchbot": {
+      "display": "Claude-SearchBot",
+      "vendor": "Anthropic",
+      "kind": "crawler",
+      "sources": ["token Claude-SearchBot"]
+    },
+    "perplexitybot": {
+      "display": "PerplexityBot",
+      "vendor": "Perplexity",
+      "kind": "crawler",
+      "sources": ["token PerplexityBot"]
+    },
+    "perplexity-user": {
+      "display": "Perplexity-User",
+      "vendor": "Perplexity",
+      "kind": "fetcher",
+      "sources": ["token Perplexity-User"]
+    },
+    "googlebot": {
+      "display": "Googlebot",
+      "vendor": "Google",
+      "kind": "crawler",
+      "sources": ["token Googlebot"]
+    },
+    "googlebot-image": {
+      "display": "Googlebot Image",
+      "vendor": "Google",
+      "kind": "crawler",
+      "sources": ["token Googlebot-Image"]
+    },
+    "googlebot-video": {
+      "display": "Googlebot Video",
+      "vendor": "Google",
+      "kind": "crawler",
+      "sources": ["token Googlebot-Video"]
+    },
+    "storebot-google": {
+      "display": "Storebot-Google",
+      "vendor": "Google",
+      "kind": "crawler",
+      "sources": ["token Storebot-Google"]
+    },
+    "google-inspectiontool": {
+      "display": "Google-InspectionTool",
+      "vendor": "Google",
+      "kind": "crawler",
+      "sources": ["token Google-InspectionTool"]
+    },
+    "googleother": {
+      "display": "GoogleOther",
+      "vendor": "Google",
+      "kind": "crawler",
+      "sources": ["token GoogleOther"]
+    },
+    "googleother-image": {
+      "display": "GoogleOther Image",
+      "vendor": "Google",
+      "kind": "crawler",
+      "sources": ["token GoogleOther-Image"]
+    },
+    "googleother-video": {
+      "display": "GoogleOther Video",
+      "vendor": "Google",
+      "kind": "crawler",
+      "sources": ["token GoogleOther-Video"]
+    },
+    "google-cloudvertexbot": {
+      "display": "Google-CloudVertexBot",
+      "vendor": "Google",
+      "kind": "crawler",
+      "sources": ["token Google-CloudVertexBot"]
+    },
+    "apis-google": {
+      "display": "APIs-Google",
+      "vendor": "Google",
+      "kind": "crawler",
+      "sources": ["token APIs-Google"]
+    },
+    "adsbot-google": {
+      "display": "AdsBot-Google",
+      "vendor": "Google",
+      "kind": "crawler",
+      "sources": ["token AdsBot-Google"]
+    },
+    "adsbot-google-mobile": {
+      "display": "AdsBot-Google Mobile",
+      "vendor": "Google",
+      "kind": "crawler",
+      "sources": ["token AdsBot-Google-Mobile"]
+    },
+    "google-safety": {
+      "display": "Google-Safety",
+      "vendor": "Google",
+      "kind": "crawler",
+      "sources": ["token Google-Safety"]
+    },
+    "mediapartners-google": {
+      "display": "Mediapartners-Google",
+      "vendor": "Google",
+      "kind": "crawler",
+      "sources": ["token Mediapartners-Google"]
+    },
+    "google-agent": {
+      "display": "Google-Agent",
+      "vendor": "Google",
+      "kind": "computer-use-agent",
+      "sources": ["token Google-Agent"]
+    },
+    "google-cws": {
+      "display": "Google-CWS",
+      "vendor": "Google",
+      "kind": "fetcher",
+      "sources": ["token Google-CWS"]
+    },
+    "feedfetcher-google": {
+      "display": "FeedFetcher-Google",
+      "vendor": "Google",
+      "kind": "fetcher",
+      "sources": ["token FeedFetcher-Google"]
+    },
+    "google-gemininotebook": {
+      "display": "Google-GeminiNotebook",
+      "vendor": "Google",
+      "kind": "fetcher",
+      "sources": ["token Google-GeminiNotebook"]
+    },
+    "google-pinpoint": {
+      "display": "Google-Pinpoint",
+      "vendor": "Google",
+      "kind": "fetcher",
+      "sources": ["token Google-Pinpoint"]
+    },
+    "googleproducer": {
+      "display": "GoogleProducer",
+      "vendor": "Google",
+      "kind": "fetcher",
+      "sources": ["token GoogleProducer"]
+    },
+    "google-read-aloud": {
+      "display": "Google-Read-Aloud",
+      "vendor": "Google",
+      "kind": "fetcher",
+      "sources": ["token Google-Read-Aloud"]
+    },
+    "google-site-verification": {
+      "display": "Google-Site-Verification",
+      "vendor": "Google",
+      "kind": "fetcher",
+      "sources": ["token Google-Site-Verification"]
+    },
+    "googlemessages": {
+      "display": "Google Messages link preview",
+      "vendor": "Google",
+      "kind": "previewer",
+      "sources": ["token GoogleMessages"]
+    },
+    "mistralai-user": {
+      "display": "MistralAI-User",
+      "vendor": "Mistral AI",
+      "kind": "fetcher",
+      "sources": ["token MistralAI-User"]
+    },
+    "mistralai-index": {
+      "display": "MistralAI-Index",
+      "vendor": "Mistral AI",
+      "kind": "crawler",
+      "sources": ["token MistralAI-Index"]
+    },
+    "mistralai-training": {
+      "display": "MistralAI-Training",
+      "vendor": "Mistral AI",
+      "kind": "crawler",
+      "sources": ["token MistralAI-Training"]
+    },
+    "amazonbot": {
+      "display": "Amazonbot",
+      "vendor": "Amazon",
+      "kind": "crawler",
+      "sources": ["token Amazonbot"]
+    },
+    "amzn-searchbot": {
+      "display": "Amzn-SearchBot",
+      "vendor": "Amazon",
+      "kind": "crawler",
+      "sources": ["token Amzn-SearchBot"]
+    },
+    "amzn-user": {
+      "display": "Amzn-User",
+      "vendor": "Amazon",
+      "kind": "fetcher",
+      "sources": ["token Amzn-User"]
+    },
+    "agent-novaact": {
+      "display": "Nova Act",
+      "vendor": "Amazon",
+      "kind": "computer-use-agent",
+      "sources": ["token Agent-NovaAct"]
+    },
+    "meta-externalagent": {
+      "display": "Meta-ExternalAgent",
+      "vendor": "Meta",
+      "kind": "crawler",
+      "sources": ["token meta-externalagent"]
+    },
+    "meta-externalfetcher": {
+      "display": "Meta-ExternalFetcher",
+      "vendor": "Meta",
+      "kind": "fetcher",
+      "sources": ["token meta-externalfetcher"]
+    },
+    "meta-webindexer": {
+      "display": "Meta-WebIndexer",
+      "vendor": "Meta",
+      "kind": "crawler",
+      "sources": ["token meta-webindexer"]
+    },
+    "meta-externalads": {
+      "display": "Meta-ExternalAds",
+      "vendor": "Meta",
+      "kind": "crawler",
+      "sources": ["token meta-externalads"]
+    },
+    "facebookexternalhit": {
+      "display": "facebookexternalhit link preview",
+      "vendor": "Meta",
+      "kind": "previewer",
+      "sources": ["token facebookexternalhit"]
+    },
+    "applebot": {
+      "display": "Applebot",
+      "vendor": "Apple",
+      "kind": "crawler",
+      "sources": ["token Applebot"]
+    },
+    "itms": {
+      "display": "Apple Podcasts",
+      "vendor": "Apple",
+      "kind": "crawler",
+      "sources": ["token iTMS"]
+    },
+    "bingbot": {
+      "display": "Bingbot",
+      "vendor": "Microsoft",
+      "kind": "crawler",
+      "sources": ["token bingbot"]
+    },
+    "adidxbot": {
+      "display": "AdIdxBot",
+      "vendor": "Microsoft",
+      "kind": "crawler",
+      "sources": ["token adidxbot"]
+    },
+    "microsoftpreview": {
+      "display": "MicrosoftPreview",
+      "vendor": "Microsoft",
+      "kind": "previewer",
+      "sources": ["token MicrosoftPreview"]
+    },
+    "bingvideopreview": {
+      "display": "BingVideoPreview",
+      "vendor": "Microsoft",
+      "kind": "crawler",
+      "sources": ["token BingVideoPreview"]
+    },
+    "ccbot": {
+      "display": "CCBot",
+      "vendor": "Common Crawl",
+      "kind": "crawler",
+      "sources": ["token CCBot"]
+    },
+    "duckduckbot": {
+      "display": "DuckDuckBot",
+      "vendor": "DuckDuckGo",
+      "kind": "crawler",
+      "sources": ["token DuckDuckBot"]
+    },
+    "duckassistbot": {
+      "display": "DuckAssistBot",
+      "vendor": "DuckDuckGo",
+      "kind": "crawler",
+      "sources": ["token DuckAssistBot"]
+    },
+    "slackbot-linkexpanding": {
+      "display": "Slack link preview",
+      "vendor": "Slack",
+      "kind": "previewer",
+      "sources": ["token Slackbot-LinkExpanding"]
+    },
+    "slack-imgproxy": {
+      "display": "Slack image proxy",
+      "vendor": "Slack",
+      "kind": "previewer",
+      "sources": ["token Slack-ImgProxy"]
+    },
+    "slackbot": {
+      "display": "Slackbot",
+      "vendor": "Slack",
+      "kind": "fetcher",
+      "sources": ["token Slackbot"]
+    },
+    "twitterbot": {
+      "display": "X link preview",
+      "vendor": "X",
+      "kind": "previewer",
+      "sources": ["token Twitterbot"]
+    },
+    "yandexbot": {
+      "display": "YandexBot",
+      "vendor": "Yandex",
+      "kind": "crawler",
+      "sources": ["token YandexBot"]
+    },
+    "yandexuserproxy": {
+      "display": "YandexUserproxy",
+      "vendor": "Yandex",
+      "kind": "fetcher",
+      "sources": ["token YandexUserproxy"]
+    },
+    "baiduspider": {
+      "display": "Baiduspider",
+      "vendor": "Baidu",
+      "kind": "crawler",
+      "sources": ["token Baiduspider"]
+    },
+    "seznambot": {
+      "display": "SeznamBot",
+      "vendor": "Seznam",
+      "kind": "crawler",
+      "sources": ["token SeznamBot"]
+    },
+    "yeti": {
+      "display": "Yeti",
+      "vendor": "Naver",
+      "kind": "crawler",
+      "sources": ["token Yeti"]
+    },
+    "petalbot": {
+      "display": "PetalBot",
+      "vendor": "Huawei",
+      "kind": "crawler",
+      "sources": ["token PetalBot"]
+    },
+    "ahrefsbot": {
+      "display": "AhrefsBot",
+      "vendor": "Ahrefs",
+      "kind": "crawler",
+      "sources": ["token AhrefsBot"]
+    },
+    "ahrefssiteaudit": {
+      "display": "AhrefsSiteAudit",
+      "vendor": "Ahrefs",
+      "kind": "crawler",
+      "sources": ["token AhrefsSiteAudit"]
     }
   }
 }

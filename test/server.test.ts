@@ -73,8 +73,8 @@ test('debug output says why a signature did not verify', async () => {
 
 test('tokens match only as whole tokens', () => {
   const t = [
-    ['Devin', 'devin'],
-    ['curl', 'curl'],
+    ['Devin', 'devin', 'token'],
+    ['curl', 'curl', 'token'],
   ] as const
   assert.deepEqual(
     matchTokens('curl/8.7.1', t).map((m) => m.name),

@@ -431,6 +431,166 @@ const cases: Case[] = [
     verdict: agent(['ua.declared-agent-token'], 'manus'),
   },
   {
+    name: 'curl, by its default user agent',
+    headers: [['user-agent', 'curl/8.22.0']],
+    verdict: agent(['ua.declared-agent-token'], 'curl'),
+  },
+  {
+    name: "Node's built-in fetch sends exactly node",
+    headers: [['user-agent', 'node']],
+    verdict: agent(['ua.declared-agent-token'], 'node'),
+  },
+  {
+    name: "npm's user agent carries node/ but is not Node's fetch",
+    headers: [['user-agent', 'npm/10.9.2 node/v22.11.0 darwin arm64 workspaces/false']],
+    verdict: human,
+  },
+  {
+    name: 'aiohttp after a Python product',
+    headers: [['user-agent', 'Python/3.14 aiohttp/3.14.3']],
+    verdict: agent(['ua.declared-agent-token'], 'aiohttp'),
+  },
+  {
+    name: 'Guzzle 6 also declares curl: two clients, no name',
+    headers: [['user-agent', 'GuzzleHttp/6.5.5 curl/8.5.0 PHP/8.3.6']],
+    verdict: agent(['ua.declared-agent-token']),
+  },
+  {
+    name: 'Apache HttpClient with Java in its comment: no name',
+    headers: [['user-agent', 'Apache-HttpClient/4.5.14 (Java/1.8.0_412)']],
+    verdict: agent(['ua.declared-agent-token']),
+  },
+  {
+    name: "Apple's link previews claim two crawlers: software, no name",
+    headers: [
+      [
+        'user-agent',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/601.2.4 (KHTML, like Gecko) Version/9.0.1 Safari/601.2.4 facebookexternalhit/1.1 Facebot Twitterbot/1.0',
+      ],
+    ],
+    verdict: agent(['ua.declared-agent-token']),
+  },
+  {
+    name: "Slack's link preview, version after a space",
+    headers: [['user-agent', 'Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)']],
+    verdict: agent(['ua.declared-agent-token'], 'slackbot-linkexpanding'),
+  },
+  {
+    name: "Slack's desktop app is a person's browser",
+    headers: [
+      [
+        'user-agent',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Slack/4.52.162 Chrome/140.0.0.0 Electron/38.0.0 Safari/537.36 Sonic Slack_SSB/4.52.162',
+      ],
+    ],
+    verdict: human,
+  },
+  {
+    name: 'PetalBot without a space after compatible;',
+    headers: [['user-agent', 'Mozilla/5.0 (compatible;PetalBot;+https://webmaster.petalsearch.com/site/petalbot)']],
+    verdict: agent(['ua.declared-agent-token'], 'petalbot'),
+  },
+  {
+    name: 'Yeti with its version',
+    headers: [['user-agent', 'Mozilla/5.0 (compatible; Yeti/1.1; +https://naver.me/spd)']],
+    verdict: agent(['ua.declared-agent-token'], 'yeti'),
+  },
+  {
+    name: 'Yeti as a word in a device name is not the crawler',
+    headers: [
+      [
+        'user-agent',
+        'Mozilla/5.0 (Linux; Android 13; Yeti) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36',
+      ],
+    ],
+    verdict: human,
+  },
+  {
+    name: "Google-Agent, Google's browsing agent",
+    headers: [
+      [
+        'user-agent',
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko; compatible; Google-Agent; +https://developers.google.com/crawling/docs/crawlers-fetchers/google-agent) Chrome/141.0.0.0 Safari/537.36',
+      ],
+    ],
+    verdict: agent(['ua.declared-agent-token'], 'google-agent'),
+  },
+  {
+    name: "Amazon's Nova Act, after the Chrome product",
+    headers: [
+      [
+        'user-agent',
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 Agent-NovaAct/0.9',
+      ],
+    ],
+    verdict: agent(['ua.declared-agent-token'], 'agent-novaact'),
+  },
+  {
+    name: 'GoogleOther without a version',
+    headers: [
+      [
+        'user-agent',
+        'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; GoogleOther) Chrome/141.0.0.0 Safari/537.36',
+      ],
+    ],
+    verdict: agent(['ua.declared-agent-token'], 'googleother'),
+  },
+  {
+    name: 'Googlebot-Image is not Googlebot',
+    headers: [['user-agent', 'Googlebot-Image/1.0']],
+    verdict: agent(['ua.declared-agent-token'], 'googlebot-image'),
+  },
+  {
+    name: "ChatGPT-User, OpenAI's user-triggered fetcher",
+    headers: [
+      [
+        'user-agent',
+        'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0; +https://openai.com/bot',
+      ],
+    ],
+    verdict: agent(['ua.declared-agent-token'], 'chatgpt-user'),
+  },
+  {
+    name: "Ruby's Net::HTTP sends exactly Ruby",
+    headers: [['user-agent', 'Ruby']],
+    verdict: agent(['ua.declared-agent-token'], 'ruby'),
+  },
+  {
+    name: 'Ruby as a device name is not Ruby',
+    headers: [
+      [
+        'user-agent',
+        'Mozilla/5.0 (Linux; Android 12; Ruby) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36',
+      ],
+    ],
+    verdict: human,
+  },
+  {
+    name: "DuckDuckGo's own browser is not DuckDuckBot",
+    headers: [
+      [
+        'user-agent',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Safari/605.1.15 Ddg/18.6',
+      ],
+    ],
+    verdict: human,
+  },
+  {
+    name: "Discord's desktop app is a person's browser",
+    headers: [
+      [
+        'user-agent',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) discord/0.0.413 Chrome/138.0.0.0 Electron/37.0.0 Safari/537.36',
+      ],
+    ],
+    verdict: human,
+  },
+  {
+    name: 'tokens are case-sensitive: TwitterBot is not Twitterbot',
+    headers: [['user-agent', 'TelegramBot (like TwitterBot)']],
+    verdict: human,
+  },
+  {
     name: "Cloudflare's verified-bot category",
     headers: [['user-agent', CHROME]],
     cf: { verifiedBotCategory: 'AI Assistant' },

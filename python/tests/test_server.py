@@ -79,7 +79,7 @@ def test_debug_lines_say_why(caplog):
 
 
 def test_tokens_match_only_as_whole_tokens():
-    tokens = (("Devin", "devin"), ("curl", "curl"))
+    tokens = (("Devin", "devin", "token"), ("curl", "curl", "token"))
     assert [n for _, n in match_tokens("curl/8.7.1", tokens)] == ["curl"]
     assert match_tokens("curly/1.0 xcurl/1 Devinx", tokens) == []
     assert [n for _, n in match_tokens("curlcurl curl/1", tokens)] == ["curl"]

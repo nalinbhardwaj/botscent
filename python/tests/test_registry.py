@@ -22,7 +22,9 @@ def read(path):
 def test_generated_module_matches_the_registry():
     assert g.REASONS == tuple(r["id"] for r in read("registry/reasons.json")["reasons"])
     assert g.SIGNERS == read("registry/signers.json")["signers"]
-    assert g.TOKENS == tuple((t["token"], t["name"]) for t in read("registry/tokens.json")["tokens"])
+    assert g.TOKENS == tuple(
+        (t["token"], t["name"], t.get("match", "token")) for t in read("registry/tokens.json")["tokens"]
+    )
     directories = read("registry/keys.json")["directories"]
     assert g.KEYS == {
         host: [

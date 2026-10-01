@@ -2,7 +2,7 @@
 // find each signature tagged web-bot-auth, attribute it to the Signature-Agent
 // member it covers, and verify it against the keys bundled in the release.
 // Never throws: anything unexpected is a signature that did not verify.
-import type { SignerKey } from '../generated/server.ts'
+import type { SignerKey, Token } from '../generated/server.ts'
 import type { Log } from './log.ts'
 import type { RequestView } from './request.ts'
 import {
@@ -18,7 +18,7 @@ import {
 export type Registry = {
   signers: Readonly<Record<string, string>>
   keys: Readonly<Record<string, readonly SignerKey[]>>
-  tokens: readonly (readonly [token: string, name: string])[]
+  tokens: readonly Token[]
 }
 
 export type Signature = {

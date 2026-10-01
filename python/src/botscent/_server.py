@@ -104,14 +104,20 @@ _AFTER = "/ \t;),"
 
 
 def match_tokens(ua: str, tokens) -> list[tuple[str, str]]:
-    """Every registry token that occurs in the user agent as a whole token, with its name."""
+    """Every registry token the user agent declares, with its name: as a whole token,
+    as Name/version only ("versioned"), or as the whole header ("exact")."""
     found = []
-    for token, name in tokens:
+    for token, name, match in tokens:
+        if match == "exact":
+            if ua == token:
+                found.append((token, name))
+            continue
         at = ua.find(token)
         while at != -1:
             before = ua[at - 1] if at > 0 else ""
             after = ua[at + len(token)] if at + len(token) < len(ua) else ""
-            if (before == "" or before in _BEFORE) and (after == "" or after in _AFTER):
+            ends = after == "/" if match == "versioned" else (after == "" or after in _AFTER)
+            if (before == "" or before in _BEFORE) and ends:
                 found.append((token, name))
                 break
             at = ua.find(token, at + 1)
