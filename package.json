@@ -1,0 +1,46 @@
+{
+  "name": "botscent",
+  "version": "0.0.0",
+  "description": "Tells a website when software rather than a person is operating a visit, and names the agent when the evidence allows.",
+  "keywords": [
+    "bot",
+    "agent",
+    "ai-agent",
+    "web-bot-auth",
+    "bot-detection"
+  ],
+  "license": "MIT",
+  "author": "Nalin Bhardwaj",
+  "homepage": "https://botscent.nibnalin.me",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nalinbhardwaj/botscent.git"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc",
+    "test": "node --test 'test/**/*.test.ts'"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/core": "^0.18.5",
+    "@types/node": "^24.0.0",
+    "publint": "^0.3.24",
+    "tsdown": "^0.23.0",
+    "typescript": "^7.0.2"
+  }
+}

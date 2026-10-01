@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.tgz
+.venv/
+__pycache__/
+*.egg-info/
+python/dist/
+test-results/
+playwright-report/
+.DS_Store

@@ -1,0 +1,36 @@
+[project]
+name = "botscent"
+version = "0.0.0"
+description = "Tells a website when software rather than a person is operating a visit, and names the agent when the evidence allows."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Nalin Bhardwaj" }]
+requires-python = ">=3.11"
+dependencies = ["cryptography>=42"]
+keywords = ["bot", "agent", "ai-agent", "web-bot-auth", "bot-detection"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://botscent.nibnalin.me"
+Repository = "https://github.com/nalinbhardwaj/botscent"
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 120
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
