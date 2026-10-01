@@ -9,7 +9,15 @@
 import { execFileSync } from 'node:child_process'
 import { readFileSync, writeFileSync } from 'node:fs'
 
-type Key = { kty?: string; crv?: string; x: string; kid?: string; nbf?: number; exp?: number }
+type Key = {
+  kty?: string
+  crv?: string
+  x: string
+  kid?: string
+  nbf?: number
+  exp?: number
+  rolling_expiry_s?: number
+}
 type Keys = { $comment: string; fetched_at: string; directories: Record<string, Key[]> }
 
 const root = new URL('../', import.meta.url).pathname
@@ -62,21 +70,43 @@ for (const host of Object.keys(signers)) {
   const merged: Key[] = []
   for (const k of keys) {
     const b = before.find((x) => x.x === k.x)
-    if (b && b.exp && k.exp && b.exp !== k.exp && Math.abs(k.exp - now - (b.exp - fetchedAt)) < 600) {
-      // The same lifetime counted from each fetch: a rolling expiry, not a change.
-      lines.push(
-        `- \`${host}\`: key \`${k.kid ?? k.x}\` has a rolling expiry (fetch time plus ${Math.round((k.exp - now) / 86400)} days)`,
-      )
-      merged.push(b)
+    const id = `\`${host}\`: key \`${k.kid ?? k.x}\``
+    // The same lifetime counted from this fetch: the directory's expiry rolls forward.
+    const rolls = (lifetime: number) => k.exp !== undefined && Math.abs(k.exp - now - lifetime) < 600
+    if (!b) {
+      merged.push(k)
       continue
     }
-    if (b && (b.nbf !== k.nbf || b.exp !== k.exp)) {
+    if (b.rolling_expiry_s !== undefined) {
+      if (rolls(b.rolling_expiry_s) && b.nbf === k.nbf) {
+        lines.push(
+          `- ${id} keeps its rolling expiry (fetch time plus ${Math.round(b.rolling_expiry_s / 86400)} days), bundled without one`,
+        )
+        merged.push(b)
+      } else {
+        lines.push(`- ${id}: its expiry no longer rolls (nbf ${k.nbf ?? '-'}, exp ${k.exp ?? '-'})`)
+        merged.push(k)
+        changed = true
+      }
+      continue
+    }
+    if (b.exp !== undefined && k.exp !== undefined && b.exp !== k.exp && rolls(b.exp - fetchedAt)) {
+      // First seen rolling: bundle the key without the expiry, and record the lifetime it rolls by.
+      const { exp: _, ...rest } = k
+      merged.push({ ...rest, rolling_expiry_s: Math.round(k.exp - now) })
       lines.push(
-        `- \`${host}\`: key \`${k.kid ?? k.x}\` validity changed (nbf ${b.nbf ?? '-'} → ${k.nbf ?? '-'}, exp ${b.exp ?? '-'} → ${k.exp ?? '-'})`,
+        `- ${id}: its expiry rolls (fetch time plus ${Math.round((k.exp - now) / 86400)} days); bundled without it from now on`,
       )
       changed = true
+      continue
     }
-    merged.push(k)
+    if (b.nbf !== k.nbf || b.exp !== k.exp) {
+      lines.push(
+        `- ${id} validity changed (nbf ${b.nbf ?? '-'} → ${k.nbf ?? '-'}, exp ${b.exp ?? '-'} → ${k.exp ?? '-'})`,
+      )
+      changed = true
+      merged.push(k)
+    } else merged.push(b)
   }
   live[host] = merged
 }

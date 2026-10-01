@@ -13,7 +13,10 @@ const page = read('registry/page.json') as {
   platforms: Record<string, string>
 }
 const keys = read('registry/keys.json') as {
-  directories: Record<string, { kty: string; crv: string; x: string; kid?: string }[]>
+  directories: Record<
+    string,
+    { kty: string; crv: string; x: string; kid?: string; exp?: number; rolling_expiry_s?: number }[]
+  >
 }
 
 const NAME = /^[a-z0-9]+(-[a-z0-9]+)*$/
@@ -68,6 +71,14 @@ test('every signer has a bundled directory of Ed25519 keys', () => {
       assert.equal(Buffer.from(key.x, 'base64url').length, 32, `${host}: x is 32 bytes`)
     }
   }
+})
+
+test('a key whose published expiry rolls is bundled without one', () => {
+  for (const [host, list] of Object.entries(keys.directories))
+    for (const key of list)
+      if (key.rolling_expiry_s !== undefined) assert.equal(key.exp, undefined, `${host}: a rolling key carries no exp`)
+  // OpenAI's directory answers every fetch with exp seven days ahead (measured 1 October 2026).
+  for (const key of keys.directories['chatgpt.com']!) assert.equal(key.exp, undefined)
 })
 
 test('generated modules are current', () => {

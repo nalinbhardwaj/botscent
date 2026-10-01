@@ -1,5 +1,5 @@
 {
-  "$comment": "Key directories fetched from each signer's /.well-known/http-message-signatures-directory and frozen into the release. Only Ed25519 OKP keys are used. The scheduled key-watching job refreshes this file.",
+  "$comment": "Key directories fetched from each signer's /.well-known/http-message-signatures-directory and frozen into the release. Only Ed25519 OKP keys are used. A key whose published expiry only rolls forward (the directory answers every fetch with exp = fetch time + rolling_expiry_s) is bundled without exp: that expiry is a refresh hint, and bundling it would end verification a few days after each release. The scheduled key-watching job refreshes this file.",
   "fetched_at": "2026-10-01T14:10:00Z",
   "directories": {
     "chatgpt.com": [
@@ -9,7 +9,7 @@
         "x": "P_1c4SX6fCavDcq6FRegWcVvaOKsp_aXHPEN1FcKDIA",
         "kid": "ArwjqcCqtA5oxEWkzXGC-To_0A9whHmajCHtfe8I9aY",
         "nbf": 1735689600,
-        "exp": 1791468407
+        "rolling_expiry_s": 604801
       }
     ],
     "cursorusercontent.com": [
