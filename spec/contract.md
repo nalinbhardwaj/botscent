@@ -190,6 +190,19 @@ type Diagnostics = {
 42. `diagnostics()` never contains raw observed values and is never part of a verdict.
 43. Debug output, off by default, writes one line per decision, prefixed `[botscent]`: in the page, through `console.debug`, each probe result, the transport outcome and each verdict change with its time since navigation start; on the server, each request's tokens, signatures (with the reason one did not verify), hints, verdict and transport decision. Python logs the same lines, without the prefix, to the `botscent` logger at `DEBUG`.
 
+## 13a. `check`
+
+```
+npx botscent check <url> [--origin <url>] [--project <dir>] [--chrome <path>] [--no-browser] [--json] [--report]
+```
+
+- It requests the page twice as a navigation: first as itself (`User-Agent: botscent-check/<version> (+https://botscent.nibnalin.me/check)`, a registered token), then at once with an empty user agent, so that a cache which stored the first response serves it to the second. With `--origin` it also requests the origin as itself, and names a hop that removes `Server-Timing` only when it saw both sides.
+- It opens the page in a local Chrome or Chromium over the DevTools protocol (which sets the webdriver flag, as any automation does) and reads the page half's `diagnostics()` and verdict, the entries the document carried, console errors and Content Security Policy violations. Without a browser those checks are `skipped`.
+- Run inside a project, or with `--project`, it reads the declared frameworks and every `botscent` import, and compares a Next.js proxy or Vercel middleware that uses `botscent/next` or `botscent/vercel` with its version at git `HEAD`: code of its own there and none now, without `withBotscent(existing)`, is a replaced proxy.
+- Each check is one line: an outcome (`pass`, `fail`, `unknown`, `skipped`), the observation, and for anything but a pass the likely cause and the fix. The checks, in order: `reachable`, `server-half`, `entry` (fresh and single), `no-store`, `person`, `cache`, `page-script`, `page-verdict`, `transport`, `probes`, `csp`, `script`, `stack`, `adapters`.
+- `--json` prints `{ check, url, checks: [{ id, outcome, observed, cause?, fix? }], exit }`. `--report` adds a block to paste into an issue: versions, the stack, the adapters found, the entry at each hop, the diagnostics and every check; it carries no query string, cookie or address.
+- Exit codes: `0` installed; `1` broken, a check failed; `2` unverified, neither half confirmed; `64` a usage error.
+
 ## 14. Releases
 
 44. Every release publishes an output-change report, and any change to outputs is a minor version.

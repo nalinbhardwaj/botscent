@@ -41,6 +41,17 @@ export function scrubServerTiming(value: string | null): string | null {
 /** Whether a Server-Timing value carries a botscent entry. */
 export const hasOurEntry = (value: string | null): boolean => value !== null && entries(value).some(isOurs)
 
+/** The desc of every botscent entry in a Server-Timing value, as written (unquoted). */
+export function ourEntries(value: string | null): string[] {
+  if (value === null) return []
+  return entries(value)
+    .filter(isOurs)
+    .map((entry) => {
+      const m = /;\s*desc\s*=\s*(?:"((?:[^"\\]|\\.)*)"|([^;,\s]*))/i.exec(entry)
+      return m ? (m[1] !== undefined ? m[1].replace(/\\(.)/g, '$1') : m[2]!) : ''
+    })
+}
+
 /** The botscent entry for an agent verdict (`botscent;desc="..."`), or null. */
 export function serverTimingEntry(verdict: Verdict, nowMs: number): string | null {
   const entry = encode(verdict, nowMs)

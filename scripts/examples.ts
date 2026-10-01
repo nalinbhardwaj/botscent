@@ -64,4 +64,5 @@ run(process.execPath, [
   'examples/test/nuxt.test.ts',
   'examples/test/servers.test.ts',
   'examples/test/pages.test.ts',
+  'examples/test/check.test.ts',
 ])

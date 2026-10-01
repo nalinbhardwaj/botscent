@@ -26,6 +26,16 @@ export default defineConfig([
     deps: { neverBundle: [/^virtual:botscent\//] },
   },
   {
+    // npx botscent check <url>: Node only, never imported by an application.
+    entry: { cli: 'src/check/cli.ts' },
+    format: 'esm',
+    platform: 'node',
+    target: 'node22',
+    dts: false,
+    outputOptions: { entryFileNames: '[name].js' },
+    clean: false,
+  },
+  {
     // The standalone script for <script defer src="/botscent.js">.
     entry: { botscent: 'src/script.ts' },
     format: 'iife',

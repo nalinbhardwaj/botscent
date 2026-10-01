@@ -77,6 +77,9 @@
     "./botscent.js": "./dist/botscent.js",
     "./package.json": "./package.json"
   },
+  "bin": {
+    "botscent": "./dist/cli.js"
+  },
   "files": [
     "dist"
   ],

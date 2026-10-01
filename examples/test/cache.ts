@@ -5,7 +5,8 @@ import type { AddressInfo } from 'node:net'
 
 type Stored = { status: number; headers: IncomingMessage['headers']; body: Buffer }
 
-export async function sharedCache(upstream: string) {
+/** storeEverything: a misconfigured cache that ignores Cache-Control and stores every GET 200. */
+export async function sharedCache(upstream: string, { storeEverything = false } = {}) {
   const store = new Map<string, Stored>()
   const log: string[] = []
   const server = createServer((req, res) => {
@@ -25,7 +26,9 @@ export async function sharedCache(upstream: string) {
         const body = Buffer.concat(chunks)
         const cc = String(up.headers['cache-control'] ?? '')
         const storable =
-          req.method === 'GET' && up.statusCode === 200 && /s-maxage|public/.test(cc) && !/no-store|private/.test(cc)
+          req.method === 'GET' &&
+          up.statusCode === 200 &&
+          (storeEverything || (/s-maxage|public/.test(cc) && !/no-store|private/.test(cc)))
         if (storable) store.set(key, { status: up.statusCode!, headers: up.headers, body })
         log.push(`${storable ? 'STORE' : 'PASS'} ${key} (${cc || 'no cache-control'})`)
         res.writeHead(up.statusCode ?? 502, { ...up.headers, 'x-cache': 'MISS' })
