@@ -21,6 +21,8 @@ run('npm', ['install', '--no-audit', '--no-fund', '--force', '../botscent.tgz'],
 run('node_modules/.bin/next', ['build'], `${root}examples/next`)
 run('npm', ['install', '--no-audit', '--no-fund', '--force', '../botscent.tgz'], `${root}examples/astro`)
 run('node_modules/.bin/astro', ['build'], `${root}examples/astro`, { BOTSCENT_EXAMPLE_TRANSPORT: 'always' })
+run('npm', ['install', '--no-audit', '--no-fund', '--force', '../botscent.tgz'], `${root}examples/nuxt`)
+run('node_modules/.bin/nuxt', ['build'], `${root}examples/nuxt`, { NUXT_TELEMETRY_DISABLED: '1' })
 run('uv', ['venv', '-q', '--allow-existing', '.venv'], `${root}examples/fastapi`)
 run(
   'uv',
@@ -45,4 +47,5 @@ run(process.execPath, [
   '--test-timeout=90000',
   'examples/test/slice.test.ts',
   'examples/test/astro.test.ts',
+  'examples/test/nuxt.test.ts',
 ])

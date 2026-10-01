@@ -1,0 +1,13 @@
+{
+  "name": "botscent-example-nuxt",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "start": "node .output/server/index.mjs"
+  },
+  "dependencies": {
+    "botscent": "file:../botscent.tgz",
+    "nuxt": "4.5.2"
+  }
+}

@@ -86,7 +86,7 @@ function create(): Instance {
       const t = readTransport()
       diag.transport = t.status
       transported = t.evidence
-      log?.(`transport ${t.status}: ${t.note}`)
+      log?.(`transport ${t.status}${t.note ? `: ${t.note}` : ''}`)
     } catch {
       diag.transport = 'unsupported'
     }

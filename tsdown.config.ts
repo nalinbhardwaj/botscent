@@ -16,13 +16,14 @@ export default defineConfig([
       vercel: 'src/adapters/vercel.ts',
       astro: 'src/adapters/astro.ts',
       'astro-middleware': 'src/adapters/astro-middleware.ts',
+      nuxt: 'src/adapters/nuxt.ts',
     },
     format: 'esm',
     platform: 'neutral',
     target: 'es2022',
     dts: true,
     // Resolved by the application's Vite build (botscent/astro).
-    external: [/^virtual:botscent\//],
+    deps: { neverBundle: [/^virtual:botscent\//] },
   },
   {
     // The standalone script for <script defer src="/botscent.js">.

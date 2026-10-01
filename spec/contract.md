@@ -121,8 +121,31 @@ ext     = *( %x21-7E except ";" )         ; ignored: room for later minor versio
 ## 10a. Adapters
 
 - An adapter preserves status codes, redirects, cookies, streaming responses, request bodies and the application's own exceptions; never turns a statically rendered route into a dynamic one; adds no detection logic of its own; and fails to "no evidence", never into the application.
-- It gives the application the request verdict where the framework keeps per-request state: `request.state.botscent` (ASGI), `req.botscent` (Express), `c.get('botscent')` (Hono). In Next.js, route handlers call `inspect(request)` themselves.
-- Its `transport` option is `'auto'` (send where the adapter knows it runs per request after the shared cache: the Next.js proxy on Vercel, Cloudflare Workers without Workers Cache), `'always'` (the developer states that no shared cache stores the HTML), or `'never'`. The ASGI middleware takes `transport=True` the same way. Origin adapters default to off.
+- It gives the application the request verdict where the framework keeps per-request state, and its `transport` option is `'auto'` (send where the adapter knows it runs per request after the shared cache), `'always'` (the developer states that no shared cache stores the HTML), or `'never'`. The Python adapters take `transport=True` (Django: the `BOTSCENT_TRANSPORT` setting). Origin adapters default to off.
+
+| Server entry       | What it is                                                     | The request verdict                         | Transport by default                                           |
+| ------------------ | -------------------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------------- |
+| `botscent/next`    | Next.js proxy: `proxy`, `middleware`, `withBotscent(existing)` | route handlers call `inspect(request)`      | on Vercel only                                                 |
+| `botscent/vercel`  | Vercel Routing Middleware, for projects that are not Next.js   | not passed on; the middleware continues     | on                                                             |
+| `botscent/workers` | `withBotscent(handler)` around a Worker's `fetch`              | the handler's fourth argument               | on; `'never'` for a Worker that stores HTML with the Cache API |
+| `botscent/hono`    | Hono middleware                                                | `c.get('botscent')`                         | on Cloudflare Workers only                                     |
+| `botscent/express` | Express and Connect middleware                                 | `req.botscent`                              | off                                                            |
+| `botscent/astro`   | Astro integration, both halves                                 | `Astro.locals.botscent` on on-demand routes | off                                                            |
+| `botscent.asgi`    | ASGI middleware (FastAPI, Starlette)                           | `request.state.botscent`                    | off                                                            |
+| `botscent.django`  | Django middleware                                              | `request.botscent`                          | off                                                            |
+| `botscent.flask`   | Flask extension                                                | `flask.g.botscent`                          | off                                                            |
+
+| Page entry        | What it does                                                                                                                     |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `botscent/auto`   | calls `start()` on import: Next.js `instrumentation-client`, SvelteKit `hooks.client`                                            |
+| `botscent/react`  | `useBotscent(select?)`; `<Botscent />` starts observation; `<BotscentField />` opts a form in                                    |
+| `botscent/vue`    | `app.use(Botscent)` starts observation; `useBotscent(select?)` is a read-only ref                                                |
+| `botscent/svelte` | the `botscent` store                                                                                                             |
+| `botscent/nuxt`   | a Nuxt module: a client plugin calls `start()`, and `useBotscent` is auto-imported; server routes call `inspect(event.node.req)` |
+| `botscent/astro`  | adds `botscent/auto` to every page                                                                                               |
+| `botscent.js`     | the script build (section 11)                                                                                                    |
+
+- Framework values render the server's snapshot (`{ type: 'human', reasons: [] }`) and follow the page's verdict after hydration, so hydration always matches.
 - A Next.js proxy cannot see headers the route sets later, and Next.js keeps one value per header, so on the agent navigations it decorates, its `Server-Timing` replaces one the route set. People's responses are untouched.
 
 ## 11. Page half
