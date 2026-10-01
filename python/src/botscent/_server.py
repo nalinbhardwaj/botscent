@@ -448,6 +448,26 @@ def has_our_entry(value: str | None) -> bool:
     return value is not None and any(_ours(e) for e in _entries(value))
 
 
+def transport(current: str | None, verdict: Verdict, navigation: bool, send: bool, now_ms: float):
+    """The transport rules on one response (contract section 10), for adapters.
+
+    Takes the response's current Server-Timing value (all lines joined) and returns
+    (value, no_store): the Server-Timing value to set (None to remove the header)
+    and whether to set Cache-Control: no-store. Inherited botscent entries are
+    always removed; the entry is written only when send is true and the request is
+    an agent's document navigation."""
+    value = current
+    if has_our_entry(current):
+        value = scrub_server_timing(current)
+        log.debug("transport: removed an inherited botscent entry")
+    if send and navigation and verdict.get("type") == "agent":
+        entry = server_timing_entry(verdict, now_ms)
+        if entry:
+            log.debug("transport: wrote %s with Cache-Control: no-store", entry)
+            return (f"{value}, {entry}" if value else entry), True
+    return value, False
+
+
 def server_timing_entry(verdict: Verdict, now_ms: float) -> str | None:
     """The botscent entry for an agent verdict (``botscent;desc="..."``), or None."""
     entry = encode(verdict, now_ms)

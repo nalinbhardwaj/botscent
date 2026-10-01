@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import time
 
-from ._server import has_our_entry, inspect, is_navigation, log, scrub_server_timing, server_timing_entry
+from ._server import inspect, is_navigation, log, transport
 
 
 class _ScopeRequest:
@@ -45,22 +45,16 @@ class _ScopeRequest:
 def apply_transport(raw_headers, verdict, navigation: bool, send: bool, now_ms: float):
     """The response's header list with the transport rules applied (contract section 10)."""
     values = [value.decode("latin-1") for name, value in raw_headers if name.lower() == b"server-timing"]
-    existing = ", ".join(values) if values else None
-    kept = existing
-    headers = list(raw_headers)
-    if has_our_entry(existing):
-        kept = scrub_server_timing(existing)
-        headers = [(n, v) for n, v in headers if n.lower() != b"server-timing"]
-        if kept is not None:
-            headers.append((b"server-timing", kept.encode("latin-1")))
-        log.debug("transport: removed an inherited botscent entry")
-    if send and navigation and verdict["type"] == "agent":
-        entry = server_timing_entry(verdict, now_ms)
-        if entry:
-            headers = [(n, v) for n, v in headers if n.lower() not in (b"server-timing", b"cache-control")]
-            headers.append((b"server-timing", (f"{kept}, {entry}" if kept else entry).encode("latin-1")))
-            headers.append((b"cache-control", b"no-store"))
-            log.debug("transport: wrote %s with Cache-Control: no-store", entry)
+    current = ", ".join(values) if values else None
+    value, no_store = transport(current, verdict, navigation, send, now_ms)
+    if value == current and not no_store:
+        return list(raw_headers)
+    drop = (b"server-timing", b"cache-control") if no_store else (b"server-timing",)
+    headers = [(n, v) for n, v in raw_headers if n.lower() not in drop]
+    if value is not None:
+        headers.append((b"server-timing", value.encode("latin-1")))
+    if no_store:
+        headers.append((b"cache-control", b"no-store"))
     return headers
 
 
