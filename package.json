@@ -17,16 +17,24 @@
     "url": "git+https://github.com/nalinbhardwaj/botscent.git"
   },
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "./dist/auto.js",
+    "./dist/botscent.js"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./auto": {
+      "types": "./dist/auto.d.ts",
+      "default": "./dist/auto.js"
+    },
     "./server": {
       "types": "./dist/server.d.ts",
       "default": "./dist/server.js"
     },
+    "./botscent.js": "./dist/botscent.js",
     "./package.json": "./package.json"
   },
   "files": [
@@ -37,16 +45,19 @@
   },
   "scripts": {
     "generate": "node scripts/generate.ts",
-    "build": "tsdown",
+    "build": "tsdown && publint && attw --pack . --profile esm-only --exclude-entrypoints botscent.js --quiet && node scripts/size.ts",
     "typecheck": "tsc",
-    "test": "node --test 'test/**/*.test.ts'",
+    "test": "node --test 'test/*.test.ts'",
     "format": "prettier --write . && cd python && uv run ruff format .",
     "lint": "prettier --check . && node scripts/generate.ts --check && node scripts/vectors.ts --check",
-    "vectors": "node scripts/vectors.ts"
+    "vectors": "node scripts/vectors.ts",
+    "test:browser": "node --test 'test/browser/*.test.ts'"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
     "@arethetypeswrong/core": "^0.18.5",
     "@types/node": "^24.0.0",
+    "playwright": "^1.63.0",
     "prettier": "^3.9.9",
     "publint": "^0.3.24",
     "tsdown": "^0.23.0",

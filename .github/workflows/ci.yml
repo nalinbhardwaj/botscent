@@ -27,6 +27,19 @@ jobs:
       - run: npm test
       - run: npm run build
 
+  browsers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium webkit firefox
+      - run: npm run build
+      - run: npm run test:browser
+
   python:
     runs-on: ubuntu-latest
     strategy:

@@ -1,0 +1,16 @@
+// The page half's size, gzipped (plan 8.7): the standalone script, which holds
+// everything a page loads. Fails when it grows past its budget.
+import { readFileSync } from 'node:fs'
+import { gzipSync } from 'node:zlib'
+
+const BUDGETS: Record<string, number> = { 'dist/botscent.js': 5000 }
+const dist = new URL('../dist/', import.meta.url)
+const gz = (bytes: Buffer) => gzipSync(bytes, { level: 9 }).length
+let over = 0
+for (const [file, budget] of Object.entries(BUDGETS)) {
+  const bytes = readFileSync(new URL(file.replace('dist/', ''), dist))
+  const size = gz(bytes)
+  console.log(`${file}: ${bytes.length} bytes, ${size} gzipped (budget ${budget})`)
+  if (size > budget) over++
+}
+if (over) process.exit(1)

@@ -37,6 +37,16 @@ export function ordered(reasons: Iterable<Reason>): Reason[] {
   return [...known, ...unknown]
 }
 
+/** The naming rule, without explanations: declarations first and only when they all agree; product
+ * shapes only when no declaration names; generic evidence never names. */
+export function pickName(evidence: Iterable<Evidence>): string | undefined {
+  const declared = new Set<string>()
+  const shaped = new Set<string>()
+  for (const e of evidence) if (e.name) (e.source === 'declaration' ? declared : shaped).add(e.name)
+  const names = declared.size ? declared : shaped
+  return names.size === 1 ? [...names][0] : undefined
+}
+
 export type Naming = { name?: string; why: string }
 
 /** The naming rule: declarations first, and only when they all agree; product
@@ -69,7 +79,7 @@ export function makeVerdict(reasons: readonly Reason[], name?: string): Verdict 
 
 export function decide(evidence: readonly Evidence[]): Verdict {
   if (evidence.length === 0) return HUMAN
-  return makeVerdict(ordered(evidence.map((e) => e.reason)), nameOf(evidence).name)
+  return makeVerdict(ordered(evidence.map((e) => e.reason)), pickName(evidence))
 }
 
 /** True exactly when the request itself was verified: by a Web Bot Auth
