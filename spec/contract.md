@@ -147,6 +147,7 @@ ext     = *( %x21-7E except ";" )         ; ignored: room for later minor versio
 
 - Framework values render the server's snapshot (`{ type: 'human', reasons: [] }`) and follow the page's verdict after hydration, so hydration always matches.
 - A Next.js proxy cannot see headers the route sets later, and Next.js keeps one value per header, so on the agent navigations it decorates, its `Server-Timing` replaces one the route set. People's responses are untouched.
+- Vercel Routing Middleware also runs before the response exists, so it cannot remove an entry the response itself carries, and Vercel appends the middleware's `Server-Timing` to the response's own. Measured on a deployment whose static page carried a stale entry: a person received the stale entry, which the page rejects as stale, and an agent received both, which the page ignores as doubled. Both fail safe; neither replays a verdict.
 
 ## 11. Page half
 
