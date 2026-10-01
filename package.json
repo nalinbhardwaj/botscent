@@ -34,6 +34,14 @@
       "types": "./dist/server.d.ts",
       "default": "./dist/server.js"
     },
+    "./next": {
+      "types": "./dist/next.d.ts",
+      "default": "./dist/next.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "default": "./dist/react.js"
+    },
     "./botscent.js": "./dist/botscent.js",
     "./package.json": "./package.json"
   },
@@ -51,16 +59,33 @@
     "format": "prettier --write . && cd python && uv run ruff format .",
     "lint": "prettier --check . && node scripts/generate.ts --check && node scripts/vectors.ts --check",
     "vectors": "node scripts/vectors.ts",
-    "test:browser": "node --test 'test/browser/*.test.ts'"
+    "test:browser": "node --test 'test/browser/*.test.ts'",
+    "test:examples": "npm run build && node scripts/examples.ts"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
     "@arethetypeswrong/core": "^0.18.5",
     "@types/node": "^24.0.0",
+    "@types/react": "^19.3.0",
+    "next": "^16.3.8",
     "playwright": "^1.63.0",
     "prettier": "^3.9.9",
     "publint": "^0.3.24",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "tsdown": "^0.23.0",
     "typescript": "^7.0.2"
+  },
+  "peerDependencies": {
+    "next": ">=14",
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "next": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    }
   }
 }

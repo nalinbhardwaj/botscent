@@ -23,7 +23,7 @@ Homepage = "https://botscent.nibnalin.me"
 Repository = "https://github.com/nalinbhardwaj/botscent"
 
 [dependency-groups]
-dev = ["pytest>=8", "ruff>=0.6"]
+dev = ["pytest>=8", "ruff>=0.6", "starlette>=0.40", "httpx2", "python-multipart"]
 
 [build-system]
 requires = ["hatchling>=1.27"]

@@ -441,8 +441,8 @@ describe('chromium: lifecycle and failure', () => {
       const b = (window as any).botscent
       const seen: string[] = []
       b.subscribe(
-        (type: string) => seen.push(type),
         (v: { type: string }) => v.type,
+        (type: string) => seen.push(type),
       )
       const m = document.createElement('div')
       m.id = 'claude-agent-glow-border'

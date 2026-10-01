@@ -4,3 +4,7 @@ python
 src/generated
 package-lock.json
 vectors
+examples/next/.next
+examples/next/next-env.d.ts
+examples/fastapi/.venv
+examples/*.tgz

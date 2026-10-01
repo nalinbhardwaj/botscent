@@ -116,13 +116,21 @@ ext     = *( %x21-7E except ";" )         ; ignored: room for later minor versio
 31. Origin adapters, which cannot see whether a shared cache stores their HTML, write the entry only when the developer opts in.
 32. The page accepts one entry whose time lies between 10 seconds before and 120 seconds after its own navigation start. More than one `botscent` entry, a malformed one, or one outside the window is ignored. An absent entry is no evidence. An accepted entry contributes its reasons and, as a declaration, its name.
 
+## 10a. Adapters
+
+- An adapter preserves status codes, redirects, cookies, streaming responses, request bodies and the application's own exceptions; never turns a statically rendered route into a dynamic one; adds no detection logic of its own; and fails to "no evidence", never into the application.
+- It gives the application the request verdict where the framework keeps per-request state: `request.state.botscent` (ASGI), `req.botscent` (Express), `c.get('botscent')` (Hono). In Next.js, route handlers call `inspect(request)` themselves.
+- Its `transport` option is `'auto'` (send where the adapter knows it runs per request after the shared cache: the Next.js proxy on Vercel, Cloudflare Workers without Workers Cache), `'always'` (the developer states that no shared cache stores the HTML), or `'never'`. The ASGI middleware takes `transport=True` the same way. Origin adapters default to off.
+- A Next.js proxy cannot see headers the route sets later, and Next.js keeps one value per header, so on the agent navigations it decorates, its `Server-Timing` replaces one the route set. People's responses are untouched.
+
 ## 11. Page half
 
 ```ts
 // botscent
 function start(options?: { debug?: boolean }): () => void
 function verdict(): Verdict
-function subscribe<T = Verdict>(listener: (selected: T, verdict: Verdict) => void, select?: (verdict: Verdict) => T): () => void
+function subscribe(listener: (verdict: Verdict) => void): () => void
+function subscribe<T>(select: (verdict: Verdict) => T, listener: (selected: T, verdict: Verdict) => void): () => void
 function headers(url: string | URL): Record<string, string>
 function diagnostics(): Diagnostics
 function isVerified(verdict: Verdict): boolean
@@ -132,7 +140,7 @@ const VERSION: string
 33. Importing any entry except the auto-starting ones (`botscent/auto`, the script build) does nothing. `start()` begins observation and is idempotent: a second call, including one from a second copy of the library on the page, does nothing more. It returns `stop`, which removes the library's listeners and observers and keeps the evidence.
 34. One instance runs per page. The running instance is published at `globalThis[Symbol.for('botscent')]`, and a second copy uses it.
 35. `verdict()` returns the current snapshot. An unchanged state returns the same object. Before `start()`, and during server rendering, it is `{ type: 'human', reasons: [] }`.
-36. `subscribe` calls its listener after every change of the snapshot, or with `select` after every change of the selected value (compared with `Object.is`); it does not call it on subscription. Every change also dispatches a `botscent` event on `window` whose `detail` is the new verdict, so code that runs before the library loads can listen.
+36. `subscribe` calls its listener after every change of the snapshot, or, given a selector first, after every change of the selected value (compared with `Object.is`); it does not call it on subscription. The selector comes first so that TypeScript can infer the selected type. Every change also dispatches a `botscent` event on `window` whose `detail` is the new verdict, so code that runs before the library loads can listen.
 37. The script build (`<script defer src="/botscent.js">`) starts itself, reads `data-debug` from its tag, and exposes the functions above at `window.botscent`.
 
 ## 12. Page to server: the carriers

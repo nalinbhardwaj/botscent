@@ -9,3 +9,5 @@ test-results/
 playwright-report/
 .DS_Store
 .size/
+examples/botscent.tgz
+examples/next/package-lock.json

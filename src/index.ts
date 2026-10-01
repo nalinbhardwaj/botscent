@@ -17,17 +17,25 @@ export function verdict(): Verdict {
   return instance()?.verdict() ?? HUMAN
 }
 
-/** Calls listener after every change of the verdict, or of select(verdict) when a selector is given. */
-export function subscribe<T = Verdict>(
+/** Calls listener after every change of the verdict; with a selector first, after every change
+ * of select(verdict), compared with Object.is. Not called on subscription. Returns unsubscribe.
+ * The selector comes first so that TypeScript infers the selected type for the listener. */
+export function subscribe(listener: (verdict: Verdict) => void): () => void
+export function subscribe<T>(
+  select: (verdict: Verdict) => T,
   listener: (selected: T, verdict: Verdict) => void,
-  select?: (verdict: Verdict) => T,
+): () => void
+export function subscribe<T>(
+  first: ((verdict: Verdict) => void) | ((verdict: Verdict) => T),
+  second?: (selected: T, verdict: Verdict) => void,
 ): () => void {
   const page = instance()
   if (!page) return () => {}
-  const pick = select ?? ((v: Verdict) => v as T)
-  let last = pick(page.verdict())
+  const select = second ? (first as (verdict: Verdict) => T) : (v: Verdict) => v as T
+  const listener = second ?? (first as (selected: T, verdict: Verdict) => void)
+  let last = select(page.verdict())
   return page.subscribe((v) => {
-    const next = pick(v)
+    const next = select(v)
     if (Object.is(next, last)) return
     last = next
     listener(next, v)

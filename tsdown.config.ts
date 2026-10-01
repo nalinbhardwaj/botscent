@@ -2,7 +2,13 @@ import { defineConfig } from 'tsdown'
 
 export default defineConfig([
   {
-    entry: { index: 'src/index.ts', auto: 'src/auto.ts', server: 'src/server/index.ts' },
+    entry: {
+      index: 'src/index.ts',
+      auto: 'src/auto.ts',
+      server: 'src/server/index.ts',
+      next: 'src/adapters/next.ts',
+      react: 'src/adapters/react.ts',
+    },
     format: 'esm',
     platform: 'neutral',
     target: 'es2022',
