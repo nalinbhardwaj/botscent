@@ -1,0 +1,181 @@
+{
+  "$comment": [
+    "Budgets for test/perf/run.ts (npm run perf). Times are milliseconds on the reference device: the reference machine with",
+    "Chromium's CPU throttled `rate` times. Another machine runs the calibration workload first and throttles by",
+    "rate x reference.calibrationMs / its own calibration, so it emulates the same device and the same budgets apply.",
+    "`max`, `min` or `equals` fail the run when `gate` is not false. `target` is the plan's number (section 8.7 or principle 5),",
+    "shown as met or not met and never failing the run. `why` says how each number was derived; measured values are",
+    "from docs/performance.md: six full runs on the reference machine, each the median of 11 loads, 5 scripted visits, 2 churn windows, 1 idle minute and 4 simulated days."
+  ],
+  "reference": {
+    "machine": "Apple M3 Max (one performance core), macOS, Chromium 153",
+    "calibrationMs": 7.0,
+    "rate": 4
+  },
+  "budgets": {
+    "startup.article.ms": {
+      "max": 48,
+      "target": 2,
+      "why": "Measured 27.5-31.4 ms (medians of six runs), about 80% of it the first Intl.DateTimeFormat() in computerProfile(). The ceiling sits under one long task (50 ms), so the library alone cannot make one on the reference device, with about 1.5x headroom for hardware the calibration evens out imperfectly. With the time zone read only when the screen matches, measured 4.7 ms: then tighten to 12."
+    },
+    "startup.feed.ms": {
+      "max": 48,
+      "target": 2,
+      "why": "As for the article page; start-up does not depend on the page (measured 28.0-31.5 ms; 4.9 ms with the lazy time zone)."
+    },
+    "startup.cold.ms": {
+      "max": 48,
+      "target": 2,
+      "why": "The first document of a newly launched browser: measured 27.3-29.4 ms, no worse than warm (4.9 ms with the lazy time zone). Same ceiling."
+    },
+    "firstSecond.article.ms": {
+      "max": 1,
+      "why": "Library time in the second after start-up on a page that does not change: measured 0."
+    },
+    "firstSecond.feed.ms": {
+      "max": 8,
+      "why": "The same on the churning feed: observer callbacks and debounced marker reads, measured 2.1-2.5 ms; about 3x headroom."
+    },
+    "startup.article.longTasks": {
+      "max": 0,
+      "target": 0,
+      "gate": false,
+      "why": "Plan 8.7: no long tasks. Today start-up turns the article's 25 ms load task into a 50-58 ms one, a long task in 4 to 11 of 11 loads depending on the run. Not gated, since the count sits on the threshold; with the lazy time zone it is 0 of 11 (task 29 ms): then gate at 0."
+    },
+    "startup.feed.longTasks": {
+      "max": 0,
+      "target": 0,
+      "gate": false,
+      "why": "As for the article page: 0 or 1 of 11 feed loads, where the page's own task is 15-30 ms. 0 with the lazy time zone."
+    },
+    "lcp.article.added": {
+      "max": 48,
+      "why": "Measured +28 to +36 ms (56-64 ms to 88-100 ms, every load): on a page this light the deferred script runs before the first paint, so the paint waits for start-up. The ceiling is the start-up budget, since the delay is start-up. With the lazy time zone, measured +4 ms: then tighten to 16 (one frame)."
+    },
+    "lcp.feed.added": {
+      "max": 48,
+      "why": "Measured -8 to 0 ms: the feed paints after its own parsing, later than the library's start-up. Same ceiling as the article."
+    },
+    "cls.article.added": {
+      "equals": 0,
+      "target": 0,
+      "why": "The library never changes layout: no DOM writes, no styles."
+    },
+    "cls.feed.added": {
+      "equals": 0,
+      "target": 0,
+      "why": "As for the article page."
+    },
+    "dom.article.writes": {
+      "equals": 0,
+      "target": 0,
+      "why": "Plan 8.7: no DOM writes except the opt-in form field. Every DOM change from the start of the document, compared with the same page without the library (less the script element itself)."
+    },
+    "network.requests": {
+      "equals": 0,
+      "target": 0,
+      "why": "Plan 8.7 and principle 5: no network request. Every request in every load beyond the page, the script and the page's image."
+    },
+    "render.blocking": {
+      "equals": 0,
+      "why": "The script tag (defer) is reported by Chromium as non_blocking in every load."
+    },
+    "input.article.median": {
+      "max": 0.1,
+      "why": "Library time inside each trusted pointerdown, keydown, input and wheel dispatch: measured 0.015-0.024 ms (a visibility check and a timestamp); 4x headroom."
+    },
+    "input.feed.median": {
+      "max": 0.1,
+      "why": "Measured 0.010-0.018 ms on the 10,000-node feed; 5x headroom."
+    },
+    "input.article.p95": {
+      "max": 2,
+      "why": "The 95th percentile is the marker read that a pointerdown or keydown triggers at most every 300 ms: measured 0.56-0.71 ms (max 0.85); about 3x headroom."
+    },
+    "input.feed.p95": {
+      "max": 2,
+      "why": "Measured 0.63-0.77 ms (max 0.8): the marker read scans the whole document for one attribute, so it grows with the DOM."
+    },
+    "inp.article.added": {
+      "max": 16,
+      "why": "Measured 0 in every run (48 to 48 ms). Event Timing rounds durations to 8 ms, so one step either way is noise; two steps fail."
+    },
+    "inp.feed.added": {
+      "max": 16,
+      "why": "Measured 0 in every run (48-56 ms both ways); as for the article page."
+    },
+    "churn.ms": {
+      "max": 6,
+      "why": "Library time per second while the feed adds and removes a <body> child every frame: measured 1.3-2.45 ms/s (60 observer callbacks a second and about 4 marker reads of 0.26-0.36 ms on 10,000 nodes); about 2.5x headroom over the worst run."
+    },
+    "churn.timers": {
+      "max": 4.5,
+      "why": "The 250 ms debounce allows 4 reads a second, plus the 5 s pass and the slow sample in the window: measured 4.05-4.1. More means the debounce broke."
+    },
+    "day.callbacks": {
+      "max": 17280,
+      "why": "One interval callback every 5 s for 24 hours. A faster slow sample, or a second interval, fails this."
+    },
+    "day.retained": {
+      "max": 160,
+      "why": "Heap the library holds once started, after a collection: measured 105-106 KB (code, the registry tables, closures); 1.5x headroom."
+    },
+    "day.firstDays": {
+      "max": 48,
+      "why": "Heap growth over the first two simulated days beyond the page's own: measured 12.3-12.8 KB, the JIT tiering up the interval callback."
+    },
+    "day.steady": {
+      "max": 8,
+      "why": "Growth on day four beyond the page's own: measured 1.2 KB (0 in a six-day exploratory run). Anything per callback that is kept would show here as about 17,000 times its size."
+    },
+    "day.listeners": {
+      "equals": 0,
+      "why": "The document keeps the same listeners all day."
+    },
+    "idle.visible.timers": {
+      "max": 8,
+      "why": "Expected 7 in 30 s: the passes at 1.5 s and 5 s and the slow sample every 5 s. Measured 7."
+    },
+    "idle.visible.queries": {
+      "max": 64,
+      "why": "8 DOM queries per marker read (one attribute query, the icon links, six ids) times 7 reads, measured 56; one read of slack."
+    },
+    "idle.visible.ms": {
+      "max": 10,
+      "why": "Measured 1.8-3.7 ms in 30 s. Single idle wake-ups are noisy (some take 1-2 ms), hence the loose ceiling; the counts are the tight checks."
+    },
+    "idle.visible.perCall": {
+      "max": 2,
+      "why": "Median callback measured 0.09-0.36 ms between runs (idle wake-ups are noisy); a marker read on this page is about 0.1 ms."
+    },
+    "idle.hidden.timers": {
+      "max": 7,
+      "why": "The slow sample's interval still fires while hidden (6 in 30 s) and returns after one visibility check."
+    },
+    "idle.hidden.queries": {
+      "equals": 0,
+      "target": 0,
+      "why": "Plan 4.8: the slow sample runs only while visible. No DOM query in 30 s hidden."
+    },
+    "idle.hidden.ms": {
+      "max": 10,
+      "gate": false,
+      "why": "Recorded, not gated. Six callbacks that each return after one visibility check measured 3.8-13.2 ms in all (one took 6.1 ms): a hidden renderer runs at low priority and the first callback after hiding can include a collection the browser schedules, so the time is the environment's. The query count and the callback count are the checks."
+    },
+    "idle.hidden.perCall": {
+      "max": 1,
+      "gate": false,
+      "why": "Recorded, not gated: median callback measured 0.38-0.66 ms between runs for the same no-op, for the reasons above."
+    },
+    "idle.requests": {
+      "equals": 0,
+      "target": 0,
+      "why": "No request in a minute left open, visible or hidden."
+    },
+    "idle.storage": {
+      "equals": 0,
+      "target": 0,
+      "why": "Principle 5: no cookie, no storage. localStorage, sessionStorage, cookies, IndexedDB and Cache Storage after a minute."
+    }
+  }
+}

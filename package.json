@@ -96,6 +96,7 @@
     "lint": "prettier --check . && node scripts/generate.ts --check && node scripts/vectors.ts --check && node scripts/docs.ts --check",
     "vectors": "node scripts/vectors.ts",
     "test:browser": "node --test 'test/browser/*.test.ts'",
+    "perf": "node test/perf/run.ts",
     "test:examples": "npm run build && node scripts/examples.ts",
     "test:runtimes": "node scripts/runtimes.ts && deno run --allow-read test/runtime/run.ts && bun test/runtime/run.ts",
     "changeset": "changeset",
