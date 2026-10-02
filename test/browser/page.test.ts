@@ -219,6 +219,17 @@ describe('chromium', () => {
     await page.context().close()
   })
 
+  test('ChatGPT for Chrome: the badge attribute counts on the favicon in <head>, not in the body', async () => {
+    const { page } = await open(
+      'chromium-clean',
+      '/plain',
+      `addEventListener('DOMContentLoaded', () => { const d = document.createElement('div'); d.setAttribute('data-codex-favicon-badge', ''); document.body.appendChild(d) })`,
+    )
+    await page.waitForTimeout(1800)
+    assert.deepEqual(await verdict(page), { type: 'human', reasons: [] })
+    await page.context().close()
+  })
+
   test('Claude for Chrome: the marker comes and goes; the verdict stays (document history)', async () => {
     const { page } = await open(
       'chromium-clean',

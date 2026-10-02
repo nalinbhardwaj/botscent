@@ -118,11 +118,15 @@ export function observe(sink: Sink): () => void {
 
   const markers = () =>
     run('markers', () => {
+      // The badge is on the favicon, which lives in <head>: every recorded sighting (71 samples, 17
+      // documents) was a badged icon link. Searching only <head> keeps the read cheap on large pages.
+      const head = document.head
       if (
-        document.querySelector('[data-codex-favicon-badge]') ||
-        Array.from(document.querySelectorAll('link[rel~="icon"]')).some((l) =>
-          (l.getAttribute('href') ?? '').includes('data-codex-favicon-badge'),
-        )
+        head &&
+        (head.querySelector('[data-codex-favicon-badge]') ||
+          Array.from(head.querySelectorAll('link[rel~="icon"]')).some((l) =>
+            (l.getAttribute('href') ?? '').includes('data-codex-favicon-badge'),
+          ))
       )
         sink.hold(R.badge)
       for (const id of CLAUDE_ACTIVE)
