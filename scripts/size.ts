@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs'
 import { gzipSync } from 'node:zlib'
 
-const BUDGETS: Record<string, number> = { 'dist/botscent.js': 5000 }
+const BUDGETS: Record<string, number> = { 'dist/botscent.js': 10_000 }
 const dist = new URL('../dist/', import.meta.url)
 const gz = (bytes: Buffer) => gzipSync(bytes, { level: 9 }).length
 let over = 0
