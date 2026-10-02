@@ -58,6 +58,27 @@ jobs:
         env:
           HOME: /root
 
+  perf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # The page half's performance budgets (docs/performance.md), in the same image as the browsers
+    # job. Chromium is throttled by a rate calibrated against the reference machine, so the budgets
+    # in test/perf/budgets.json hold on the runner; the table goes to the job summary.
+    container: mcr.microsoft.com/playwright:v1.63.0-noble
+    steps:
+      - uses: actions/checkout@v5
+      - run: npm ci
+      - run: npm run build
+      - run: npm run perf -- --json perf.json
+        env:
+          HOME: /root
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: perf
+          path: perf.json
+          if-no-files-found: ignore
+
   python:
     runs-on: ubuntu-latest
     strategy:
