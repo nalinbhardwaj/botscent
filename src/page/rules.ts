@@ -106,3 +106,13 @@ export function evidenceOf(held: ReadonlySet<string>, declaredName?: string): Ev
   if (held.has(R.pointerdown)) out.push({ reason: R.pointerdown })
   return out
 }
+
+/** For debug output: why a signal of a joint rule, just held, does not count yet; '' otherwise. */
+export function waiting(held: ReadonlySet<string>, reason: string): string {
+  const pair: string[] = [R.wrappers, R.geetest]
+  if (pair.includes(reason) && !pair.every((r) => held.has(r)))
+    return `; counts only with ${pair.find((r) => r !== reason)}`
+  const codex: string[] = [R.prompt, R.keyboard, R.overlay]
+  const n = codex.filter((r) => held.has(r)).length
+  return codex.includes(reason) && n < 2 ? `; Codex shell ${n} of 3, counts at 2` : ''
+}

@@ -7,7 +7,7 @@ Tells a website when software rather than a person is operating a visit, and nam
 Botscent has two halves that give the same small verdict:
 
 - **The server half** reads what one request declares: a [Web Bot Auth](https://datatracker.ietf.org/doc/draft-ietf-webbotauth-httpsig-protocol/) signature, verified against the signers' keys bundled in each release; a user-agent token that an AI agent, crawler or HTTP client publishes for itself; or the hosting platform's verified-bot field. It reads headers only, never the body, and calls no service. TypeScript (Node.js, Cloudflare Workers, Vercel, Deno, Bun) and Python.
-- **The page half** watches the document for evidence that an agent is operating it: the automation flag, the shapes and markers that agent browsers and extensions leave (ChatGPT's agent, Claude for Chrome, the Codex browser, Meta's Muse and others), and input that arrives while the document is hidden. Once seen, the document stays `agent`. It is 4.7 KB gzipped and makes no network request.
+- **The page half** watches the document for evidence that an agent is operating it: the automation flag, the shapes and markers that agent browsers and extensions leave (ChatGPT's agent, Claude for Chrome, the Codex browser, Meta's Muse and others), and input that arrives while the document is hidden. Once seen, the document stays `agent`. It is about 5 KB gzipped and makes no network request.
 
 ```ts
 type Verdict = {
@@ -16,6 +16,10 @@ type Verdict = {
   reasons: Reason[] // rule ids, strongest first; [] for 'human'
 }
 ```
+
+### What v1 promises
+
+Botscent 1.0 detects the agents in [Coverage](#coverage), with the evidence each is detected by, and names one only when that evidence identifies it. `human` means no agent evidence was seen; it is never proof of a person. Some evidence describes an agent's surface rather than who is at the keyboard, so a person working inside one is reported as that agent by design: the Codex in-app browser, Grok Bot's cloud computer, and a Muse or ChatGPT agent session the person has taken over. Out of scope: automation built to look like a person, crawler management and robots policy, and authorization. Comet and Windows assistive tools have not been measured.
 
 ## Quickstart
 
@@ -102,6 +106,8 @@ const verdict = await inspect(event.request)
 <script defer src="/botscent.js"></script>
 <!-- serve node_modules/botscent/dist/botscent.js from your own origin; add data-debug to log -->
 ```
+
+The script has no inline code and no `eval`. Under a strict Content Security Policy, a bundled import runs under your application's own policy; the script tag needs `script-src` to allow its origin (`'self'` when you serve it yourself), or a nonce on the tag with `'strict-dynamic'`.
 
 It exposes `window.botscent` (`verdict()`, `subscribe()`, `reportHeaders()`, `diagnostics()`, `start()`, `VERSION`) and dispatches a `botscent` event on every change.
 
@@ -203,6 +209,10 @@ if (isVerified(own, 'chatgpt')) {
 
 A page report can be forged by the page's own scripts, and anyone can send the headers that produce a name, so access decisions use `isVerified` on the request's own verdict, never a reason string, a bare `agent_name` or a report. To let one agent through, pass its name: `isVerified(own) && own.agent_name === 'chatgpt'` can pair the platform's verification of some bot with a name that bot merely declared.
 
+## The trust model
+
+The request's own verdict (`inspect`) is what the request declared, and it is the only one to use for anything security-relevant. Within it, `isVerified` is the one check fit for letting an agent past something: with a name, it is true only when a Web Bot Auth signature from that agent verified against a key bundled in this release; without one, also when the hosting platform verified the bot. It authenticates the operator's infrastructure, not the person or the model in the session, and a captured signature can be replayed to the same host within its window. A name without verification is a declaration or a product shape that anyone can produce, so it never grants access. The page verdict, a page report carried to your server, and anything `combine` returns are computed in the visitor's browser: fine for adapting an interface and for measurement, wrong for access. None of them is a claim about the person behind an agent, and none says who performed a particular action.
+
 ## How the request's verdict reaches the page
 
 For an agent's document navigation, the server adapters can add a `Server-Timing: botscent;desc="…"` entry with `Cache-Control: no-store`, which the page half reads, so a single page sees both halves. People's responses never carry it, and the page ignores an entry that is stale or doubled. Every adapter takes `transport`. The default, `'auto'`, turns it on only where the adapter runs per request in front of the cache: the Next.js proxy on Vercel, Vercel Routing Middleware, Cloudflare Workers, Netlify Edge Functions, and Hono on Cloudflare Workers. An origin (Express, Astro, Hono on Node.js, Django, FastAPI, Flask, self-hosted Next.js) cannot see whether a CDN in front of it stores HTML, so there it is off unless you set `transport: 'always'` (Python: `transport=True`), which states that no shared cache stores your HTML. If one does and ignores `Cache-Control: no-store`, a person can be served an agent's entry; `npx botscent check` reports that case.
@@ -244,19 +254,19 @@ Named agents: 100, from [the registry](registry/names.json). Software the regist
 
 **Agents that operate a browser**
 
-| Agent                | Vendor    | `agent_name`     | Evidence                                                                                                     |
-| -------------------- | --------- | ---------------- | ------------------------------------------------------------------------------------------------------------ |
-| ChatGPT              | OpenAI    | `chatgpt`        | signature from `chatgpt.com`                                                                                 |
-| ChatGPT for Chrome   | OpenAI    | `chatgpt-chrome` | page: `chatgpt.badge.active`                                                                                 |
-| Claude for Chrome    | Anthropic | `claude-chrome`  | page: `claude.marker.active`                                                                                 |
-| Codex in-app browser | OpenAI    | `codex-browser`  | page: two of `codex.prompt.anonymous-native`, `codex.keyboard.empty-layout-map`, `codex.overlay.shadow-root` |
-| Devin                | Cognition | `devin`          | user agent `Devin`                                                                                           |
-| Google-Agent         | Google    | `google-agent`   | user agent `Google-Agent`                                                                                    |
-| Grok Bot             | Anysphere | `grok-bot`       | signature from `cursorusercontent.com`; page: `grok.computer.profile`                                        |
-| Instinct             | —         | `instinct`       | page: `instinct.credentials.wrappers` with `instinct.geetest.accessor-pair`                                  |
-| Manus                | Manus     | `manus`          | signature from `api.manus.im`; user agent `Manus-User`                                                       |
-| Muse                 | Meta      | `muse`           | page: `muse.credentials.accessor-family`                                                                     |
-| Nova Act             | Amazon    | `agent-novaact`  | user agent `Agent-NovaAct`                                                                                   |
+| Agent                | Vendor                  | `agent_name`     | Evidence                                                                                                     |
+| -------------------- | ----------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------ |
+| ChatGPT              | OpenAI                  | `chatgpt`        | signature from `chatgpt.com`                                                                                 |
+| ChatGPT for Chrome   | OpenAI                  | `chatgpt-chrome` | page: `chatgpt.badge.active`                                                                                 |
+| Claude for Chrome    | Anthropic               | `claude-chrome`  | page: `claude.marker.active`                                                                                 |
+| Codex in-app browser | OpenAI                  | `codex-browser`  | page: two of `codex.prompt.anonymous-native`, `codex.keyboard.empty-layout-map`, `codex.overlay.shadow-root` |
+| Devin                | Cognition               | `devin`          | user agent `Devin`                                                                                           |
+| Google-Agent         | Google                  | `google-agent`   | user agent `Google-Agent`                                                                                    |
+| Grok Bot             | Anysphere               | `grok-bot`       | signature from `cursorusercontent.com`; page: `grok.computer.profile`                                        |
+| Instinct             | Spear Street Technology | `instinct`       | page: `instinct.credentials.wrappers` with `instinct.geetest.accessor-pair`                                  |
+| Manus                | Manus                   | `manus`          | signature from `api.manus.im`; user agent `Manus-User`                                                       |
+| Muse                 | Meta                    | `muse`           | page: `muse.credentials.accessor-family`                                                                     |
+| Nova Act             | Amazon                  | `agent-novaact`  | user agent `Agent-NovaAct`                                                                                   |
 
 **Browser automation**
 
@@ -384,13 +394,15 @@ Named agents: 100, from [the registry](registry/names.json). Software the regist
 
 ## Privacy
 
-The page half makes no network request, writes no cookie or storage, and writes nothing to the DOM except the form field you opt into; its diagnostics never contain observed values. The server half reads request headers and nothing else. Nothing leaves the page unless your code sends it.
+The page half makes no network request, writes no cookie, storage or DOM, and keeps no observed value, only the ids of reasons that held; its diagnostics never contain observed values. The server half reads request headers and nothing else. Nothing leaves the page unless your code sends it, and then only the verdict. [PRIVACY.md](PRIVACY.md) lists every probe and every header read.
 
 ## Debugging
 
 `start({ debug: true })`, `data-debug` on the script tag, `inspect(request, { debug: true })` or `BOTSCENT_DEBUG=1` log one line per decision, prefixed `[botscent]`: each probe, each signature and why it did or did not verify, each token, and each verdict change. Python logs the same lines to the `botscent` logger at `DEBUG`.
 
 ## Stability
+
+If you route or block on verdicts, pin an exact version (`npm install --save-exact botscent`, `botscent==1.0.0` in Python). A minor release can change who is detected, there is no remote switch to undo it, and rolling back means installing the previous version.
 
 The behaviour is pinned by [the contract](spec/contract.md) and by shared test vectors that the TypeScript and Python halves must both pass. Signer keys are frozen into each release, so the server half makes no outbound request; a scheduled job opens a pull request when a signer's published keys change. Those keys are pinned as of the release, not checked live: a key a signer later removes still verifies in an installation that bundles it, so if you grant access on `isVerified`, keep the package current. Any release that changes a verdict for some visitor, or adds a reason or a name, is a minor version, with an output-change report in its release notes; renaming or removing a reason id or an agent name, which code and stored data depend on, is a major version. The names, with each agent's display name, vendor and kind, ship as data: `import names from 'botscent/names.json'`.
 

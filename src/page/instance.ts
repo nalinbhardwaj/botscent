@@ -6,7 +6,7 @@ import { decide, HUMAN, type Evidence, type Verdict } from '../core/verdict.ts'
 import { VERSION } from '../generated/core.ts'
 import { installFormField } from './carriers.ts'
 import { observe, type ProbeStatus } from './observe.ts'
-import { evidenceOf } from './rules.ts'
+import { evidenceOf, waiting } from './rules.ts'
 import { readTransport } from './transport.ts'
 
 export type Diagnostics = {
@@ -102,7 +102,7 @@ function create(): Instance {
         hold(reason) {
           if (held.has(reason)) return
           held.add(reason)
-          log?.(`held ${reason} at ${ms()} ms`)
+          log?.(`held ${reason} at ${ms()} ms${waiting(held, reason)}`)
           recompute()
         },
         declare(name) {

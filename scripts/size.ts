@@ -13,4 +13,11 @@ for (const [file, budget] of Object.entries(BUDGETS)) {
   console.log(`${file}: ${bytes.length} bytes, ${size} gzipped (budget ${budget})`)
   if (size > budget) over++
 }
+// The README states the script's size rounded to the kilobyte ("about 5 KB gzipped"); keep it true.
+const script = gz(readFileSync(new URL('botscent.js', dist)))
+const stated = /about (\d+) KB gzipped/.exec(readFileSync(new URL('../README.md', import.meta.url), 'utf8'))
+if (!stated || Number(stated[1]) !== Math.round(script / 1000)) {
+  console.error(`README: say "about ${Math.round(script / 1000)} KB gzipped" (the script is ${script} bytes)`)
+  over++
+}
 if (over) process.exit(1)

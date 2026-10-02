@@ -86,3 +86,16 @@ test('generated modules are current', () => {
     stdio: 'pipe',
   })
 })
+
+test('every reason states its known collisions and when it was last tested', () => {
+  for (const r of reasons as unknown as {
+    id: string
+    collision_kind?: string
+    collisions?: string
+    tested?: string
+  }[]) {
+    assert.ok(['none-known', 'untested', 'agent-surface'].includes(r.collision_kind ?? ''), r.id)
+    assert.ok((r.collisions ?? '').length > 20, r.id)
+    assert.match(r.tested ?? '', /^\d{4}-\d{2}-\d{2}: /, r.id)
+  }
+})

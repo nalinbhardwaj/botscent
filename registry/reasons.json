@@ -1,113 +1,167 @@
 {
-  "$comment": "Reason ids the library can report, strongest first: a verdict lists its reasons in this order. Ids are a public contract: added, never renamed within a major version. half: where the evidence is read. names: whether the reason can name an agent (signer, token, page-declaration, a product name) or never does (null).",
+  "$comment": "Reason ids the library can report, strongest first: a verdict lists its reasons in this order. Ids are a public contract: added, never renamed within a major version. half: where the evidence is read. names: whether the reason can name an agent (signer, token, page-declaration, a product name) or never does (null). Each reason also records its known collisions (collision_kind: none-known, untested or agent-surface, where a person inside an agent's own surface is reported as that agent by design) and when it was last tested.",
   "reasons": [
     {
       "id": "signer.web-bot-auth.verified",
       "half": "request",
       "names": "signer",
-      "summary": "A Web Bot Auth signature on the request verified against a key bundled with this release."
+      "summary": "A Web Bot Auth signature on the request verified against a key bundled with this release.",
+      "collision_kind": "none-known",
+      "collisions": "No person's browser signs requests. It authenticates the signer's infrastructure, not who controls the session: a person who takes over a hosted browser session is still reported as the signer.",
+      "tested": "2026-10-02: replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
     },
     {
       "id": "signer.edge-verified-bot",
       "half": "request",
       "names": null,
-      "summary": "The hosting platform verified the request as a known bot (Cloudflare's verified-bot category)."
+      "summary": "The hosting platform verified the request as a known bot (Cloudflare's verified-bot category).",
+      "collision_kind": "none-known",
+      "collisions": "No person's browser is a verified bot. It says some verified bot sent the request, which includes search crawlers, not which agent.",
+      "tested": "2026-10-02: replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
     },
     {
       "id": "signer.web-bot-auth.declared",
       "half": "request",
       "names": "signer",
-      "summary": "The request carries a Web Bot Auth signature that did not verify here: an unknown or expired key, a signature outside its window, or a check that failed."
+      "summary": "The request carries a Web Bot Auth signature that did not verify here: an unknown or expired key, a signature outside its window, or a check that failed.",
+      "collision_kind": "none-known",
+      "collisions": "No person's browser sends a Web Bot Auth signature. Anyone can send the headers, so it is a declaration, never authentication.",
+      "tested": "2026-10-02: replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
     },
     {
       "id": "ua.declared-agent-token",
       "half": "request",
       "names": "token",
-      "summary": "The user agent contains a token that declares software: an agent, fetcher, crawler, link previewer or HTTP client."
+      "summary": "The user agent contains a token that declares software: an agent, fetcher, crawler, link previewer or HTTP client.",
+      "collision_kind": "none-known",
+      "collisions": "No person's browser sends these tokens. Anyone can, so it is a declaration, never authentication.",
+      "tested": "2026-10-02: replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
     },
     {
       "id": "ua.page-declared-engine",
       "half": "page",
       "names": "page-declaration",
-      "summary": "The page's own navigator declares a hosted browser engine."
+      "summary": "The page's own navigator declares a hosted browser engine.",
+      "collision_kind": "none-known",
+      "collisions": "No person's browser declares these engines. Forgeable like any declaration.",
+      "tested": "2026-10-02: replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
     },
     {
       "id": "browser.webdriver-flag",
       "half": "page",
       "names": null,
-      "summary": "navigator.webdriver is true: the browser declares that automation controls it."
+      "summary": "navigator.webdriver is true: the browser declares that automation controls it.",
+      "collision_kind": "none-known",
+      "collisions": "None in 44 human documents (a Windows VM, a Linux container, Safari, Firefox, an iPhone, DevTools open). It says the browser is automated, not who drives it; a person using a browser that automation launched would match (untested).",
+      "tested": "2026-10-02: replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
     },
     {
       "id": "ua.headless-chrome",
       "half": "request",
       "names": null,
-      "summary": "The user agent declares headless Chrome."
+      "summary": "The user agent declares headless Chrome.",
+      "collision_kind": "none-known",
+      "collisions": "No person browses headless; a person driving a remote headless session would match (untested).",
+      "tested": "2026-10-02: replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
     },
     {
       "id": "muse.credentials.accessor-family",
       "half": "page",
       "names": "muse",
-      "summary": "The credential methods are replaced by the accessor family Muse's cloud browser installs."
+      "summary": "The credential methods are replaced by the accessor family Muse's cloud browser installs.",
+      "collision_kind": "none-known",
+      "collisions": "Password managers and passkey providers seen so far replace these methods with named functions, not this accessor family. A person driving the same remote browser would match.",
+      "tested": "2026-10-02: replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
     },
     {
       "id": "instinct.credentials.wrappers",
       "half": "page",
       "names": "instinct",
-      "summary": "The credential methods are wrapped the way Instinct's cloud desktop wraps them; counts only together with the GeeTest pair."
+      "summary": "The credential methods are wrapped the way Instinct's cloud desktop wraps them; counts only together with the GeeTest pair.",
+      "collision_kind": "untested",
+      "collisions": "A credential or CAPTCHA extension that wraps only get and create with anonymous one-argument functions (none known); a person on the same remote browser. Counts only with instinct.geetest.accessor-pair.",
+      "tested": "2026-10-02: replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
     },
     {
       "id": "instinct.geetest.accessor-pair",
       "half": "page",
       "names": "instinct",
-      "summary": "The GeeTest initialisers are the accessor pair Instinct installs; counts only together with the credential wrappers."
+      "summary": "The GeeTest initialisers are the accessor pair Instinct installs; counts only together with the credential wrappers.",
+      "collision_kind": "untested",
+      "collisions": "Pages that load GeeTest define plain functions, not accessors; a CAPTCHA-solver extension a person uses might install accessors (untested). Counts only with instinct.credentials.wrappers.",
+      "tested": "2026-10-02: replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
     },
     {
       "id": "grok.computer.profile",
       "half": "page",
       "names": "grok-bot",
-      "summary": "The page runs on Grok Bot's cloud computer: its exact screen, window, pixel ratio and time zone, with no media devices."
+      "summary": "The page runs on Grok Bot's cloud computer: its exact screen, window, pixel ratio and time zone, with no media devices.",
+      "collision_kind": "agent-surface",
+      "collisions": "A person working inside Grok Bot's own computer is reported as Grok Bot by design. A person or another agent in an identically configured cloud desktop (1280x800, a 57 px bottom panel, the browser maximised, UTC, no audio device) would match; a stock Ubuntu desktop at 1280x800 in UTC does not (its 32 px top bar gives another geometry; measured 2026-10-03).",
+      "tested": "2026-10-02: replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
     },
     {
       "id": "codex.prompt.anonymous-native",
       "half": "page",
       "names": "codex-browser",
-      "summary": "window.prompt has the Codex in-app browser's shape; counts only with a second Codex shell signal."
+      "summary": "window.prompt has the Codex in-app browser's shape; counts only with a second Codex shell signal.",
+      "collision_kind": "agent-surface",
+      "collisions": "A person browsing the Codex in-app browser by hand (measured: 4 of 4 documents). It identifies the browser, not who acts in it.",
+      "tested": "2026-10-02: replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
     },
     {
       "id": "codex.keyboard.empty-layout-map",
       "half": "page",
       "names": "codex-browser",
-      "summary": "The keyboard layout map is empty, as in the Codex in-app browser; counts only with a second Codex shell signal."
+      "summary": "The keyboard layout map is empty, as in the Codex in-app browser; counts only with a second Codex shell signal.",
+      "collision_kind": "agent-surface",
+      "collisions": "A person in the Codex in-app browser (measured). It identifies the browser, not who acts in it.",
+      "tested": "2026-10-02: replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
     },
     {
       "id": "codex.overlay.shadow-root",
       "half": "page",
       "names": "codex-browser",
-      "summary": "The Codex in-app browser's overlay is attached to the document; counts only with a second Codex shell signal."
+      "summary": "The Codex in-app browser's overlay is attached to the document; counts only with a second Codex shell signal.",
+      "collision_kind": "agent-surface",
+      "collisions": "A person in the Codex in-app browser: the browser draws it for everyone. Other overlays at the maximum z-index (screen recorders, translation and writing extensions) are a J1 control.",
+      "tested": "2026-10-02: replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
     },
     {
       "id": "chatgpt.badge.active",
       "half": "page",
       "names": "chatgpt-chrome",
-      "summary": "ChatGPT for Chrome's activity badge was drawn on the page while its agent acted."
+      "summary": "ChatGPT for Chrome's activity badge was drawn on the page while its agent acted.",
+      "collision_kind": "none-known",
+      "collisions": "A person taking the tab over in the seconds before the badge is removed; it left within seconds of the agent's turn in both takeover runs.",
+      "tested": "2026-10-02: replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
     },
     {
       "id": "claude.marker.active",
       "half": "page",
       "names": "claude-chrome",
-      "summary": "Claude for Chrome's activity marker was drawn on the page while its agent acted."
+      "summary": "Claude for Chrome's activity marker was drawn on the page while its agent acted.",
+      "collision_kind": "none-known",
+      "collisions": "A person taking the tab over before the glow is removed; it left at the end of the agent's turn (17 s, 20 s), before the person's first click, in both takeover runs.",
+      "tested": "2026-10-02: replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
     },
     {
       "id": "hidden.input.focus-emulated",
       "half": "page",
       "names": null,
-      "summary": "Trusted input arrived while the document was hidden yet reported focus, which needs focus emulation."
+      "summary": "Trusted input arrived while the document was hidden yet reported focus, which needs focus emulation.",
+      "collision_kind": "none-known",
+      "collisions": "No known way for a person to deliver input to a hidden document; focus while hidden needs focus emulation. None in 44 human documents.",
+      "tested": "2026-10-02: replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
     },
     {
       "id": "hidden.input.trusted-pointerdown",
       "half": "page",
       "names": null,
-      "summary": "A trusted pointerdown arrived while the document was hidden, which no person can produce."
+      "summary": "A trusted pointerdown arrived while the document was hidden, which no person can produce.",
+      "collision_kind": "none-known",
+      "collisions": "No known way for a person to click in a hidden document. None in 44 human documents.",
+      "tested": "2026-10-02: replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
     }
   ]
 }

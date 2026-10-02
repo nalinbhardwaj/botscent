@@ -43,7 +43,7 @@
     },
     "instinct": {
       "display": "Instinct",
-      "vendor": "",
+      "vendor": "Spear Street Technology",
       "kind": "computer-use-agent",
       "sources": ["page instinct.credentials.wrappers with instinct.geetest.accessor-pair"]
     },
