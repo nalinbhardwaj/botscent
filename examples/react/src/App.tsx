@@ -1,16 +1,17 @@
 import { useState } from 'react'
-import { headers, useBotscent } from 'botscent/react'
+import { reportHeaders } from 'botscent'
+import { useBotscent } from 'botscent/react'
 
 export function App() {
   // Re-renders whenever the page's verdict changes.
   const verdict = useBotscent()
   const [answer, setAnswer] = useState('')
 
-  // The headers carrier: same-origin requests get the page's report when it is an agent.
+  // The report carrier: same-origin requests get the page's report when it is an agent.
   async function send() {
     const response = await fetch('/api/visit', {
       method: 'POST',
-      headers: { 'content-type': 'application/json', ...headers('/api/visit') },
+      headers: { 'content-type': 'application/json', ...reportHeaders('/api/visit') },
       body: '{}',
     })
     setAnswer(await response.text())

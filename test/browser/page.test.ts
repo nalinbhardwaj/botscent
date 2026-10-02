@@ -328,16 +328,16 @@ describe('chromium: input to a hidden document', () => {
 describe('chromium: carriers', () => {
   const agentPage = () => open('chromium', '/plain') // webdriver: agent evidence observed
 
-  test('headers(url): only for agents, only to the page origin', async () => {
+  test('reportHeaders(url): only for agents, only to the page origin', async () => {
     const { page } = await agentPage()
     const out = await page.evaluate(() => {
       const b = (window as any).botscent
       return [
-        b.headers('/api/checkout'),
-        b.headers(location.origin + '/x'),
-        b.headers('https://example.com/api'),
-        b.headers('//example.com/x'),
-        b.headers('http://[::1'),
+        b.reportHeaders('/api/checkout'),
+        b.reportHeaders(location.origin + '/x'),
+        b.reportHeaders('https://example.com/api'),
+        b.reportHeaders('//example.com/x'),
+        b.reportHeaders('http://[::1'),
       ]
     })
     assert.deepEqual(out[0], { 'Botscent-Report': '1;;;browser.webdriver-flag' })
@@ -345,7 +345,7 @@ describe('chromium: carriers', () => {
     assert.deepEqual(out.slice(2), [{}, {}, {}])
     await page.context().close()
     const person = await open('chromium-clean', '/plain')
-    assert.deepEqual(await person.page.evaluate(() => (window as any).botscent.headers('/api')), {})
+    assert.deepEqual(await person.page.evaluate(() => (window as any).botscent.reportHeaders('/api')), {})
     await person.page.context().close()
   })
 
@@ -544,7 +544,7 @@ describe('chromium: lifecycle and failure', () => {
     await page.context().close()
   })
 
-  test('listeners are passive and capture; no network request of its own; subscribe with a selector', async () => {
+  test('listeners are passive and capture; no network request of its own; subscribe on change only', async () => {
     server.route('/watch', { body: html() })
     const { page } = await open(
       'chromium-clean',
@@ -567,17 +567,14 @@ describe('chromium: lifecycle and failure', () => {
     const calls = await page.evaluate(async () => {
       const b = (window as any).botscent
       const seen: string[] = []
-      b.subscribe(
-        (v: { type: string }) => v.type,
-        (type: string) => seen.push(type),
-      )
+      b.subscribe((v: { type: string }) => seen.push(v.type))
       const m = document.createElement('div')
       m.id = 'claude-agent-glow-border'
       document.body.appendChild(m)
       await new Promise((r) => setTimeout(r, 600))
       return seen
     })
-    assert.deepEqual(calls, ['agent'], 'called once, when the selected value changed')
+    assert.deepEqual(calls, ['agent'], 'called once, when the verdict changed, not on subscription')
     await page.context().close()
   })
 })

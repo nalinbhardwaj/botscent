@@ -7,7 +7,7 @@ import { readable, type Readable } from 'svelte/store'
 import { HUMAN, type Verdict } from '../core/verdict.ts'
 import { subscribe, verdict } from '../index.ts'
 
-export { isVerified, headers, diagnostics, start, type Verdict } from '../index.ts'
+export type { Verdict } from '../core/verdict.ts'
 
 export const botscent: Readable<Verdict> = readable<Verdict>(HUMAN, (set) => {
   if (typeof window === 'undefined') return

@@ -42,7 +42,7 @@ class _ScopeRequest:
         )
 
 
-def apply_transport(raw_headers, verdict, navigation: bool, send: bool, now_ms: float):
+def _apply_transport(raw_headers, verdict, navigation: bool, send: bool, now_ms: float):
     """The response's header list with the transport rules applied (contract section 10)."""
     values = [value.decode("latin-1") for name, value in raw_headers if name.lower() == b"server-timing"]
     current = ", ".join(values) if values else None
@@ -77,7 +77,7 @@ class BotscentMiddleware:
                 try:
                     message = {
                         **message,
-                        "headers": apply_transport(
+                        "headers": _apply_transport(
                             message.get("headers") or [], verdict, navigation, self.transport, time.time() * 1000
                         ),
                     }

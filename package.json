@@ -75,6 +75,7 @@
       "default": "./dist/vercel.js"
     },
     "./botscent.js": "./dist/botscent.js",
+    "./names.json": "./dist/names.json",
     "./package.json": "./package.json"
   },
   "bin": {
@@ -88,7 +89,7 @@
   },
   "scripts": {
     "generate": "node scripts/generate.ts",
-    "build": "tsdown && publint && attw --pack . --profile esm-only --exclude-entrypoints botscent.js --quiet && node scripts/size.ts",
+    "build": "tsdown && cp src/generated/names.json dist/names.json && publint && attw --pack . --profile esm-only --exclude-entrypoints botscent.js --quiet && node scripts/size.ts",
     "typecheck": "tsc",
     "test": "node --test 'test/*.test.ts' 'test/adapters/*.test.ts'",
     "format": "prettier --write . && cd python && uv run ruff format .",
@@ -123,13 +124,13 @@
     "vue": "^3.5.43"
   },
   "peerDependencies": {
-    "astro": ">=4",
-    "express": ">=4",
-    "hono": ">=4",
-    "next": ">=14",
-    "react": ">=18",
-    "svelte": ">=4",
-    "vue": ">=3.3"
+    "astro": ">=4 <8",
+    "express": ">=4 <6",
+    "hono": ">=4 <5",
+    "next": ">=14 <17",
+    "react": ">=18 <20",
+    "svelte": ">=4 <6",
+    "vue": ">=3.3 <4"
   },
   "peerDependenciesMeta": {
     "next": {

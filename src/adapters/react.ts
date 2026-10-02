@@ -1,13 +1,12 @@
 'use client'
 // botscent/react: the page half in React. useBotscent re-renders when the
 // verdict (or the selected part of it) changes; <Botscent /> starts observation
-// in apps that have no instrumentation-client entry; <BotscentField /> opts the
-// surrounding POST form in to carrying the report.
-import { createElement, useEffect, useSyncExternalStore, type ReactElement } from 'react'
+// in apps that have no instrumentation-client entry.
+import { useEffect, useSyncExternalStore } from 'react'
 import { HUMAN, type Verdict } from '../core/verdict.ts'
 import { start, subscribe, verdict, type StartOptions } from '../index.ts'
 
-export { isVerified, headers, diagnostics, type Verdict } from '../index.ts'
+export type { Verdict } from '../core/verdict.ts'
 
 const subscribeAll = (onChange: () => void) => subscribe(onChange)
 
@@ -33,10 +32,4 @@ export function Botscent(props: StartOptions = {}): null {
     start({ debug })
   }, [debug])
   return null
-}
-
-/** Opts the surrounding form in to carrying the report on POST submissions to the same origin.
- * Renders a disabled hidden input, which forms never submit; the entry is added when the form is serialised. */
-export function BotscentField(): ReactElement {
-  return createElement('input', { type: 'hidden', disabled: true, 'data-botscent-field': '' })
 }

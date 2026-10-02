@@ -17,6 +17,9 @@ export default defineConfig([
       astro: 'src/adapters/astro.ts',
       'astro-middleware': 'src/adapters/astro-middleware.ts',
       nuxt: 'src/adapters/nuxt.ts',
+      // Not in package.json exports, so no application can import it: the transport step the
+      // adapters share, built on its own for the research benchmark, which runs it as they do.
+      internal: 'src/server/adapter.ts',
     },
     format: 'esm',
     platform: 'neutral',

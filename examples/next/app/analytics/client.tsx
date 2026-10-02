@@ -15,12 +15,13 @@ function track(name: string) {
 export function Analytics() {
   useEffect(() => {
     track('pageview')
-    const stop = subscribe(
-      (v) => v.type,
-      (type) => {
-        if (type === 'agent') track('agent_detected')
-      },
-    )
+    // Detection is monotonic within a document, so the first agent verdict is the moment.
+    let sent = verdict().type === 'agent'
+    const stop = subscribe((v) => {
+      if (v.type !== 'agent' || sent) return
+      sent = true
+      track('agent_detected')
+    })
     const onClick = () => track('click')
     document.addEventListener('click', onClick)
     return () => {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { headers } from 'botscent'
+import { reportHeaders } from 'botscent'
 import { useBotscent } from 'botscent/vue'
 
 // A read-only ref that follows the page's verdict.
@@ -11,7 +11,7 @@ const answer = ref('')
 async function send() {
   const response = await fetch('/api/visit', {
     method: 'POST',
-    headers: { 'content-type': 'application/json', ...headers('/api/visit') },
+    headers: { 'content-type': 'application/json', ...reportHeaders('/api/visit') },
     body: '{}',
   })
   answer.value = await response.text()

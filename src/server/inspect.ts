@@ -14,7 +14,8 @@ export type CloudflareHints = {
 export type InspectOptions = {
   /** Cloudflare's request.cf, for its verified-bot field. */
   cf?: CloudflareHints | null | undefined
-  /** The request time in milliseconds since the epoch; defaults to now. */
+  /** The request time in milliseconds since the epoch, for signature windows. Leave it unset in
+   * production (it defaults to now); it exists for tests and for replaying stored requests. */
   now?: number | undefined
   /** Log each decision: true for console.debug, or a function that receives each line. */
   debug?: Debug

@@ -5,13 +5,16 @@
 // botscent entries are removed from every response either way.
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Verdict } from '../core/verdict.ts'
-import type { Debug } from '../server/log.ts'
-import { applyTransport, inspect } from '../server/index.ts'
 
-export { inspect, isVerified, readReport, combine, VERSION, type Verdict } from '../server/index.ts'
+export type { Verdict } from '../core/verdict.ts'
+import type { Debug } from '../server/log.ts'
+import { transport } from '../server/adapter.ts'
+import { inspect } from '../server/index.ts'
 
 export type BotscentExpressOptions = {
-  /** 'always' when no shared cache stores this app's HTML; 'never' (the default here) otherwise. */
+  /** Whether an agent's document navigation carries the verdict to the page in Server-Timing.
+   * 'never' (the default): an origin cannot see whether a CDN in front of it stores HTML.
+   * 'always': the developer states that no shared cache stores it. */
   transport?: 'always' | 'never'
   debug?: Debug
 }
@@ -40,7 +43,7 @@ export function botscent(
               values.push(...[value].flat().map(String))
           const headers = new Headers()
           if (values.length) headers.set('server-timing', values.join(', '))
-          const outcome = applyTransport(headers, verdict, request, { send, debug: options.debug })
+          const outcome = transport(headers, verdict, request, { send, debug: options.debug })
           if (outcome === 'untouched') return given
           const value = headers.get('server-timing')
           const set: [string, string][] = []

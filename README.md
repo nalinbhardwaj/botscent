@@ -41,7 +41,7 @@ export { proxy } from 'botscent/next'
 
 ```ts
 // middleware.ts (before Next.js 16): the server half
-export { middleware } from 'botscent/next'
+export { proxy as middleware } from 'botscent/next'
 ```
 
 An existing proxy or middleware is wrapped, not replaced: `export const proxy = withBotscent(existingProxy)` (`export const middleware = withBotscent(existingMiddleware)` before Next.js 16), with `withBotscent` from `botscent/next`.
@@ -88,6 +88,14 @@ import botscent from 'botscent/astro'
 export default defineConfig({ integrations: [botscent()] })
 ```
 
+SvelteKit and Nuxt have no server adapter; where a route needs the request's verdict, ask for it:
+
+```ts
+// SvelteKit hooks.server.ts, or a Nitro server middleware in Nuxt
+import { inspect } from 'botscent/server'
+const verdict = await inspect(event.request)
+```
+
 ### A plain script tag
 
 ```html
@@ -95,9 +103,9 @@ export default defineConfig({ integrations: [botscent()] })
 <!-- serve node_modules/botscent/dist/botscent.js from your own origin; add data-debug to log -->
 ```
 
-It exposes `window.botscent` (`verdict()`, `subscribe()`, `headers()`, `diagnostics()`) and dispatches a `botscent` event on every change.
+It exposes `window.botscent` (`verdict()`, `subscribe()`, `reportHeaders()`, `diagnostics()`, `start()`, `VERSION`) and dispatches a `botscent` event on every change.
 
-### Express, Hono, Cloudflare Workers, Vercel
+### Express, Hono, Cloudflare Workers, Netlify, Vercel
 
 ```ts
 // Express: req.botscent in every handler
@@ -115,6 +123,13 @@ const app = new Hono().use(botscent())
 // Cloudflare Workers: the verdict is the handler's fourth argument
 import { withBotscent } from 'botscent/workers'
 export default { fetch: withBotscent(async (request, env, ctx, verdict) => fetch(request)) }
+```
+
+```ts
+// Netlify Edge Functions: the same adapter, continuing to the site
+import type { Context } from '@netlify/edge-functions'
+import { withBotscent } from 'botscent/workers'
+export default withBotscent<Context>((request, context) => context.next())
 ```
 
 ```ts
@@ -160,15 +175,15 @@ npx botscent check https://your-site.example/
 The page half sends nothing on its own. To tell your server what the page saw, spread its headers into a same-origin request, or opt a form in:
 
 ```ts
-import { headers } from 'botscent'
-await fetch('/api/checkout', { method: 'POST', headers: { 'content-type': 'application/json', ...headers('/api/checkout') }, body })
+import { reportHeaders } from 'botscent'
+await fetch('/api/checkout', { method: 'POST', headers: { 'content-type': 'application/json', ...reportHeaders('/api/checkout') }, body })
 ```
 
 ```html
 <form method="post" action="/checkout" data-botscent-field>...</form>
 ```
 
-The form gets a `botscent` field only on its own POST submission to the same origin (a click, Enter or `requestSubmit()`); `form.submit()` and `new FormData(form)` never get it, because their data can go anywhere. A form your code sends with `fetch` carries the report through `headers(url)` instead.
+The form gets a `botscent` field only on its own POST submission to the same origin (a click, Enter or `requestSubmit()`); `form.submit()` and `new FormData(form)` never get it, because their data can go anywhere. A form your code sends with `fetch` carries the report through `reportHeaders(url)` instead.
 
 On the server, a report never mixes with the request's own evidence unless you join them:
 
@@ -190,7 +205,7 @@ A page report can be forged by the page's own scripts, and anyone can send the h
 
 ## How the request's verdict reaches the page
 
-For an agent's document navigation, the server adapters can add a `Server-Timing: botscent;desc="…"` entry with `Cache-Control: no-store`, which the page half reads, so a single page sees both halves. People's responses never carry it, and the page ignores an entry that is stale or doubled. It is on by default where the adapter runs per request in front of the cache (the Next.js proxy on Vercel, Vercel Routing Middleware, Cloudflare Workers); an origin (Express, Hono on Node.js, Django, FastAPI, Flask, self-hosted Next.js) cannot see whether a CDN in front of it stores HTML, so there it is off unless you set `transport: 'always'` (Python: `transport=True`).
+For an agent's document navigation, the server adapters can add a `Server-Timing: botscent;desc="…"` entry with `Cache-Control: no-store`, which the page half reads, so a single page sees both halves. People's responses never carry it, and the page ignores an entry that is stale or doubled. Every adapter takes `transport`. The default, `'auto'`, turns it on only where the adapter runs per request in front of the cache: the Next.js proxy on Vercel, Vercel Routing Middleware, Cloudflare Workers, Netlify Edge Functions, and Hono on Cloudflare Workers. An origin (Express, Astro, Hono on Node.js, Django, FastAPI, Flask, self-hosted Next.js) cannot see whether a CDN in front of it stores HTML, so there it is off unless you set `transport: 'always'` (Python: `transport=True`), which states that no shared cache stores your HTML. If one does and ignores `Cache-Control: no-store`, a person can be served an agent's entry; `npx botscent check` reports that case.
 
 ## Reasons
 
@@ -377,7 +392,7 @@ The page half makes no network request, writes no cookie or storage, and writes 
 
 ## Stability
 
-The behaviour is pinned by [the contract](spec/contract.md) and by shared test vectors that the TypeScript and Python halves must both pass. Signer keys are frozen into each release, so the server half makes no outbound request; a scheduled job opens a pull request when a signer's published keys change. Those keys are pinned as of the release, not checked live: a key a signer later removes still verifies in an installation that bundles it, so if you grant access on `isVerified`, keep the package current. Any release that changes a verdict for some visitor is a minor version, with an output-change report in its release notes.
+The behaviour is pinned by [the contract](spec/contract.md) and by shared test vectors that the TypeScript and Python halves must both pass. Signer keys are frozen into each release, so the server half makes no outbound request; a scheduled job opens a pull request when a signer's published keys change. Those keys are pinned as of the release, not checked live: a key a signer later removes still verifies in an installation that bundles it, so if you grant access on `isVerified`, keep the package current. Any release that changes a verdict for some visitor, or adds a reason or a name, is a minor version, with an output-change report in its release notes; renaming or removing a reason id or an agent name, which code and stored data depend on, is a major version. The names, with each agent's display name, vendor and kind, ship as data: `import names from 'botscent/names.json'`.
 
 ## License
 

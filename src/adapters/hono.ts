@@ -6,13 +6,21 @@
 // Cache API should set transport: 'never'.
 import type { MiddlewareHandler } from 'hono'
 import type { Verdict } from '../core/verdict.ts'
+
+export type { Verdict } from '../core/verdict.ts'
 import type { Debug } from '../server/log.ts'
-import { applyTransport, inspect, type CloudflareHints } from '../server/index.ts'
+import { transport } from '../server/adapter.ts'
+import { inspect, type CloudflareHints } from '../server/index.ts'
 import { mutable, type TransportMode } from '../server/transport.ts'
 
-export { inspect, isVerified, readReport, combine, VERSION, type Verdict } from '../server/index.ts'
-
-export type BotscentHonoOptions = { transport?: TransportMode; debug?: Debug }
+export type BotscentHonoOptions = {
+  /** Whether an agent's document navigation carries the verdict to the page in Server-Timing.
+   * 'auto' (the default): on Cloudflare Workers, which run per request in front of any cache; off
+   * elsewhere. 'always': the developer states that no shared cache stores the HTML. 'never': off. */
+  transport?: TransportMode
+  /** Log each decision: true for console.debug, or a function that receives each line. */
+  debug?: Debug
+}
 
 const onWorkers = (): boolean => {
   try {
@@ -38,7 +46,7 @@ export function botscent(options: BotscentHonoOptions = {}): MiddlewareHandler<{
       const mode = options.transport ?? 'auto'
       const send = mode === 'always' || (mode === 'auto' && onWorkers())
       const response = mutable(c.res)
-      applyTransport(response.headers, verdict, request, { send, debug: options.debug })
+      transport(response.headers, verdict, request, { send, debug: options.debug })
       if (response !== c.res) {
         // Hono's c.res setter copies the previous response's headers onto a new one,
         // which would undo the change: clear it first so the copy is taken as it is.

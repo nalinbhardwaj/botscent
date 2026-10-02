@@ -1,7 +1,8 @@
 // The server half as Astro middleware, added by botscent/astro.
 import config from 'virtual:botscent/astro-config'
 import type { Verdict } from '../core/verdict.ts'
-import { applyTransport, inspect } from '../server/index.ts'
+import { transport } from '../server/adapter.ts'
+import { inspect } from '../server/index.ts'
 import { mutable } from '../server/transport.ts'
 
 type Context = { request: Request; isPrerendered?: boolean; locals: Record<string, unknown> }
@@ -18,7 +19,7 @@ export async function onRequest(context: Context, next: () => Promise<Response>)
   if (!verdict) return response
   try {
     const out = mutable(response)
-    applyTransport(out.headers, verdict, context.request, { send: config.transport === 'always', debug: config.debug })
+    transport(out.headers, verdict, context.request, { send: config.transport === 'always', debug: config.debug })
     return out
   } catch {
     return response

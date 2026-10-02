@@ -15,7 +15,7 @@ import {
 import { HUMAN, type Verdict } from '../core/verdict.ts'
 import { start, subscribe, verdict, type StartOptions } from '../index.ts'
 
-export { isVerified, headers, diagnostics, start, type Verdict } from '../index.ts'
+export type { Verdict } from '../core/verdict.ts'
 
 /** `app.use(Botscent)` or `app.use(Botscent, { debug: true })`. */
 export const Botscent: Plugin<[StartOptions?]> = {
@@ -31,8 +31,9 @@ export function useBotscent<T>(select?: (verdict: Verdict) => T): Readonly<Ref<T
   const state = shallowRef<T | Verdict>(pick(HUMAN))
   const follow = () => {
     state.value = pick(verdict())
-    const stop = subscribe(pick, (value) => {
-      state.value = value
+    const stop = subscribe((v) => {
+      const next = pick(v)
+      if (!Object.is(next, state.value)) state.value = next
     })
     if (getCurrentScope()) onScopeDispose(stop)
   }

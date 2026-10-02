@@ -1,12 +1,14 @@
 // The verdict and the one decision every half shares: from a set of evidence to
 // { type, agent_name?, reasons }. Pure; no I/O, no globals.
-import { REASONS, type KnownReason } from '../generated/core.ts'
+import { REASONS, type KnownAgentName, type KnownReason } from '../generated/core.ts'
 
 export type Reason = KnownReason | (string & {})
+/** An agent name from the registry; names a newer server sends still type-check. */
+export type AgentName = KnownAgentName | (string & {})
 
 export type Verdict = {
   readonly type: 'agent' | 'human'
-  readonly agent_name?: string
+  readonly agent_name?: AgentName
   readonly reasons: readonly Reason[]
 }
 
@@ -87,7 +89,7 @@ export function decide(evidence: readonly Evidence[]): Verdict {
  * when a verified signature names that agent; the platform's field verifies
  * that some bot sent the request, not which one. A reason with the `page.`
  * prefix never counts, and a named check fails on any verdict that holds one. */
-export function isVerified(verdict: Verdict | null | undefined, name?: string): boolean {
+export function isVerified(verdict: Verdict | null | undefined, name?: AgentName): boolean {
   const reasons = verdict?.reasons
   if (!Array.isArray(reasons)) return false
   const signed = reasons.includes('signer.web-bot-auth.verified')

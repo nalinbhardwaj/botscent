@@ -1,0 +1,502 @@
+{
+  "chatgpt": {
+    "display": "ChatGPT",
+    "vendor": "OpenAI",
+    "kind": "computer-use-agent"
+  },
+  "grok-bot": {
+    "display": "Grok Bot",
+    "vendor": "Anysphere",
+    "kind": "computer-use-agent"
+  },
+  "manus": {
+    "display": "Manus",
+    "vendor": "Manus",
+    "kind": "computer-use-agent"
+  },
+  "devin": {
+    "display": "Devin",
+    "vendor": "Cognition",
+    "kind": "computer-use-agent"
+  },
+  "cloudflare-browser-run": {
+    "display": "Cloudflare Browser Run",
+    "vendor": "Cloudflare",
+    "kind": "automation"
+  },
+  "muse": {
+    "display": "Muse",
+    "vendor": "Meta",
+    "kind": "computer-use-agent"
+  },
+  "instinct": {
+    "display": "Instinct",
+    "vendor": "",
+    "kind": "computer-use-agent"
+  },
+  "codex-browser": {
+    "display": "Codex in-app browser",
+    "vendor": "OpenAI",
+    "kind": "computer-use-agent"
+  },
+  "chatgpt-chrome": {
+    "display": "ChatGPT for Chrome",
+    "vendor": "OpenAI",
+    "kind": "computer-use-agent"
+  },
+  "claude-chrome": {
+    "display": "Claude for Chrome",
+    "vendor": "Anthropic",
+    "kind": "computer-use-agent"
+  },
+  "botscent-check": {
+    "display": "Botscent check",
+    "vendor": "Botscent",
+    "kind": "client"
+  },
+  "curl": {
+    "display": "curl",
+    "vendor": "curl project",
+    "kind": "client"
+  },
+  "wget": {
+    "display": "GNU Wget",
+    "vendor": "GNU",
+    "kind": "client"
+  },
+  "python-requests": {
+    "display": "Python requests",
+    "vendor": "Python Software Foundation",
+    "kind": "client"
+  },
+  "python-httpx": {
+    "display": "HTTPX",
+    "vendor": "Encode",
+    "kind": "client"
+  },
+  "aiohttp": {
+    "display": "aiohttp",
+    "vendor": "aio-libs",
+    "kind": "client"
+  },
+  "python-urllib": {
+    "display": "Python urllib",
+    "vendor": "Python Software Foundation",
+    "kind": "client"
+  },
+  "python-urllib3": {
+    "display": "urllib3",
+    "vendor": "urllib3",
+    "kind": "client"
+  },
+  "go-http-client": {
+    "display": "Go net/http",
+    "vendor": "Go project",
+    "kind": "client"
+  },
+  "node": {
+    "display": "Node.js fetch",
+    "vendor": "OpenJS Foundation",
+    "kind": "client"
+  },
+  "undici": {
+    "display": "undici fetch",
+    "vendor": "OpenJS Foundation",
+    "kind": "client"
+  },
+  "node-fetch": {
+    "display": "node-fetch",
+    "vendor": "node-fetch",
+    "kind": "client"
+  },
+  "axios": {
+    "display": "axios",
+    "vendor": "axios",
+    "kind": "client"
+  },
+  "okhttp": {
+    "display": "OkHttp",
+    "vendor": "Square",
+    "kind": "client"
+  },
+  "java-http-client": {
+    "display": "Java HttpClient",
+    "vendor": "OpenJDK",
+    "kind": "client"
+  },
+  "java": {
+    "display": "Java HttpURLConnection",
+    "vendor": "OpenJDK",
+    "kind": "client"
+  },
+  "apache-httpclient": {
+    "display": "Apache HttpClient",
+    "vendor": "Apache Software Foundation",
+    "kind": "client"
+  },
+  "libwww-perl": {
+    "display": "libwww-perl",
+    "vendor": "libwww-perl",
+    "kind": "client"
+  },
+  "postmanruntime": {
+    "display": "Postman",
+    "vendor": "Postman",
+    "kind": "client"
+  },
+  "httpie": {
+    "display": "HTTPie",
+    "vendor": "HTTPie",
+    "kind": "client"
+  },
+  "ruby": {
+    "display": "Ruby Net::HTTP",
+    "vendor": "Ruby",
+    "kind": "client"
+  },
+  "guzzlehttp": {
+    "display": "Guzzle",
+    "vendor": "Guzzle",
+    "kind": "client"
+  },
+  "deno": {
+    "display": "Deno",
+    "vendor": "Deno Land",
+    "kind": "client"
+  },
+  "bun": {
+    "display": "Bun",
+    "vendor": "Oven",
+    "kind": "client"
+  },
+  "scrapy": {
+    "display": "Scrapy",
+    "vendor": "Zyte",
+    "kind": "crawler"
+  },
+  "oai-searchbot": {
+    "display": "OAI-SearchBot",
+    "vendor": "OpenAI",
+    "kind": "crawler"
+  },
+  "gptbot": {
+    "display": "GPTBot",
+    "vendor": "OpenAI",
+    "kind": "crawler"
+  },
+  "chatgpt-user": {
+    "display": "ChatGPT-User",
+    "vendor": "OpenAI",
+    "kind": "fetcher"
+  },
+  "oai-adsbot": {
+    "display": "OAI-AdsBot",
+    "vendor": "OpenAI",
+    "kind": "crawler"
+  },
+  "claudebot": {
+    "display": "ClaudeBot",
+    "vendor": "Anthropic",
+    "kind": "crawler"
+  },
+  "claude-user": {
+    "display": "Claude-User",
+    "vendor": "Anthropic",
+    "kind": "fetcher"
+  },
+  "claude-searchbot": {
+    "display": "Claude-SearchBot",
+    "vendor": "Anthropic",
+    "kind": "crawler"
+  },
+  "perplexitybot": {
+    "display": "PerplexityBot",
+    "vendor": "Perplexity",
+    "kind": "crawler"
+  },
+  "perplexity-user": {
+    "display": "Perplexity-User",
+    "vendor": "Perplexity",
+    "kind": "fetcher"
+  },
+  "googlebot": {
+    "display": "Googlebot",
+    "vendor": "Google",
+    "kind": "crawler"
+  },
+  "googlebot-image": {
+    "display": "Googlebot Image",
+    "vendor": "Google",
+    "kind": "crawler"
+  },
+  "googlebot-video": {
+    "display": "Googlebot Video",
+    "vendor": "Google",
+    "kind": "crawler"
+  },
+  "storebot-google": {
+    "display": "Storebot-Google",
+    "vendor": "Google",
+    "kind": "crawler"
+  },
+  "google-inspectiontool": {
+    "display": "Google-InspectionTool",
+    "vendor": "Google",
+    "kind": "crawler"
+  },
+  "googleother": {
+    "display": "GoogleOther",
+    "vendor": "Google",
+    "kind": "crawler"
+  },
+  "googleother-image": {
+    "display": "GoogleOther Image",
+    "vendor": "Google",
+    "kind": "crawler"
+  },
+  "googleother-video": {
+    "display": "GoogleOther Video",
+    "vendor": "Google",
+    "kind": "crawler"
+  },
+  "google-cloudvertexbot": {
+    "display": "Google-CloudVertexBot",
+    "vendor": "Google",
+    "kind": "crawler"
+  },
+  "apis-google": {
+    "display": "APIs-Google",
+    "vendor": "Google",
+    "kind": "crawler"
+  },
+  "adsbot-google": {
+    "display": "AdsBot-Google",
+    "vendor": "Google",
+    "kind": "crawler"
+  },
+  "adsbot-google-mobile": {
+    "display": "AdsBot-Google Mobile",
+    "vendor": "Google",
+    "kind": "crawler"
+  },
+  "google-safety": {
+    "display": "Google-Safety",
+    "vendor": "Google",
+    "kind": "crawler"
+  },
+  "mediapartners-google": {
+    "display": "Mediapartners-Google",
+    "vendor": "Google",
+    "kind": "crawler"
+  },
+  "google-agent": {
+    "display": "Google-Agent",
+    "vendor": "Google",
+    "kind": "computer-use-agent"
+  },
+  "google-cws": {
+    "display": "Google-CWS",
+    "vendor": "Google",
+    "kind": "fetcher"
+  },
+  "feedfetcher-google": {
+    "display": "FeedFetcher-Google",
+    "vendor": "Google",
+    "kind": "fetcher"
+  },
+  "google-gemininotebook": {
+    "display": "Google-GeminiNotebook",
+    "vendor": "Google",
+    "kind": "fetcher"
+  },
+  "google-pinpoint": {
+    "display": "Google-Pinpoint",
+    "vendor": "Google",
+    "kind": "fetcher"
+  },
+  "googleproducer": {
+    "display": "GoogleProducer",
+    "vendor": "Google",
+    "kind": "fetcher"
+  },
+  "google-read-aloud": {
+    "display": "Google-Read-Aloud",
+    "vendor": "Google",
+    "kind": "fetcher"
+  },
+  "google-site-verification": {
+    "display": "Google-Site-Verification",
+    "vendor": "Google",
+    "kind": "fetcher"
+  },
+  "googlemessages": {
+    "display": "Google Messages link preview",
+    "vendor": "Google",
+    "kind": "previewer"
+  },
+  "mistralai-user": {
+    "display": "MistralAI-User",
+    "vendor": "Mistral AI",
+    "kind": "fetcher"
+  },
+  "mistralai-index": {
+    "display": "MistralAI-Index",
+    "vendor": "Mistral AI",
+    "kind": "crawler"
+  },
+  "mistralai-training": {
+    "display": "MistralAI-Training",
+    "vendor": "Mistral AI",
+    "kind": "crawler"
+  },
+  "amazonbot": {
+    "display": "Amazonbot",
+    "vendor": "Amazon",
+    "kind": "crawler"
+  },
+  "amzn-searchbot": {
+    "display": "Amzn-SearchBot",
+    "vendor": "Amazon",
+    "kind": "crawler"
+  },
+  "amzn-user": {
+    "display": "Amzn-User",
+    "vendor": "Amazon",
+    "kind": "fetcher"
+  },
+  "agent-novaact": {
+    "display": "Nova Act",
+    "vendor": "Amazon",
+    "kind": "computer-use-agent"
+  },
+  "meta-externalagent": {
+    "display": "Meta-ExternalAgent",
+    "vendor": "Meta",
+    "kind": "crawler"
+  },
+  "meta-externalfetcher": {
+    "display": "Meta-ExternalFetcher",
+    "vendor": "Meta",
+    "kind": "fetcher"
+  },
+  "meta-webindexer": {
+    "display": "Meta-WebIndexer",
+    "vendor": "Meta",
+    "kind": "crawler"
+  },
+  "meta-externalads": {
+    "display": "Meta-ExternalAds",
+    "vendor": "Meta",
+    "kind": "crawler"
+  },
+  "facebookexternalhit": {
+    "display": "facebookexternalhit link preview",
+    "vendor": "Meta",
+    "kind": "previewer"
+  },
+  "applebot": {
+    "display": "Applebot",
+    "vendor": "Apple",
+    "kind": "crawler"
+  },
+  "itms": {
+    "display": "Apple Podcasts",
+    "vendor": "Apple",
+    "kind": "crawler"
+  },
+  "bingbot": {
+    "display": "Bingbot",
+    "vendor": "Microsoft",
+    "kind": "crawler"
+  },
+  "adidxbot": {
+    "display": "AdIdxBot",
+    "vendor": "Microsoft",
+    "kind": "crawler"
+  },
+  "microsoftpreview": {
+    "display": "MicrosoftPreview",
+    "vendor": "Microsoft",
+    "kind": "previewer"
+  },
+  "bingvideopreview": {
+    "display": "BingVideoPreview",
+    "vendor": "Microsoft",
+    "kind": "crawler"
+  },
+  "ccbot": {
+    "display": "CCBot",
+    "vendor": "Common Crawl",
+    "kind": "crawler"
+  },
+  "duckduckbot": {
+    "display": "DuckDuckBot",
+    "vendor": "DuckDuckGo",
+    "kind": "crawler"
+  },
+  "duckassistbot": {
+    "display": "DuckAssistBot",
+    "vendor": "DuckDuckGo",
+    "kind": "crawler"
+  },
+  "slackbot-linkexpanding": {
+    "display": "Slack link preview",
+    "vendor": "Slack",
+    "kind": "previewer"
+  },
+  "slack-imgproxy": {
+    "display": "Slack image proxy",
+    "vendor": "Slack",
+    "kind": "previewer"
+  },
+  "slackbot": {
+    "display": "Slackbot",
+    "vendor": "Slack",
+    "kind": "fetcher"
+  },
+  "twitterbot": {
+    "display": "X link preview",
+    "vendor": "X",
+    "kind": "previewer"
+  },
+  "yandexbot": {
+    "display": "YandexBot",
+    "vendor": "Yandex",
+    "kind": "crawler"
+  },
+  "yandexuserproxy": {
+    "display": "YandexUserproxy",
+    "vendor": "Yandex",
+    "kind": "fetcher"
+  },
+  "baiduspider": {
+    "display": "Baiduspider",
+    "vendor": "Baidu",
+    "kind": "crawler"
+  },
+  "seznambot": {
+    "display": "SeznamBot",
+    "vendor": "Seznam",
+    "kind": "crawler"
+  },
+  "yeti": {
+    "display": "Yeti",
+    "vendor": "Naver",
+    "kind": "crawler"
+  },
+  "petalbot": {
+    "display": "PetalBot",
+    "vendor": "Huawei",
+    "kind": "crawler"
+  },
+  "ahrefsbot": {
+    "display": "AhrefsBot",
+    "vendor": "Ahrefs",
+    "kind": "crawler"
+  },
+  "ahrefssiteaudit": {
+    "display": "AhrefsSiteAudit",
+    "vendor": "Ahrefs",
+    "kind": "crawler"
+  }
+}

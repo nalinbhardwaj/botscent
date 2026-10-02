@@ -8,9 +8,15 @@
 // runs at the origin, which cannot see a CDN in front of it, so the Server-Timing
 // transport is off unless set to 'always' here.
 import type { AstroIntegration } from 'astro'
-import type { Debug } from '../server/log.ts'
 
-export type BotscentAstroOptions = { transport?: 'always' | 'never'; debug?: Debug }
+export type BotscentAstroOptions = {
+  /** Whether an agent's document navigation carries the verdict to the page in Server-Timing.
+   * 'never' (the default): Astro's server output runs at the origin, which cannot see whether a CDN
+   * in front of it stores HTML. 'always': the developer states that no shared cache stores it. */
+  transport?: 'always' | 'never'
+  /** Log each decision of the server half with console.debug. */
+  debug?: boolean
+}
 
 const CONFIG = 'virtual:botscent/astro-config'
 

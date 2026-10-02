@@ -139,7 +139,7 @@ function checkTypeScript(code: string) {
     for (const name of wanted)
       if (!available.has(name)) problems.push(`README imports ${name} from ${entry}, which does not export it`)
   }
-  for (const m of code.matchAll(/\b(withBotscent|inspect|readReport|combine|isVerified|headers|useBotscent)\b/g))
+  for (const m of code.matchAll(/\b(withBotscent|inspect|readReport|combine|isVerified|reportHeaders|useBotscent)\b/g))
     if (![...Object.values(ENTRIES)].some((f) => exported(f).has(m[1]!)))
       problems.push(`README uses ${m[1]}, which no entry exports`)
 }

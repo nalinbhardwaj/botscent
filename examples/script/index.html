@@ -21,7 +21,7 @@
       document.getElementById('send').onclick = async () => {
         const response = await fetch('/api/visit', {
           method: 'POST',
-          headers: { 'content-type': 'application/json', ...botscent.headers('/api/visit') },
+          headers: { 'content-type': 'application/json', ...botscent.reportHeaders('/api/visit') },
           body: '{}',
         })
         document.getElementById('answer').textContent = await response.text()

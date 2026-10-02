@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { headers } from 'botscent'
+  import { reportHeaders } from 'botscent'
   import { botscent } from 'botscent/svelte'
 
   // $botscent renders the server's value ({ type: 'human', reasons: [] }) and follows
   // the page's verdict after hydration.
   let answer = $state('')
 
-  // The headers carrier: same-origin requests get the page's report when it is an agent.
+  // The report carrier: same-origin requests get the page's report when it is an agent.
   async function send() {
     const response = await fetch('/api/visit', {
       method: 'POST',
-      headers: { 'content-type': 'application/json', ...headers('/api/visit') },
+      headers: { 'content-type': 'application/json', ...reportHeaders('/api/visit') },
       body: '{}',
     })
     answer = JSON.stringify(await response.json())

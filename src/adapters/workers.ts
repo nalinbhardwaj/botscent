@@ -8,13 +8,22 @@
 // no-store, which that cache honours (measured: BYPASS), so a cached page reaches an
 // agent without an entry rather than with another visitor's.
 import type { Verdict } from '../core/verdict.ts'
+
+export type { Verdict } from '../core/verdict.ts'
 import type { Debug } from '../server/log.ts'
-import { applyTransport, inspect, type CloudflareHints } from '../server/index.ts'
+import { transport } from '../server/adapter.ts'
+import { inspect, type CloudflareHints } from '../server/index.ts'
 import { mutable, type TransportMode } from '../server/transport.ts'
 
-export { inspect, isVerified, readReport, combine, VERSION, type Verdict } from '../server/index.ts'
-
-export type BotscentWorkersOptions = { transport?: TransportMode; debug?: Debug }
+export type BotscentWorkersOptions = {
+  /** Whether an agent's document navigation carries the verdict to the page in Server-Timing.
+   * 'auto' (the default) and 'always': on, because a Worker (or a Netlify Edge Function) runs per
+   * request in front of the cache. 'never': off; use it when the Worker itself stores HTML with
+   * the Cache API. */
+  transport?: TransportMode
+  /** Log each decision: true for console.debug, or a function that receives each line. */
+  debug?: Debug
+}
 type Context = { waitUntil(promise: Promise<unknown>): void; passThroughOnException?(): void }
 export type FetchWithVerdict<Env> = (
   request: Request,
@@ -33,7 +42,7 @@ export function withBotscent<Env = unknown>(
     const response = await handler(request, env, ctx, verdict)
     try {
       const out = mutable(response)
-      applyTransport(out.headers, verdict, request, {
+      transport(out.headers, verdict, request, {
         send: (options.transport ?? 'auto') !== 'never',
         debug: options.debug,
       })

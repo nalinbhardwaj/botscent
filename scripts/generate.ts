@@ -10,6 +10,9 @@ const read = (path: string) => JSON.parse(readFileSync(new URL(path, root), 'utf
 const { version } = read('package.json')
 const { reasons } = read('registry/reasons.json') as { reasons: { id: string }[] }
 const { signers } = read('registry/signers.json') as { signers: Record<string, string> }
+const { names } = read('registry/names.json') as {
+  names: Record<string, { display: string; vendor: string; kind: string }>
+}
 const { tokens } = read('registry/tokens.json') as { tokens: { token: string; name: string; match?: string }[] }
 const page = read('registry/page.json') as {
   user_agent_prefixes: Record<string, string>
@@ -47,7 +50,20 @@ export const VERSION: string = ${json(version)}
 export const REASONS: readonly KnownReason[] = ${json(reasons.map((r) => r.id))}
 export type KnownReason =
 ${reasons.map((r) => `  | ${json(r.id)}`).join('\n')}
+
+/** Agent names (registry/names.json). */
+export type KnownAgentName =
+${Object.keys(names)
+  .map((n) => `  | ${json(n)}`)
+  .join('\n')}
 `
+
+// The name registry as data for applications (botscent/names.json): display name, vendor and kind.
+const namesData = `${JSON.stringify(
+  Object.fromEntries(Object.entries(names).map(([id, { display, vendor, kind }]) => [id, { display, vendor, kind }])),
+  null,
+  2,
+)}\n`
 
 const server = `${header}
 /** Web Bot Auth signer host -> operator-level name (registry/signers.json). */
@@ -100,6 +116,7 @@ const outputs: [string, string][] = [
   ['src/generated/core.ts', core],
   ['src/generated/server.ts', server],
   ['src/generated/page.ts', pageData],
+  ['src/generated/names.json', namesData],
   ['python/src/botscent/_generated.py', python],
 ]
 const check = process.argv.includes('--check')

@@ -44,15 +44,15 @@ type Verdict = {
 function inspect(request: RequestLike, options?: InspectOptions): Promise<Verdict>
 function readReport(value: string | Verdict | null | undefined): Verdict | null
 function combine(request: Verdict, report: Verdict | null): Verdict
-function isVerified(verdict: Verdict, name?: string): boolean
-function isNavigation(request: RequestLike): boolean
-function applyTransport(headers: Headers, verdict: Verdict, request: RequestLike, options: { send: boolean; now?: number; debug?: Debug }): 'decorated' | 'scrubbed' | 'untouched'
+function isVerified(verdict: Verdict, name?: AgentName): boolean
 const VERSION: string
+
+type AgentName = KnownAgentName | (string & {})  // every id in registry/names.json, generated
 
 type RequestLike = Request | { headers: Headers | Record<string, string | string[] | undefined>; method?: string; url?: string }
 type InspectOptions = {
   cf?: { verifiedBotCategory?: string; botManagement?: { verifiedBot?: boolean } } // Cloudflare's request.cf
-  now?: number                                  // milliseconds since the epoch; default Date.now()
+  now?: number                                  // milliseconds since the epoch; default Date.now(); for tests and replays
   debug?: boolean | ((line: string) => void)    // section 13
 }
 ```
@@ -121,24 +121,24 @@ ext     = *( %x21-7E except ";" )         ; ignored: room for later minor versio
 ## 10a. Adapters
 
 - An adapter preserves status codes, redirects, cookies, streaming responses, request bodies and the application's own exceptions; never turns a statically rendered route into a dynamic one; adds no detection logic of its own; and fails to "no evidence", never into the application.
-- It gives the application the request verdict where the framework keeps per-request state, and its `transport` option is `'auto'` (send where the adapter knows it runs per request after the shared cache), `'always'` (the developer states that no shared cache stores the HTML), or `'never'`. The Python adapters take `transport=True` (Django: the `BOTSCENT_TRANSPORT` setting). Origin adapters default to off.
+- It gives the application the request verdict where the framework keeps per-request state, and its `transport` option is `'auto'` (send where the adapter knows it runs per request after the shared cache), `'always'` (the developer states that no shared cache stores the HTML), or `'never'`. The Python adapters take `transport=True` (Django: the `BOTSCENT_TRANSPORT` setting). Origin adapters default to off. `withBotscent` in `botscent/next` and `botscent/vercel` takes the existing handler and options, or options alone. Before Next.js 16, `middleware.ts` re-exports the proxy under the old name: `export { proxy as middleware } from 'botscent/next'`.
 
-| Server entry       | What it is                                                     | The request verdict                         | Transport by default                                  |
-| ------------------ | -------------------------------------------------------------- | ------------------------------------------- | ----------------------------------------------------- |
-| `botscent/next`    | Next.js proxy: `proxy`, `middleware`, `withBotscent(existing)` | route handlers call `inspect(request)`      | on Vercel only                                        |
-| `botscent/vercel`  | Vercel Routing Middleware, for projects that are not Next.js   | not passed on; the middleware continues     | on                                                    |
-| `botscent/workers` | `withBotscent(handler)` around a Worker's `fetch`              | the handler's fourth argument               | on; behind Workers Cache, cached pages carry no entry |
-| `botscent/hono`    | Hono middleware                                                | `c.get('botscent')`                         | on Cloudflare Workers only                            |
-| `botscent/express` | Express and Connect middleware                                 | `req.botscent`                              | off                                                   |
-| `botscent/astro`   | Astro integration, both halves                                 | `Astro.locals.botscent` on on-demand routes | off                                                   |
-| `botscent.asgi`    | ASGI middleware (FastAPI, Starlette)                           | `request.state.botscent`                    | off                                                   |
-| `botscent.django`  | Django middleware                                              | `request.botscent`                          | off                                                   |
-| `botscent.flask`   | Flask extension                                                | `flask.g.botscent`                          | off                                                   |
+| Server entry       | What it is                                                                    | The request verdict                         | Transport by default                                  |
+| ------------------ | ----------------------------------------------------------------------------- | ------------------------------------------- | ----------------------------------------------------- |
+| `botscent/next`    | Next.js proxy: `proxy`, `withBotscent(existing?, options?)`                   | route handlers call `inspect(request)`      | on Vercel only                                        |
+| `botscent/vercel`  | Vercel Routing Middleware, for projects that are not Next.js                  | not passed on; the middleware continues     | on                                                    |
+| `botscent/workers` | `withBotscent(handler)` around a Worker's `fetch`, or a Netlify Edge Function | the handler's fourth argument               | on; behind Workers Cache, cached pages carry no entry |
+| `botscent/hono`    | Hono middleware                                                               | `c.get('botscent')`                         | on Cloudflare Workers only                            |
+| `botscent/express` | Express and Connect middleware                                                | `req.botscent`                              | off                                                   |
+| `botscent/astro`   | Astro integration, both halves                                                | `Astro.locals.botscent` on on-demand routes | off                                                   |
+| `botscent.asgi`    | ASGI middleware (FastAPI, Starlette)                                          | `request.state.botscent`                    | off                                                   |
+| `botscent.django`  | Django middleware                                                             | `request.botscent`                          | off                                                   |
+| `botscent.flask`   | Flask extension                                                               | `flask.g.botscent`                          | off                                                   |
 
 | Page entry        | What it does                                                                                                                     |
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | `botscent/auto`   | calls `start()` on import: Next.js `instrumentation-client`, SvelteKit `hooks.client`                                            |
-| `botscent/react`  | `useBotscent(select?)`; `<Botscent />` starts observation; `<BotscentField />` opts a form in                                    |
+| `botscent/react`  | `useBotscent(select?)`; `<Botscent />` starts observation                                                                        |
 | `botscent/vue`    | `app.use(Botscent)` starts observation; `useBotscent(select?)` is a read-only ref                                                |
 | `botscent/svelte` | the `botscent` store                                                                                                             |
 | `botscent/nuxt`   | a Nuxt module: a client plugin calls `start()`, and `useBotscent` is auto-imported; server routes call `inspect(event.node.req)` |
@@ -148,6 +148,7 @@ ext     = *( %x21-7E except ";" )         ; ignored: room for later minor versio
 - Framework values render the server's snapshot (`{ type: 'human', reasons: [] }`) and follow the page's verdict after hydration, so hydration always matches.
 - A Next.js proxy cannot see headers the route sets later, and Next.js keeps one value per header, so on the agent navigations it decorates, its `Server-Timing` replaces one the route set. People's responses are untouched.
 - Vercel Routing Middleware also runs before the response exists, so it cannot remove an entry the response itself carries, and Vercel appends the middleware's `Server-Timing` to the response's own. Measured on a deployment whose static page carried a stale entry: a person received the stale entry, which the page rejected as stale, and an agent received both, which the page ignored as doubled. That shows what happens to an old entry, not that an inherited entry is always harmless.
+- Measured on 3 October: nginx ignoring `Cache-Control` replayed an agent's entry to a person within its minute, so with the transport forced on the person's page reported an agent; CloudFront with a minimum TTL above zero kept the page but served cache hits without the origin's `Server-Timing`.
 - Freshness bounds how long an entry can be replayed; it does not show that the entry was written for this response. A fresh entry inherited from another source is accepted: for example a cache that ignores `Cache-Control: no-store` (a CDN rule that caches everything with its own TTL) and serves an agent's decorated page to a person within two minutes. So the transport is correct only where no cache or other response source can contribute a `botscent` entry that the adapter cannot remove. Adapters that run after every cache and remove inherited entries (item 30) meet that by construction; Vercel Routing Middleware and the Next.js proxy, which cannot remove an entry the response carries, and every origin adapter rely on the deployment for it. That is why origin adapters leave the transport off by default, and why the `always` option is the developer's statement that the condition holds. The server half's verdict does not depend on it.
 
 ## 11. Page half
@@ -157,24 +158,22 @@ ext     = *( %x21-7E except ";" )         ; ignored: room for later minor versio
 function start(options?: { debug?: boolean }): () => void
 function verdict(): Verdict
 function subscribe(listener: (verdict: Verdict) => void): () => void
-function subscribe<T>(select: (verdict: Verdict) => T, listener: (selected: T, verdict: Verdict) => void): () => void
-function headers(url: string | URL): Record<string, string>
+function reportHeaders(url: string | URL): Record<string, string>
 function diagnostics(): Diagnostics
-function isVerified(verdict: Verdict, name?: string): boolean
 const VERSION: string
 ```
 
 33. Importing any entry except the auto-starting ones (`botscent/auto`, the script build) does nothing. `start()` begins observation and is idempotent: a second call, including one from a second copy of the library on the page, does nothing more. It returns `stop`, which removes the library's listeners and observers and keeps the evidence.
-34. One instance runs per page. The running instance is published at `globalThis[Symbol.for('botscent')]`, and a second copy uses it.
+34. One instance runs per page. The running instance is published at `globalThis[Symbol.for('botscent')]`, and a second copy uses it. That object is a protocol between copies of any version: `{ version, verdict(), subscribe(listener), diagnostics(), start(options?) }`. Within a major version it only gains members, so a 1.x copy works with any 1.x instance. It is not an API for applications.
 35. `verdict()` returns the current snapshot. An unchanged state returns the same object. Before `start()`, and during server rendering, it is `{ type: 'human', reasons: [] }`.
-36. `subscribe` calls its listener after every change of the snapshot, or, given a selector first, after every change of the selected value (compared with `Object.is`); it does not call it on subscription. The selector comes first so that TypeScript can infer the selected type. Every change also dispatches a `botscent` event on `window` whose `detail` is the new verdict, so code that runs before the library loads can listen.
-37. The script build (`<script defer src="/botscent.js">`) exposes the functions above at `window.botscent`, then starts itself, reading `data-debug` from its tag; a listener for its first `botscent` event can therefore already call them.
+36. `subscribe` calls its listener after every change of the snapshot; it does not call it on subscription. The framework bindings select parts of the verdict themselves (`useBotscent(select)`). Every change also dispatches a `botscent` event on `window` whose `detail` is the new verdict, so code that runs before the library loads can listen.
+37. The script build (`<script defer src="/botscent.js">`) exposes exactly the functions above at `window.botscent` (`verdict`, `subscribe`, `reportHeaders`, `diagnostics`, `start`, `VERSION`), then starts itself, reading `data-debug` from its tag; a listener for its first `botscent` event can therefore already call them.
 
 ## 12. Page to server: the carriers
 
 38. Nothing leaves the page unless the developer uses a carrier.
-39. `headers(url)` returns `{ 'Botscent-Report': <entry> }` when the verdict is an agent and `url` resolves to the page's own origin, and `{}` otherwise.
-40. A form opts in with the `data-botscent-field` attribute on the form or on an element inside it. Its own submission, the one a `submit` event announces (a click, Enter, `requestSubmit()`), gains `botscent=<entry>` in its entry list when that event finished dispatching without being canceled, the verdict is an agent, the effective method is POST (a submitter's `formmethod` counts) and the effective action is same-origin (a submitter's `formaction` counts). `form.submit()` and `new FormData(form)` fire no `submit` event, and the data they produce can be sent anywhere, so they never gain it; neither does a form serialised by a `submit` listener while that event is still dispatching. Code that sends a form's data itself uses `headers(url)`. Nothing is written to the DOM.
+39. `reportHeaders(url)` returns `{ 'Botscent-Report': <entry> }` when the verdict is an agent and `url` resolves to the page's own origin, and `{}` otherwise.
+40. A form opts in with the `data-botscent-field` attribute on the form or on an element inside it. Its own submission, the one a `submit` event announces (a click, Enter, `requestSubmit()`), gains `botscent=<entry>` in its entry list when that event finished dispatching without being canceled, the verdict is an agent, the effective method is POST (a submitter's `formmethod` counts) and the effective action is same-origin (a submitter's `formaction` counts). `form.submit()` and `new FormData(form)` fire no `submit` event, and the data they produce can be sent anywhere, so they never gain it; neither does a form serialised by a `submit` listener while that event is still dispatching. Code that sends a form's data itself uses `reportHeaders(url)`. Nothing is written to the DOM.
 41. For a report passed as an argument, the server accepts `verdict()`'s object through `readReport`.
 
 ## 13. Diagnostics and debug output
@@ -189,7 +188,7 @@ type Diagnostics = {
 }
 ```
 
-42. `diagnostics()` never contains raw observed values and is never part of a verdict.
+42. `diagnostics()` never contains raw observed values and is never part of a verdict. Its top-level fields and their values are stable; the keys of `probes` name the current probes and may change in any release.
 43. Debug output, off by default, writes one line per decision, prefixed `[botscent]`: in the page, through `console.debug`, each probe result, the transport outcome and each verdict change with its time since navigation start; on the server, each request's tokens, signatures (with the reason one did not verify), hints, verdict and transport decision. Python logs the same lines, without the prefix, to the `botscent` logger at `DEBUG`.
 
 ## 13a. `check`
@@ -205,8 +204,10 @@ npx botscent check <url> [--origin <url>] [--project <dir>] [--chrome <path>] [-
 - `csp` fails only when a violation names botscent's own script; anything else the policy blocks is reported as context, by kind and directive without its URL, and never with a fix. `probes` tells apart `failed` (a fail), `pending` (the browser had not answered; `unknown`) and `unsupported` (reported, a pass).
 - `--json` prints `{ check, url, checks: [{ id, outcome, observed, detail?, cause?, fix? }], exit }`; `detail` holds the page's own text, such as its error messages. `--report` adds a block to paste into an issue, built only from what botscent owns or bounds: versions, the stack, the adapters found, botscent's own entry at each hop (other `Server-Timing` entries are counted, not copied), the diagnostics and each check's `observed`, never `detail`; it carries no query string, cookie or address.
 - Exit codes: `0` installed; `1` broken, a check failed; `2` unverified, neither half confirmed; `64` a usage error.
+- Stable across minor versions: the flags, the `--json` field names, the check ids, the outcome values and the exit codes. The text of `observed`, `detail`, `cause` and `fix`, and the `--report` block, are for people and may change in any release.
 
 ## 14. Releases
 
-44. Every release publishes an output-change report, and any change to outputs is a minor version.
+44. Every release publishes an output-change report, and any change to outputs is a minor version: which visitors get which verdict, a new reason, a new name, a new token or key.
+    44a. Renaming or removing a reason id or an agent name is a major version, as is any change to an export's signature, to a wire format of sections 9, 10 and 12, to the shared instance of item 34 other than an addition, or to the stable parts of `check` (section 13a). Exports are exactly what `package.json` `exports` and the Python modules `botscent`, `botscent.asgi`, `botscent.django` and `botscent.flask` name without a leading underscore; the server adapters export their own functions and option types only, and the shared functions live in `botscent` and `botscent/server`.
 45. npm and PyPI releases are cut from one tag with one version, their release notes give the sha256 of the vectors both passed, and both bundle the same signer key directories.

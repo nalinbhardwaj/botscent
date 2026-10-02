@@ -26,3 +26,12 @@ test("an existing middleware's response (a redirect) is kept and decorated", asy
   assert.equal(r.headers.get('location'), 'https://example.com/login')
   assert.match(r.headers.get('server-timing')!, /botscent;desc=/)
 })
+
+test('withBotscent(options) without existing middleware; options after an existing one', async () => {
+  const off = (await withBotscent({ transport: 'never' })(request(AGENT)))!
+  assert.equal(off.headers.get('x-middleware-next'), '1')
+  assert.equal(off.headers.get('server-timing'), null)
+  const both = (await withBotscent(() => new Response('ok'), { transport: 'never' })(request(AGENT)))!
+  assert.equal(await both.text(), 'ok')
+  assert.equal(both.headers.get('server-timing'), null)
+})

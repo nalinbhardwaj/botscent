@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { headers } from 'botscent'
+import { reportHeaders } from 'botscent'
 
 // useBotscent() is auto-imported by the module. It renders the server's value
 // ({ type: 'human', reasons: [] }) and follows the page's verdict after hydration.
@@ -10,7 +10,7 @@ const answer = ref('')
 async function send() {
   const response = await fetch('/api/visit', {
     method: 'POST',
-    headers: { 'content-type': 'application/json', ...headers('/api/visit') },
+    headers: { 'content-type': 'application/json', ...reportHeaders('/api/visit') },
     body: '{}',
   })
   answer.value = JSON.stringify(await response.json())

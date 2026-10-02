@@ -8,24 +8,38 @@
 // Server-Timing transport is on by default. Continuing is a response carrying
 // x-middleware-next, whose other headers Vercel adds to the final response.
 import type { Debug } from '../server/log.ts'
-import { applyTransport, inspect } from '../server/index.ts'
+import { transport } from '../server/adapter.ts'
+import { inspect } from '../server/index.ts'
 import { mutable, type TransportMode } from '../server/transport.ts'
 
-export { inspect, isVerified, readReport, combine, VERSION, type Verdict } from '../server/index.ts'
-
-export type BotscentVercelOptions = { transport?: TransportMode; debug?: Debug }
+export type BotscentVercelOptions = {
+  /** Whether an agent's document navigation carries the verdict to the page in Server-Timing.
+   * 'auto' (the default) and 'always': on, because Routing Middleware runs per request in front of
+   * Vercel's cache. 'never': off. */
+  transport?: TransportMode
+  /** Log each decision: true for console.debug, or a function that receives each line. */
+  debug?: Debug
+}
 type Result = Response | null | undefined | void
 export type VercelMiddleware = (request: Request, context?: unknown) => Result | Promise<Result>
 
 const next = (): Response => new Response(null, { headers: { 'x-middleware-next': '1' } })
 
-export function withBotscent(existing?: VercelMiddleware, options: BotscentVercelOptions = {}): VercelMiddleware {
+/** Wraps existing middleware, or none: `withBotscent(existing, options)`, or `withBotscent(options)`. */
+export function withBotscent(existing?: VercelMiddleware, options?: BotscentVercelOptions): VercelMiddleware
+export function withBotscent(options: BotscentVercelOptions): VercelMiddleware
+export function withBotscent(
+  first?: VercelMiddleware | BotscentVercelOptions,
+  second: BotscentVercelOptions = {},
+): VercelMiddleware {
+  const existing = typeof first === 'function' ? first : undefined
+  const options = typeof first === 'function' || first === undefined ? second : first
   return async (request, context) => {
     const response = (existing ? await existing(request, context) : undefined) ?? next()
     try {
       const verdict = await inspect(request, { debug: options.debug })
       const out = mutable(response)
-      applyTransport(out.headers, verdict, request, {
+      transport(out.headers, verdict, request, {
         send: (options.transport ?? 'auto') !== 'never',
         debug: options.debug,
       })
