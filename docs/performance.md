@@ -6,22 +6,22 @@ What the page half costs a page, measured in a real browser against the same pag
 
 On the reference device (defined below; roughly a budget phone's CPU), against the same page without the library:
 
-| What                               | Measured                                                                                              | Plan (section 8.7, principle 5)              |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| Start-up: the script and `start()` | **27.5–31.4 ms**, about 80% of it one `Intl.DateTimeFormat()` call                                    | under 2 ms: **not met**                      |
-| Long tasks                         | the library's start-up turns a light page's 25 ms load task into a 50–58 ms one (4 to 11 of 11 loads) | none: **not met**                            |
-| First paint and LCP, light page    | **+28 to +36 ms** (the paint waits for start-up)                                                      | measured, no number                          |
-| First paint and LCP, heavy page    | no change                                                                                             | measured, no number                          |
-| CLS                                | no change (0)                                                                                         | no DOM writes: met                           |
-| Work per trusted input             | 0.010–0.024 ms median; 0.56–0.77 ms when it reads the markers (at most every 300 ms)                  | microseconds: met except the marker read     |
-| INP, scripted visit                | no change (48 ms both ways)                                                                           | measured, no number                          |
-| Idle, visible                      | 7 callbacks in 30 s, 1.8–3.7 ms in all                                                                | nothing beyond the triggers: met             |
-| Idle, hidden                       | 6 callbacks in 30 s, no DOM reads                                                                     | the slow sample runs only while visible: met |
-| DOM churn, every frame             | 1.3–2.45 ms per second; the 250 ms debounce holds at 4 reads a second                                 | met                                          |
-| A day left open                    | 17,280 callbacks; heap 105 KB at rest, no growth after the JIT settles                                | met                                          |
-| Requests, storage, DOM writes      | none                                                                                                  | none: met                                    |
+| What                               | Measured                                                                             | Plan (section 8.7, principle 5)              |
+| ---------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------- |
+| Start-up: the script and `start()` | **4.7 ms** (27.5–31.4 ms before the fix in Findings 1)                               | under 2 ms: **not met**                      |
+| Long tasks                         | none (before the fix: 4 to 11 of 11 light-page loads)                                | none: met                                    |
+| First paint and LCP, light page    | **+4 ms** (+28 to +36 ms before the fix; the paint waits for start-up)               | measured, no number                          |
+| First paint and LCP, heavy page    | no change                                                                            | measured, no number                          |
+| CLS                                | no change (0)                                                                        | no DOM writes: met                           |
+| Work per trusted input             | 0.010–0.024 ms median; 0.56–0.77 ms when it reads the markers (at most every 300 ms) | microseconds: met except the marker read     |
+| INP, scripted visit                | no change (48 ms both ways)                                                          | measured, no number                          |
+| Idle, visible                      | 7 callbacks in 30 s, 1.8–3.7 ms in all                                               | nothing beyond the triggers: met             |
+| Idle, hidden                       | 6 callbacks in 30 s, no DOM reads                                                    | the slow sample runs only while visible: met |
+| DOM churn, every frame             | 1.3–2.45 ms per second; the 250 ms debounce holds at 4 reads a second                | met                                          |
+| A day left open                    | 17,280 callbacks; heap 105 KB at rest, no growth after the JIT settles               | met                                          |
+| Requests, storage, DOM writes      | none                                                                                 | none: met                                    |
 
-Almost all of the start-up cost is one line, and a behaviour-preserving fix takes start-up to **4.7 ms**. It also removes the long task and brings the light page's LCP cost down to **+4 ms** (see [Findings](#findings)).
+Almost all of the start-up cost was one line. The fix, applied on 3 October with detection unchanged, took start-up to **4.7 ms**, removed the long task and brought the light page's LCP cost down to **+4 ms** (see [Findings](#findings)). The budgets were tightened to match.
 
 ## Method
 
@@ -112,7 +112,7 @@ A CPU profile of start-up (10 loads, sampled every 20 µs) puts 6.7 ms of about 
 
 If the host page formats a date anyway, it would pay the same cost later: after the library has run, the page's first `toLocaleString()` is free, and before it, 5.9 ms. So on a page that formats dates, the library moves the cost earlier rather than adding it. On a page that does not, which includes most static pages, the cost is the library's alone.
 
-**Proposed fix (not applied here).** Compare the screen part of the profile first, and read the time zone only when it already matches. This is the same comparison, with the same detection and the same vectors, at a cost of 27 bytes gzipped:
+**The fix (applied 3 October).** Compare the screen part of the profile first, and read the time zone only when it already matches. This is the same comparison, with the same detection and the same vectors, at a cost of 27 bytes gzipped:
 
 ```ts
 // shapes.ts: split the profile
@@ -138,7 +138,7 @@ With it, measured with this harness (one full run, 11 loads per variant):
 | article: LCP added                               | +28 to +36 ms | +4 ms                |
 | `dist/botscent.js` gzipped                       | 4,970 B       | 4,997 B              |
 
-The unit and browser tests pass with it. Once it lands, the budgets should tighten: start-up from 48 to 12 ms, light-page LCP added from 48 to 16 ms (one frame), and the long-task rows gated at 0.
+The unit and browser tests pass with it, and the budgets were tightened with it: start-up from 48 to 12 ms, LCP added from 48 to 16 ms (one frame), and the long-task rows gated at 0.
 
 The remaining 4.7 ms is spread thinly across module evaluation (the registry tables), compiling the script, `start()` itself, and the descriptor and source reads, with no single hot spot. The plan's 2 ms target stays unmet on this reference device, which is slower than a mid-range phone. Whether 4.7 ms on a budget-phone CPU meets "under 2 ms on a mid-range phone" depends on the phone; the honest statement is the measured number and the device.
 

@@ -13,7 +13,15 @@ import {
   isMuse,
   type Credentials,
 } from './rules.ts'
-import { CLAUDE_ACTIVE, computerProfile, elementShape, globalShape, methodShape, sourceShape } from './shapes.ts'
+import {
+  CLAUDE_ACTIVE,
+  computerProfile,
+  elementShape,
+  globalShape,
+  methodShape,
+  screenProfile,
+  sourceShape,
+} from './shapes.ts'
 
 export type ProbeStatus = 'pending' | 'ok' | 'unsupported' | 'failed'
 
@@ -88,7 +96,8 @@ export function observe(sink: Sink): () => void {
   // Only a page whose screen already matches asks for the device list: no work for anyone else.
   const computer = () =>
     run('computer', () => {
-      if (computerProfile() !== GROK_COMPUTER) return
+      // The time zone only when the screen already matches: reading it is most of start-up otherwise.
+      if (!GROK_COMPUTER.startsWith(`${screenProfile()},`) || computerProfile() !== GROK_COMPUTER) return
       if (!navigator.mediaDevices) return false
       return navigator.mediaDevices.enumerateDevices().then((list) => !list.length && R.grok)
     })

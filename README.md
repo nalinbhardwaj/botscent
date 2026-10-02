@@ -7,7 +7,7 @@ Tells a website when software rather than a person is operating a visit, and nam
 Botscent has two halves that give the same small verdict:
 
 - **The server half** reads what one request declares: a [Web Bot Auth](https://datatracker.ietf.org/doc/draft-ietf-webbotauth-httpsig-protocol/) signature, verified against the signers' keys bundled in each release; a user-agent token that an AI agent, crawler or HTTP client publishes for itself; or the hosting platform's verified-bot field. It reads headers only, never the body, and calls no service. TypeScript (Node.js, Cloudflare Workers, Vercel, Deno, Bun) and Python.
-- **The page half** watches the document for evidence that an agent is operating it: the automation flag, the shapes and markers that agent browsers and extensions leave (ChatGPT's agent, Claude for Chrome, the Codex browser, Meta's Muse and others), and input that arrives while the document is hidden. Once seen, the document stays `agent`. It is about 5 KB gzipped and makes no network request.
+- **The page half** watches the document for evidence that an agent is operating it: the automation flag, the shapes and markers that agent browsers and extensions leave (ChatGPT's agent, Claude for Chrome, the Codex browser, Meta's Muse and others), and input that arrives while the document is hidden. Once seen, the document stays `agent`. It is about 5 KB gzipped, makes no network request, and its start-up and per-input costs are [measured and gated in CI](docs/performance.md).
 
 ```ts
 type Verdict = {

@@ -14,19 +14,19 @@
   },
   "budgets": {
     "startup.article.ms": {
-      "max": 48,
+      "max": 12,
       "target": 2,
-      "why": "Measured 27.5-31.4 ms (medians of six runs), about 80% of it the first Intl.DateTimeFormat() in computerProfile(). The ceiling sits under one long task (50 ms), so the library alone cannot make one on the reference device, with about 1.5x headroom for hardware the calibration evens out imperfectly. With the time zone read only when the screen matches, measured 4.7 ms: then tighten to 12."
+      "why": "Measured 4.7 ms (27.5-31.4 ms before the time zone was read only on a matching screen, 3 October). 12 ms leaves about 2.5x headroom for hardware the calibration evens out imperfectly; the plan's 2 ms is not met, with no single hot spot left."
     },
     "startup.feed.ms": {
-      "max": 48,
+      "max": 12,
       "target": 2,
-      "why": "As for the article page; start-up does not depend on the page (measured 28.0-31.5 ms; 4.9 ms with the lazy time zone)."
+      "why": "As for the article page; start-up does not depend on the page (measured 4.9 ms)."
     },
     "startup.cold.ms": {
-      "max": 48,
+      "max": 12,
       "target": 2,
-      "why": "The first document of a newly launched browser: measured 27.3-29.4 ms, no worse than warm (4.9 ms with the lazy time zone). Same ceiling."
+      "why": "The first document of a newly launched browser: measured 4.9 ms, no worse than warm. Same ceiling."
     },
     "firstSecond.article.ms": {
       "max": 1,
@@ -39,22 +39,20 @@
     "startup.article.longTasks": {
       "max": 0,
       "target": 0,
-      "gate": false,
-      "why": "Plan 8.7: no long tasks. Today start-up turns the article's 25 ms load task into a 50-58 ms one, a long task in 4 to 11 of 11 loads depending on the run. Not gated, since the count sits on the threshold; with the lazy time zone it is 0 of 11 (task 29 ms): then gate at 0."
+      "why": "Plan 8.7: no long tasks. Measured 0 of 11 loads (the load task 29 ms) since the time zone is read only on a matching screen; before, 4 to 11 of 11."
     },
     "startup.feed.longTasks": {
       "max": 0,
       "target": 0,
-      "gate": false,
-      "why": "As for the article page: 0 or 1 of 11 feed loads, where the page's own task is 15-30 ms. 0 with the lazy time zone."
+      "why": "As for the article page: 0 of 11."
     },
     "lcp.article.added": {
-      "max": 48,
-      "why": "Measured +28 to +36 ms (56-64 ms to 88-100 ms, every load): on a page this light the deferred script runs before the first paint, so the paint waits for start-up. The ceiling is the start-up budget, since the delay is start-up. With the lazy time zone, measured +4 ms: then tighten to 16 (one frame)."
+      "max": 16,
+      "why": "Measured +4 ms; on a page this light the deferred script runs before the first paint, so the paint waits for start-up. 16 ms is one frame. Before the lazy time zone it was +28 to +36 ms."
     },
     "lcp.feed.added": {
-      "max": 48,
-      "why": "Measured -8 to 0 ms: the feed paints after its own parsing, later than the library's start-up. Same ceiling as the article."
+      "max": 16,
+      "why": "Measured -8 to 0 ms: the feed paints after its own parsing. One frame, as for the article."
     },
     "cls.article.added": {
       "equals": 0,
