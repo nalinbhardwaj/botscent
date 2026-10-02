@@ -7,16 +7,10 @@
 // half as middleware: the verdict is Astro.locals.botscent. Astro's server output
 // runs at the origin, which cannot see a CDN in front of it, so the Server-Timing
 // transport is off unless set to 'always' here.
+import type { AstroIntegration } from 'astro'
 import type { Debug } from '../server/log.ts'
 
 export type BotscentAstroOptions = { transport?: 'always' | 'never'; debug?: Debug }
-
-type Hooks = {
-  injectScript(stage: 'page', content: string): void
-  addMiddleware(middleware: { entrypoint: string | URL; order: 'pre' | 'post' }): void
-  updateConfig(config: { vite: { plugins: unknown[] } }): void
-}
-export type AstroIntegration = { name: string; hooks: { 'astro:config:setup': (options: Hooks) => void } }
 
 const CONFIG = 'virtual:botscent/astro-config'
 

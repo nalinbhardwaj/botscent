@@ -5,7 +5,13 @@ export type Debug = boolean | ((line: string) => void) | undefined
 export type Log = ((line: string) => void) | null
 
 export function logger(debug: Debug): Log {
-  if (typeof debug === 'function') return (line) => debug(`[botscent] ${line}`)
+  // A sink that throws loses its line; it never changes a verdict or reaches the application.
+  if (typeof debug === 'function')
+    return (line) => {
+      try {
+        debug(`[botscent] ${line}`)
+      } catch {}
+    }
   if (debug === true || (debug === undefined && fromEnvironment())) return (line) => console.debug(`[botscent] ${line}`)
   return null
 }

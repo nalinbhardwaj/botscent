@@ -43,17 +43,12 @@ class BotscentMiddleware:
     def _finish(self, request, response):
         try:
             navigation = is_navigation(lambda name: request.headers.get(name), request.method)
-            value, no_store = transport(
-                response.headers.get("Server-Timing"),
-                request.botscent,
-                navigation,
-                self.transport,
-                time.time() * 1000,
-            )
-            if value is None:
+            current = response.headers.get("Server-Timing")
+            value, no_store = transport(current, request.botscent, navigation, self.transport, time.time() * 1000)
+            if value != current:
                 response.headers.pop("Server-Timing", None)
-            else:
-                response.headers["Server-Timing"] = value
+                if value is not None:
+                    response.headers["Server-Timing"] = value
             if no_store:
                 response.headers["Cache-Control"] = "no-store"
         except Exception:  # noqa: BLE001 - the middleware's own failure never reaches the app

@@ -40,13 +40,13 @@ class Botscent:
             if verdict is None:
                 return response
             navigation = is_navigation(lambda name: request.headers.get(name), request.method)
-            value, no_store = transport(
-                response.headers.get("Server-Timing"), verdict, navigation, self.transport, time.time() * 1000
-            )
-            if value is None:
-                response.headers.pop("Server-Timing", None)
-            else:
-                response.headers["Server-Timing"] = value
+            # Every Server-Timing field line, not only the first; the response is left alone unless its entry changes.
+            current = ", ".join(response.headers.getlist("Server-Timing")) or None
+            value, no_store = transport(current, verdict, navigation, self.transport, time.time() * 1000)
+            if value != current:
+                del response.headers["Server-Timing"]
+                if value is not None:
+                    response.headers["Server-Timing"] = value
             if no_store:
                 response.headers["Cache-Control"] = "no-store"
         except Exception:  # noqa: BLE001 - the extension's own failure never reaches the app

@@ -77,28 +77,38 @@ export async function request(url: string, userAgent: string): Promise<Fetched> 
 
 /** A Chrome, Chromium or Edge to drive: the given path, CHROME_PATH, an installed browser, or Playwright's. */
 export function findChrome(explicit?: string): string | null {
-  const env = process.env
+  return chromeCandidates(process.platform, process.env, homedir(), explicit).find((p) => existsSync(p)) ?? null
+}
+
+/** Where findChrome looks, in order, for one platform. */
+export function chromeCandidates(
+  platform: NodeJS.Platform,
+  env: Record<string, string | undefined>,
+  home: string,
+  explicit?: string,
+): string[] {
   const candidates: (string | undefined)[] = [explicit, env['CHROME_PATH']]
-  if (process.platform === 'darwin')
+  if (platform === 'darwin') {
     for (const app of ['Google Chrome', 'Chromium', 'Microsoft Edge', 'Brave Browser'])
       candidates.push(`/Applications/${app}.app/Contents/MacOS/${app}`)
-  else if (process.platform === 'win32')
+  } else if (platform === 'win32') {
     for (const base of [env['PROGRAMFILES'], env['PROGRAMFILES(X86)'], env['LOCALAPPDATA']])
       if (base)
         candidates.push(
           join(base, 'Google', 'Chrome', 'Application', 'chrome.exe'),
           join(base, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
         )
-      else
-        for (const name of ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'microsoft-edge'])
-          candidates.push(`/usr/bin/${name}`)
+  } else {
+    for (const name of ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'microsoft-edge'])
+      candidates.push(`/usr/bin/${name}`)
+  }
   const cache =
     env['PLAYWRIGHT_BROWSERS_PATH'] ??
-    (process.platform === 'darwin'
-      ? join(homedir(), 'Library', 'Caches', 'ms-playwright')
-      : process.platform === 'win32'
-        ? join(env['LOCALAPPDATA'] ?? homedir(), 'ms-playwright')
-        : join(homedir(), '.cache', 'ms-playwright'))
+    (platform === 'darwin'
+      ? join(home, 'Library', 'Caches', 'ms-playwright')
+      : platform === 'win32'
+        ? join(env['LOCALAPPDATA'] ?? home, 'ms-playwright')
+        : join(home, '.cache', 'ms-playwright'))
   try {
     for (const dir of readdirSync(cache)
       .filter((d) => /^chromium-\d+$/.test(d))
@@ -115,7 +125,7 @@ export function findChrome(explicit?: string): string | null {
       ])
         candidates.push(join(cache, dir, path))
   } catch {}
-  return candidates.find((p): p is string => !!p && existsSync(p)) ?? null
+  return candidates.filter((p): p is string => !!p)
 }
 
 /** Rejects with what was being waited for, rather than hanging. */
@@ -263,7 +273,8 @@ const SKIP = new Set([
   'coverage',
 ])
 const SOURCE = /\.(?:[cm]?[jt]sx?|vue|svelte|astro|html)$/
-const IMPORT = /(?:from\s*|import\s*\(?\s*|require\s*\(\s*)["'](botscent(?:\/[a-z-]+)?)["']/g
+// Any quoted specifier: imports, require, and configuration that names an entry (Nuxt's modules: ['botscent/nuxt']).
+const IMPORT = /["'](botscent(?:\/[a-z-]+)?)["']/g
 const TAG = /<script\b[^>]*\bsrc\s*=\s*["'][^"']*\/botscent(?:\.min)?\.js/i
 
 const installed = (root: string, name: string): string | null => {
@@ -334,7 +345,10 @@ function proxyState(root: string): Proxy | null {
       continue
     }
     if (!/["']botscent\/(next|vercel)["']/.test(now)) continue
-    if (/withBotscent\(\s*[^\s)]/.test(now)) return { file, state: 'wrapped' }
+    // withBotscent(existing), also under an alias: import { withBotscent as wrap } ... wrap(existing).
+    const names = ['withBotscent', ...[...now.matchAll(/withBotscent\s+as\s+([A-Za-z_$][\w$]*)/g)].map((m) => m[1]!)]
+    if (names.some((name) => new RegExp(`(?<![\\w$.])${name.replaceAll('$', '\\$')}\\(\\s*[^\\s)]`).test(now)))
+      return { file, state: 'wrapped' }
     let before: string | null = null
     try {
       before = execFileSync('git', ['-C', root, 'show', `HEAD:./${file}`], {
@@ -344,9 +358,13 @@ function proxyState(root: string): Proxy | null {
     } catch {}
     if (before === null) return { file, state: 'new' }
     if (before === now || /["']botscent\//.test(before)) return { file, state: 'unchanged' }
-    // The committed file had code of its own, and botscent's proxy now stands in its place.
-    const code = before.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '').trim()
-    return { file, state: code ? 'replaced' : 'new' }
+    const code = (text: string) => text.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '').trim()
+    if (!code(before)) return { file, state: 'new' }
+    // Replaced only when nothing is left but botscent's own lines; any other edit is beyond a text scan.
+    const rest = code(now)
+      .split('\n')
+      .filter((line) => line.trim() && !/["']botscent\/(next|vercel)["']/.test(line))
+    return { file, state: rest.length ? 'changed' : 'replaced' }
   }
   return null
 }

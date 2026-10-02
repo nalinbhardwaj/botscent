@@ -18,19 +18,27 @@ export function reportHeaders(verdict: Verdict, url: string | URL): Record<strin
   return entry ? { 'Botscent-Report': entry } : {}
 }
 
-/** Adds botscent=<entry> to opted-in POST forms to the same origin when they are serialised. */
+/** Adds botscent=<entry> to an opted-in form's own submission when it POSTs to the same origin.
+ * The submission is the one its submit event announced: that event has finished dispatching, so no
+ * listener can still cancel it, and was not canceled. form.submit() and new FormData(form) fire no
+ * submit event, and what code does with their data is not the form's to say, so they get nothing. */
 export function installFormField(current: () => Verdict): () => void {
-  const submitters = new WeakMap<EventTarget, HTMLElement | null>()
+  const submissions = new WeakMap<EventTarget, SubmitEvent>()
   const onSubmit = (event: Event) => {
-    if (event.target) submitters.set(event.target, (event as SubmitEvent).submitter ?? null)
+    if (event.target) submissions.set(event.target, event as SubmitEvent)
   }
   const onFormData = (event: Event) => {
     try {
       const form = event.target
       if (!(form instanceof HTMLFormElement)) return
+      const submit = submissions.get(form)
+      // A current target means the submit event is still dispatching: a listener serialising the form
+      // itself. The submission's own formdata comes later. (Firefox keeps eventPhase set after dispatch.)
+      if (!submit || submit.currentTarget) return
+      submissions.delete(form)
+      if (submit.defaultPrevented) return
       if (!form.hasAttribute('data-botscent-field') && !form.querySelector('[data-botscent-field]')) return
-      const submitter = submitters.get(form) as HTMLButtonElement | HTMLInputElement | null | undefined
-      submitters.delete(form)
+      const submitter = submit.submitter as HTMLButtonElement | HTMLInputElement | null
       const method = submitter?.hasAttribute('formmethod') ? submitter.formMethod : form.method
       const action = submitter?.hasAttribute('formaction') ? submitter.formAction : form.action
       if (method.toLowerCase() !== 'post' || !sameOrigin(action)) return

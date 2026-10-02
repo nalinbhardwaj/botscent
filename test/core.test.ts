@@ -27,13 +27,15 @@ test('vectors: combine', () => {
 })
 
 test('vectors: isVerified', () => {
-  for (const { verdict, verified } of vectors.is_verified) assert.equal(isVerified(verdict), verified, json(verdict))
+  for (const { verdict, name, verified } of vectors.is_verified)
+    assert.equal(isVerified(verdict, name), verified, `${json(verdict)} ${name}`)
 })
 
 test('a forged report never passes isVerified, alone or combined', () => {
   const forged = readReport('1;chatgpt;;signer.web-bot-auth.verified,signer.edge-verified-bot')
   assert.equal(isVerified(forged), false)
   assert.equal(isVerified(combine(HUMAN, forged)), false)
+  assert.equal(isVerified(combine(HUMAN, forged), 'chatgpt'), false)
 })
 
 test('reasons follow the catalogue, unknown ones after in their own order', () => {

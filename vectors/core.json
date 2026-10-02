@@ -396,6 +396,77 @@
         "reasons": []
       },
       "verified": false
+    },
+    {
+      "verdict": {
+        "type": "agent",
+        "agent_name": "chatgpt",
+        "reasons": [
+          "signer.web-bot-auth.verified"
+        ]
+      },
+      "name": "chatgpt",
+      "verified": true
+    },
+    {
+      "verdict": {
+        "type": "agent",
+        "agent_name": "chatgpt",
+        "reasons": [
+          "signer.web-bot-auth.verified"
+        ]
+      },
+      "name": "manus",
+      "verified": false
+    },
+    {
+      "verdict": {
+        "type": "agent",
+        "reasons": [
+          "signer.web-bot-auth.verified"
+        ]
+      },
+      "name": "chatgpt",
+      "verified": false
+    },
+    {
+      "verdict": {
+        "type": "agent",
+        "agent_name": "chatgpt",
+        "reasons": [
+          "signer.edge-verified-bot",
+          "signer.web-bot-auth.declared"
+        ]
+      },
+      "name": "chatgpt",
+      "verified": false,
+      "note": "the platform verified some bot; the name comes from a signature that failed"
+    },
+    {
+      "verdict": {
+        "type": "agent",
+        "agent_name": "devin",
+        "reasons": [
+          "ua.declared-agent-token",
+          "signer.edge-verified-bot"
+        ]
+      },
+      "name": "devin",
+      "verified": false,
+      "note": "the platform's field never verifies a name"
+    },
+    {
+      "verdict": {
+        "type": "agent",
+        "agent_name": "chatgpt",
+        "reasons": [
+          "signer.web-bot-auth.verified",
+          "page.ua.declared-agent-token"
+        ]
+      },
+      "name": "chatgpt",
+      "verified": false,
+      "note": "a combined verdict's name can come from the report"
     }
   ]
 }

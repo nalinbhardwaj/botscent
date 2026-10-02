@@ -1,14 +1,22 @@
 name: release
 
-# On every push to main. With pending changesets, open or update the release pull
-# request: versions bumped everywhere (scripts/version.ts), the changelog written,
-# and the output-change report in its body. With none, publish the version npm
-# does not have yet, with provenance through trusted publishing (no token), tag
-# it, create the GitHub release, and publish the same commit to PyPI from the
-# `pypi` environment, which PyPI's trusted publisher names.
+# After ci passes on main, or by hand to resume an unfinished release.
+#
+# With pending changesets: open or update the release pull request (versions bumped
+# everywhere by scripts/version.ts, the changelog written, the output-change report in
+# its body).
+#
+# With none, a release is one immutable commit, the tag v<version>. The tag is created
+# first, at the commit ci passed, before anything is published; every later step checks
+# out the tag, never the commit that triggered the run. Each step then does only what is
+# still missing, so running the workflow again finishes a release that stopped halfway:
+# npm (with provenance through trusted publishing, no token), PyPI (from the `pypi`
+# environment, which PyPI's trusted publisher names), and the GitHub release.
 
 on:
-  push:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -20,43 +28,86 @@ permissions: {}
 
 jobs:
   plan:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: read
+      actions: read
     outputs:
       version: ${{ steps.plan.outputs.version }}
+      sha: ${{ steps.plan.outputs.sha }}
       pending: ${{ steps.plan.outputs.pending }}
+      tag: ${{ steps.plan.outputs.tag }}
       npm: ${{ steps.plan.outputs.npm }}
       pypi: ${{ steps.plan.outputs.pypi }}
+      notes: ${{ steps.plan.outputs.notes }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
       - uses: actions/setup-node@v5
         with:
           node-version: '24'
       - id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
         run: |
+          head=$(git rev-parse HEAD)
           version=$(node -p "require('./package.json').version")
           pending=false
           for f in .changeset/*.md; do
             if [ -e "$f" ] && [ "$(basename "$f")" != README.md ]; then pending=true; fi
           done
+          release=false
+          if [ "$pending" = false ] && [ "$version" != 0.0.0 ]; then release=true; fi
+          # The release commit: the tag's, once it exists; otherwise the commit ci passed.
+          sha=$head
+          tag=false
+          if git rev-parse -q --verify "refs/tags/v$version" > /dev/null; then
+            sha=$(git rev-parse "v$version^{commit}")
+          elif [ "$release" = true ]; then
+            tag=true
+          fi
+          if [ "$release" = true ]; then
+            passed=$(gh api "repos/$REPO/actions/workflows/ci.yml/runs?head_sha=$sha&status=success" --jq .total_count)
+            if [ "$passed" = 0 ]; then echo "::error::ci has not passed on $sha"; exit 1; fi
+          fi
           on_npm=false
           npm view "botscent@$version" version > /dev/null 2>&1 && on_npm=true
           on_pypi=false
           curl -sf "https://pypi.org/pypi/botscent/$version/json" > /dev/null && on_pypi=true
-          release=false
-          if [ "$pending" = false ] && [ "$version" != 0.0.0 ]; then release=true; fi
-          npm=false; pypi=false
-          if [ "$release" = true ] && [ "$on_npm" = false ]; then npm=true; fi
-          if [ "$release" = true ] && [ "$on_pypi" = false ]; then pypi=true; fi
+          if [ "$release" = true ] && [ "$tag" = true ] && { [ "$on_npm" = true ] || [ "$on_pypi" = true ]; }; then
+            echo "::error::$version is published but v$version is not tagged: which commit it came from needs a person"
+            exit 1
+          fi
+          if [ "$on_npm" = true ]; then
+            published=$(npm view "botscent@$version" gitHead 2>/dev/null || true)
+            if [ -n "$published" ] && [ "$published" != "$sha" ]; then
+              echo "::error::npm's botscent@$version came from $published, not v$version ($sha)"
+              exit 1
+            fi
+          fi
+          has_release=false
+          gh release view "v$version" --repo "$REPO" > /dev/null 2>&1 && has_release=true
+          npm=false; pypi=false; notes=false
+          if [ "$release" = true ]; then
+            [ "$on_npm" = false ] && npm=true
+            [ "$on_pypi" = false ] && pypi=true
+            [ "$has_release" = false ] && notes=true
+          fi
           {
             echo "version=$version"
+            echo "sha=$sha"
             echo "pending=$pending"
+            echo "tag=$tag"
             echo "npm=$npm"
             echo "pypi=$pypi"
+            echo "notes=$notes"
           } >> "$GITHUB_OUTPUT"
-          echo "version $version; pending changesets: $pending; on npm: $on_npm; on PyPI: $on_pypi"
+          echo "version $version at $sha; pending changesets: $pending; tag to create: $tag; npm: $on_npm; PyPI: $on_pypi; GitHub release: $has_release"
 
   pull-request:
     needs: plan
@@ -69,6 +120,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
+          ref: ${{ needs.plan.outputs.sha }}
           fetch-depth: 0
       - uses: actions/setup-node@v5
         with:
@@ -84,7 +136,7 @@ jobs:
           {
             echo "Merging this publishes botscent $version to npm and PyPI from one commit."
             echo
-            echo "Before merging: replay the benchmark snapshots in the research repository (analysis/library) and add what moved below."
+            echo "Before merging: replay the benchmark snapshots in the research repository (analysis/library, \`--check\`) and add what moved below."
             echo
             node scripts/output-change.ts
           } > "$RUNNER_TEMP/body.md"
@@ -104,28 +156,17 @@ jobs:
             gh pr create --base main --head release --title "Release $VERSION" --body-file "$RUNNER_TEMP/body.md"
           fi
 
-  npm:
+  tag:
     needs: plan
-    if: needs.plan.outputs.npm == 'true'
+    if: needs.plan.outputs.tag == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
     permissions:
       contents: write
-      id-token: write
     steps:
       - uses: actions/checkout@v5
         with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v5
-        with:
-          node-version: '24'
-          cache: npm
-          registry-url: 'https://registry.npmjs.org'
-      - uses: astral-sh/setup-uv@v6
-      # Trusted publishing needs npm 11.5.1 or later; 12 is a new major with a narrower Node range.
-      - run: npm install -g npm@11
-      - run: npm ci
-      - run: npm run lint && npm run typecheck && npm test && npm run build
+          ref: ${{ needs.plan.outputs.sha }}
       - name: One version everywhere
         env:
           VERSION: ${{ needs.plan.outputs.version }}
@@ -133,37 +174,88 @@ jobs:
           grep -qx "version = \"$VERSION\"" python/pyproject.toml
           grep -q "VERSION: string = \"$VERSION\"" src/generated/core.ts
           grep -qx "VERSION = \"$VERSION\"" python/src/botscent/_generated.py
-      - name: The report, before the new tag exists
-        run: node scripts/output-change.ts > "$RUNNER_TEMP/changes.md"
-      - run: npm publish --access public
       - env:
-          GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.plan.outputs.version }}
+          SHA: ${{ needs.plan.outputs.sha }}
         run: |
-          git tag "v$VERSION"
+          git tag "v$VERSION" "$SHA"
           git push origin "v$VERSION"
-          awk -v heading="## $VERSION" '$0 == heading { keep = 1; next } /^## / { keep = 0 } keep' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
-          { echo; cat "$RUNNER_TEMP/changes.md"; } >> "$RUNNER_TEMP/notes.md"
-          gh release create "v$VERSION" --title "v$VERSION" --notes-file "$RUNNER_TEMP/notes.md"
+
+  npm:
+    needs: [plan, tag]
+    if: always() && needs.plan.outputs.npm == 'true' && contains(fromJSON('["success","skipped"]'), needs.tag.result)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: v${{ needs.plan.outputs.version }}
+      - name: The tag is the release commit
+        run: test "$(git rev-parse HEAD)" = "${{ needs.plan.outputs.sha }}"
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+      # Trusted publishing needs npm 11.5.1 or later; 12 is a new major with a narrower Node range.
+      - run: npm install -g npm@11
+      - run: npm ci
+      # ci passed on this commit (plan checked); this only builds what is published.
+      - run: npm run build
+      - run: npm publish --access public
 
   pypi:
-    needs: [plan, npm]
-    # After npm, or on its own when npm already has this version (a rerun after a PyPI failure).
-    if: always() && needs.plan.outputs.pypi == 'true' && (needs.npm.result == 'success' || needs.npm.result == 'skipped')
+    needs: [plan, tag]
+    if: always() && needs.plan.outputs.pypi == 'true' && contains(fromJSON('["success","skipped"]'), needs.tag.result)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: pypi
     permissions:
+      contents: read
       id-token: write
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: v${{ needs.plan.outputs.version }}
+      - name: The tag is the release commit
+        run: test "$(git rev-parse HEAD)" = "${{ needs.plan.outputs.sha }}"
       - uses: astral-sh/setup-uv@v6
       - run: uv build
         working-directory: python
-      - name: The version npm published
+      - name: The tag's version
         env:
           VERSION: ${{ needs.plan.outputs.version }}
         run: test -f "python/dist/botscent-$VERSION-py3-none-any.whl"
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: python/dist/
+
+  github-release:
+    needs: [plan, npm, pypi]
+    # Last, once both registries have the version: a release page means the release is complete.
+    if: always() && needs.plan.outputs.notes == 'true' && contains(fromJSON('["success","skipped"]'), needs.npm.result) && contains(fromJSON('["success","skipped"]'), needs.pypi.result)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: v${{ needs.plan.outputs.version }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: |
+          # Against the release before this one, not the tag just made.
+          since=$(git describe --tags --abbrev=0 --match 'v*' --exclude "v$VERSION" HEAD 2>/dev/null || true)
+          node scripts/output-change.ts ${since:+--since "$since"} > "$RUNNER_TEMP/changes.md"
+          awk -v heading="## $VERSION" '$0 == heading { keep = 1; next } /^## / { keep = 0 } keep' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+          { echo; cat "$RUNNER_TEMP/changes.md"; } >> "$RUNNER_TEMP/notes.md"
+          gh release create "v$VERSION" --verify-tag --title "v$VERSION" --notes-file "$RUNNER_TEMP/notes.md"

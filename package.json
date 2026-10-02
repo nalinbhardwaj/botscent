@@ -107,6 +107,7 @@
     "@types/express": "^5.0.6",
     "@types/node": "^24.0.0",
     "@types/react": "^19.3.0",
+    "astro": "^7.3.5",
     "express": "^5.2.1",
     "hono": "^4.13.12",
     "miniflare": "^4.20260730.0",
@@ -122,6 +123,7 @@
     "vue": "^3.5.43"
   },
   "peerDependencies": {
+    "astro": ">=4",
     "express": ">=4",
     "hono": ">=4",
     "next": ">=14",
@@ -146,6 +148,9 @@
       "optional": true
     },
     "svelte": {
+      "optional": true
+    },
+    "astro": {
       "optional": true
     }
   }

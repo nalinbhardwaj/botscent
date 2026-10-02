@@ -26,11 +26,22 @@ export type Sink = {
 const LATER_PASSES_MS = [1500, 5000]
 const SLOW_SAMPLE_MS = 5000
 
-/** Starts observation; returns a function that removes every listener, observer and timer. */
+/** Starts observation; returns a function that removes every listener, observer and timer, after
+ * which nothing reaches the sink, not even a promise that settles later. */
 export function observe(sink: Sink): () => void {
-  const run = (probe: string, read: () => boolean | void) => {
+  let live = true
+  // A reader returns false when the browser cannot run it, or a promise of its evidence while it
+  // waits for the browser; what settles after stop is dropped.
+  const run = (probe: string, read: () => boolean | void | Promise<string | false>) => {
     try {
-      sink.status(probe, read() === false ? 'unsupported' : 'ok')
+      const result = read()
+      if (result instanceof Promise) {
+        sink.status(probe, 'pending')
+        result.then(
+          (reason) => live && (reason && sink.hold(reason), sink.status(probe, 'ok')),
+          () => live && sink.status(probe, 'failed'),
+        )
+      } else sink.status(probe, result === false ? 'unsupported' : 'ok')
     } catch {
       sink.status(probe, 'failed')
     }
@@ -41,8 +52,7 @@ export function observe(sink: Sink): () => void {
       if (navigator.webdriver === true) sink.hold(R.webdriver)
       const ua = navigator.userAgent
       for (const [prefix, name] of Object.entries(PAGE_USER_AGENT_PREFIXES)) if (ua.startsWith(prefix)) declare(name)
-      const platform = PAGE_PLATFORMS[navigator.platform]
-      if (platform) declare(platform)
+      if (Object.hasOwn(PAGE_PLATFORMS, navigator.platform)) declare(PAGE_PLATFORMS[navigator.platform]!)
     })
   const declare = (name: string) => {
     sink.declare(name)
@@ -80,24 +90,14 @@ export function observe(sink: Sink): () => void {
     run('computer', () => {
       if (computerProfile() !== GROK_COMPUTER) return
       if (!navigator.mediaDevices) return false
-      navigator.mediaDevices.enumerateDevices().then(
-        (list) => {
-          if (!list.length) sink.hold(R.grok)
-        },
-        () => sink.status('computer', 'failed'),
-      )
+      return navigator.mediaDevices.enumerateDevices().then((list) => !list.length && R.grok)
     })
 
   const keyboard = () =>
     run('keyboard', () => {
       const kb = (navigator as { keyboard?: { getLayoutMap?: () => Promise<{ size: number }> } }).keyboard
       if (typeof kb?.getLayoutMap !== 'function') return false
-      kb.getLayoutMap().then(
-        (map) => {
-          if (map && map.size === 0) sink.hold(R.keyboard)
-        },
-        () => sink.status('keyboard', 'failed'),
-      )
+      return kb.getLayoutMap().then((map) => map?.size === 0 && R.keyboard)
     })
 
   const overlay = () =>
@@ -204,6 +204,7 @@ export function observe(sink: Sink): () => void {
   sink.status('input', 'ok')
 
   return () => {
+    live = false
     timers.forEach(clearTimeout)
     clearInterval(slow)
     if (pending !== undefined) clearTimeout(pending)

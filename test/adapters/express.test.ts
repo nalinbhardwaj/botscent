@@ -23,6 +23,22 @@ function app(options?: Parameters<typeof botscent>[0]) {
     res.writeHead(200, { 'Server-Timing': 'app;dur=3', 'Content-Type': 'text/html' })
     res.end('<p>page</p>')
   })
+  a.get('/raw', (_req, res) => {
+    res.setHeader('x-progressive', 'kept')
+    res.writeHead(200, [
+      'Set-Cookie',
+      'session=abc; Path=/',
+      'Set-Cookie',
+      'csrf=def; Path=/',
+      'Server-Timing',
+      'db;dur=1',
+      'Server-Timing',
+      'app;dur=2',
+      'Content-Type',
+      'text/html',
+    ])
+    res.end('<p>page</p>')
+  })
   a.get('/redirect', (_req, res) => {
     res.cookie('session', 'abc')
     res.redirect(303, '/elsewhere')
@@ -101,6 +117,21 @@ test("turned on: one entry after the application's own, with no-store, also thro
   assert.equal(person.headers.get('server-timing'), 'app;dur=3')
   const api = await fetch(`${on}/page`, { headers: { 'sec-fetch-dest': 'empty', 'user-agent': AGENT } })
   assert.equal(api.headers.get('server-timing'), 'db;dur=12')
+})
+
+test("writeHead's raw header list keeps every repeated header, with the transport off and on", async () => {
+  for (const [base, headers] of [
+    [off, { 'user-agent': 'Mozilla/5.0 Chrome/141' }],
+    [off, nav],
+    [on, nav],
+  ] as const) {
+    const r = await fetch(`${base}/raw`, { headers })
+    assert.deepEqual(r.headers.getSetCookie(), ['session=abc; Path=/', 'csrf=def; Path=/'])
+    assert.equal(r.headers.get('x-progressive'), 'kept')
+    assert.match(r.headers.get('server-timing')!, /^db;dur=1, app;dur=2(, botscent;desc="[^"]+")?$/)
+    assert.equal(r.headers.get('server-timing')!.includes('botscent'), base === on)
+    assert.equal(await r.text(), '<p>page</p>')
+  }
 })
 
 test('status, cookies and redirects are kept', async () => {

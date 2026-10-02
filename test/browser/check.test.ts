@@ -6,6 +6,7 @@ import { after, before, test } from 'node:test'
 import assert from 'node:assert/strict'
 import { chromium } from 'playwright'
 import { inBrowser } from '../../src/check/probe.ts'
+import { violation } from '../../src/check/evaluate.ts'
 import { html, serve, type TestServer } from './server.ts'
 
 let server: TestServer
@@ -60,6 +61,7 @@ test('a Content Security Policy that blocks the script', async () => {
   assert.equal(b.instance, null)
   assert.equal(b.blocked.length, 1, JSON.stringify(b.blocked))
   assert.match(b.blocked[0]!, /Content Security Policy/)
+  assert.match(violation(b.blocked[0]!), /^script \(script-src/, "Chrome's own wording parses")
 })
 
 test('page errors are reported', async () => {

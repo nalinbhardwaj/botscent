@@ -27,7 +27,7 @@ def test_vectors_combine():
 
 def test_vectors_is_verified():
     for case in VECTORS["is_verified"]:
-        assert core.is_verified(case["verdict"]) is case["verified"], case["verdict"]
+        assert core.is_verified(case["verdict"], case.get("name")) is case["verified"], case
 
 
 def test_non_ascii_digits_are_not_digits():

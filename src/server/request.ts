@@ -56,7 +56,8 @@ export function view(input: RequestLike): RequestView {
     } else if (rawUrl.startsWith('/')) target = rawUrl
   }
   const method = String((input as { method?: unknown }).method ?? 'GET').toUpperCase()
-  const host = header('host') ?? header(':authority') ?? url?.host ?? null
+  // HTTP/2's :authority is the target's authority; Host, when an HTTP/2 client sends it too, is not.
+  const host = header(':authority') ?? header('host') ?? url?.host ?? null
   let authority: string | null = null
   if (host) {
     authority = host.trim().toLowerCase()

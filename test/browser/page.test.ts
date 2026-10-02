@@ -350,33 +350,45 @@ describe('chromium: carriers', () => {
   })
 
   const form = (attrs: string, extra = '') =>
-    `<form id="f" ${attrs}><input name="q" value="1">${extra}<button id="go">go</button><button id="get" formmethod="get">get</button><button id="away" formaction="https://example.com/post">away</button></form>`
+    `<form id="f" ${attrs}><input name="q" value="1">${extra}<button id="go">go</button><button id="get" formmethod="get">get</button><button id="here" formaction="/echo">here</button></form>`
+  const CROSS = 'https://cross.example/post'
+  /** Records what a page POSTs to another origin, without leaving the test machine. */
+  const crossPosts = async (page: Page) => {
+    const bodies: string[] = []
+    await page.route(`${CROSS}*`, (route) => {
+      bodies.push(route.request().postData() ?? '')
+      return route.fulfill({ contentType: 'text/html', body: 'cross' })
+    })
+    return bodies
+  }
+  const ready = (page: Page, path: string) =>
+    page
+      .goto(server.origin + path)
+      .then(() => page.waitForFunction(() => (window as any).botscent?.verdict().type === 'agent'))
+  const keys = (page: Page) =>
+    page.evaluate(() => [...new FormData(document.getElementById('f') as HTMLFormElement)].map(([k]) => k))
 
-  test('the form field: POST forms to the same origin, at serialisation, for every way of submitting', async () => {
+  test("the form field: an opted-in form's own POST submission to the same origin", async () => {
     server.route('/form', { body: html({ body: form('method="post" action="/echo" data-botscent-field') }) })
     const { page } = await open('chromium', '/form')
-    const viaFormData = await page.evaluate(() => [...new FormData(document.getElementById('f') as HTMLFormElement)])
-    assert.deepEqual(viaFormData, [
-      ['q', '1'],
-      ['botscent', '1;;;browser.webdriver-flag'],
-    ])
+    await ready(page, '/form')
     const before = server.posted.length
     await Promise.all([page.waitForURL('**/echo'), page.click('#go')])
     assert.equal(server.posted.at(-1)!.body, 'q=1&botscent=1%3B%3B%3Bbrowser.webdriver-flag')
-    await page.goto(server.origin + '/form')
-    await page.waitForFunction(() => (window as any).botscent !== undefined)
-    await Promise.all([
-      page.waitForURL('**/echo'),
-      page.evaluate(() => (document.getElementById('f') as HTMLFormElement).submit()),
-    ])
-    assert.match(server.posted.at(-1)!.body, /botscent=/, 'form.submit()')
-    await page.goto(server.origin + '/form')
-    await page.waitForFunction(() => (window as any).botscent !== undefined)
+    await ready(page, '/form')
     await Promise.all([
       page.waitForURL('**/echo'),
       page.evaluate(() => (document.getElementById('f') as HTMLFormElement).requestSubmit()),
     ])
     assert.match(server.posted.at(-1)!.body, /botscent=/, 'requestSubmit()')
+    // No submit event announces these, and their data can go anywhere: nothing is added.
+    await ready(page, '/form')
+    assert.deepEqual(await keys(page), ['q'], 'new FormData(form)')
+    await Promise.all([
+      page.waitForURL('**/echo'),
+      page.evaluate(() => (document.getElementById('f') as HTMLFormElement).submit()),
+    ])
+    assert.equal(server.posted.at(-1)!.body, 'q=1', 'form.submit()')
     assert.equal(server.posted.length, before + 3)
     await page.context().close()
   })
@@ -384,35 +396,61 @@ describe('chromium: carriers', () => {
   test('the form field: never on GET, never cross-origin, never without opting in, never for a person', async () => {
     server.route('/form-get', { body: html({ body: form('method="get" action="/plain" data-botscent-field') }) })
     server.route('/form-plain', { body: html({ body: form('method="post" action="/echo"') }) })
-    server.route('/form-cross', {
-      body: html({ body: form('method="post" action="https://example.com/x" data-botscent-field') }),
-    })
     server.route('/form-marked', {
       body: html({ body: form('method="post" action="/echo"', '<input type="hidden" disabled data-botscent-field>') }),
     })
-    const { page } = await open('chromium', '/form-get')
-    const fields = async (path: string) => {
-      await page.goto(server.origin + path)
-      await page.waitForFunction(() => (window as any).botscent !== undefined)
-      return page.evaluate(() => [...new FormData(document.getElementById('f') as HTMLFormElement)].map(([k]) => k))
-    }
-    assert.deepEqual(await fields('/form-get'), ['q'], 'GET form')
-    assert.deepEqual(await fields('/form-plain'), ['q'], 'not opted in')
-    assert.deepEqual(await fields('/form-cross'), ['q'], 'cross-origin action')
-    assert.deepEqual(await fields('/form-marked'), ['q', 'botscent'], 'opted in by a marker element inside the form')
     server.route('/form-post', { body: html({ body: form('method="post" action="/echo" data-botscent-field') }) })
-    await page.goto(server.origin + '/form-post')
-    await page.waitForFunction(() => (window as any).botscent !== undefined)
+    server.route('/form-cross', { body: html({ body: form(`method="post" action="${CROSS}" data-botscent-field`) }) })
+    const { page } = await open('chromium', '/form-get')
+    const cross = await crossPosts(page)
+    const submit = async (path: string, button = '#go') => {
+      await ready(page, path)
+      await Promise.all([page.waitForURL((url) => url.pathname !== path), page.click(button)])
+      return server.posted.at(-1)!.body
+    }
+    await ready(page, '/form-get')
+    await Promise.all([page.waitForURL((url) => url.pathname === '/plain'), page.click('#go')])
+    assert.equal(new URL(page.url()).search, '?q=1', 'GET form')
+    assert.equal(await submit('/form-plain'), 'q=1', 'not opted in')
+    assert.match(await submit('/form-marked'), /^q=1&botscent=/, 'opted in by a marker element inside the form')
+    await ready(page, '/form-post')
     await Promise.all([page.waitForURL((url) => url.pathname === '/echo'), page.click('#get')])
     assert.equal(new URL(page.url()).search, '?q=1', 'a submitter with formmethod=get puts nothing in the URL')
+    await submit('/form-cross')
+    assert.deepEqual(cross, ['q=1'], 'cross-origin action')
+
+    // A canceled submission through a same-origin submitter, then form.submit() to the form's own
+    // cross-origin action: the canceled submitter must not decide where the later data goes.
+    await ready(page, '/form-cross')
+    await page.evaluate(() => {
+      const f = document.getElementById('f') as HTMLFormElement
+      f.addEventListener('submit', (e) => e.preventDefault(), { once: true })
+      ;(document.getElementById('here') as HTMLButtonElement).click()
+    })
+    await Promise.all([
+      page.waitForURL(CROSS),
+      page.evaluate(() => (document.getElementById('f') as HTMLFormElement).submit()),
+    ])
+    assert.deepEqual(cross, ['q=1', 'q=1'], 'stale submitter after a canceled submission')
+
+    // A submit listener that serialises the form itself and sends it elsewhere.
+    await ready(page, '/form-post')
+    const sent = await page.evaluate(() => {
+      const f = document.getElementById('f') as HTMLFormElement
+      let keys: string[] = []
+      f.addEventListener('submit', (e) => {
+        e.preventDefault()
+        keys = [...new FormData(f)].map(([k]) => k)
+      })
+      f.requestSubmit()
+      return keys
+    })
+    assert.deepEqual(sent, ['q'], 'new FormData(form) inside a submit listener')
     await page.context().close()
+
     const person = await open('chromium-clean', '/form-post')
-    assert.deepEqual(
-      await person.page.evaluate(() =>
-        [...new FormData(document.getElementById('f') as HTMLFormElement)].map(([k]) => k),
-      ),
-      ['q'],
-    )
+    await Promise.all([person.page.waitForURL('**/echo'), person.page.click('#go')])
+    assert.equal(server.posted.at(-1)!.body, 'q=1', 'a person')
     await person.page.context().close()
   })
 })
@@ -432,6 +470,51 @@ describe('chromium: lifecycle and failure', () => {
       }
     })
     assert.deepEqual(out, { same: true, events: 1, instance: 'object' })
+    await page.context().close()
+  })
+
+  test('start() from a listener of the first notification: one installation, which stop() removes', async () => {
+    server.route('/reenter', { body: html() })
+    const { page } = await open(
+      'chromium',
+      '/reenter',
+      `addEventListener('botscent', () => { window.__stops = [window.botscent.start(), window.botscent.start()] }, { once: true })`,
+    )
+    await page.waitForFunction(() => (window as any).__stops?.length === 2)
+    const started = await page.evaluate(() => (window as any).botscent.diagnostics().started)
+    assert.equal(started, true)
+    await page.evaluate(() => {
+      ;(window as any).__stops[0]()
+      const m = document.createElement('div')
+      m.id = 'claude-agent-stop-button'
+      document.body.appendChild(m)
+    })
+    await page.waitForTimeout(600)
+    assert.deepEqual(await page.evaluate(() => (window as any).botscent.diagnostics().started), false)
+    assert.deepEqual(await verdict(page), { type: 'agent', reasons: ['browser.webdriver-flag'] }, 'nothing after stop')
+    await page.context().close()
+  })
+
+  test('a probe that waits is pending until it settles, and what settles after stop() is dropped', async () => {
+    const { page } = await open(
+      'chromium-clean',
+      '/plain',
+      `(() => {
+        const prompt = new Proxy(window.prompt, { get: (t, k) => (k === 'name' ? '' : Reflect.get(t, k)) })
+        Object.defineProperty(window, 'prompt', { value: prompt, writable: true, configurable: true, enumerable: true })
+        const layout = new Promise((resolve) => { window.__layout = resolve })
+        Object.defineProperty(Navigator.prototype, 'keyboard', { get: () => ({ getLayoutMap: () => layout }), configurable: true })
+      })()`,
+    )
+    await page.waitForTimeout(200)
+    assert.equal(await page.evaluate(() => (window as any).botscent.diagnostics().probes.keyboard), 'pending')
+    await page.evaluate(() => {
+      ;(window as any).botscent.start()() // the running instance's stop
+      ;(window as any).__layout(new Map())
+    })
+    await page.waitForTimeout(200)
+    assert.deepEqual(await verdict(page), { type: 'human', reasons: [] }, 'one Codex signal, and the keyboard dropped')
+    assert.equal(await page.evaluate(() => (window as any).botscent.diagnostics().probes.keyboard), 'pending')
     await page.context().close()
   })
 

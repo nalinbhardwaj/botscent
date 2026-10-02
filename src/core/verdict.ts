@@ -82,14 +82,19 @@ export function decide(evidence: readonly Evidence[]): Verdict {
   return makeVerdict(ordered(evidence.map((e) => e.reason)), pickName(evidence))
 }
 
-/** True exactly when the request itself was verified: by a Web Bot Auth
- * signature against a bundled key, or by the hosting platform. A reason with
- * the `page.` prefix never counts. */
-export function isVerified(verdict: Verdict | null | undefined): boolean {
-  if (!verdict || !Array.isArray(verdict.reasons)) return false
-  return (
-    verdict.reasons.includes('signer.web-bot-auth.verified') || verdict.reasons.includes('signer.edge-verified-bot')
-  )
+/** True when the request itself was verified: by a Web Bot Auth signature
+ * against a bundled key, or by the hosting platform. With a name, true only
+ * when a verified signature names that agent; the platform's field verifies
+ * that some bot sent the request, not which one. A reason with the `page.`
+ * prefix never counts, and a named check fails on any verdict that holds one. */
+export function isVerified(verdict: Verdict | null | undefined, name?: string): boolean {
+  const reasons = verdict?.reasons
+  if (!Array.isArray(reasons)) return false
+  const signed = reasons.includes('signer.web-bot-auth.verified')
+  if (name === undefined) return signed || reasons.includes('signer.edge-verified-bot')
+  // A verified signer's host is a declaration with a name, and declarations name only when they all
+  // agree, so on inspect's verdict a name beside a verified signature is the signer's (contract 17).
+  return signed && verdict!.agent_name === name && !reasons.some((r) => r.startsWith('page.'))
 }
 
 /** Adds a page report's evidence to the request's. The report's reasons

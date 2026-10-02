@@ -4,7 +4,15 @@
 // page half, and a project whose proxy was replaced rather than wrapped.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { evaluate, exitCode, type Browser, type Check, type Observations, type Page } from '../src/check/evaluate.ts'
+import {
+  evaluate,
+  exitCode,
+  report,
+  type Browser,
+  type Check,
+  type Observations,
+  type Page,
+} from '../src/check/evaluate.ts'
 
 const NOW = 1_760_000_000_000
 const page = (headers: Record<string, string> = {}, extra: Partial<Page> = {}): Page => ({
@@ -181,7 +189,7 @@ test('a missing, unstarted or blind page half fails', () => {
     observe({ browser: browser({ instance: null, problems: ['ReferenceError: x is not defined'] }) }),
   )
   assert.equal(find(missing, 'page-script').outcome, 'fail')
-  assert.match(find(missing, 'page-script').observed, /ReferenceError/)
+  assert.match(find(missing, 'page-script').detail!, /ReferenceError/)
   assert.equal(exitCode(missing), 1)
   const idle = evaluate(observe({ browser: browser({}, { started: false }) }))
   assert.equal(find(idle, 'page-script').outcome, 'fail')
@@ -190,7 +198,12 @@ test('a missing, unstarted or blind page half fails', () => {
   assert.equal(find(evaluate(observe({ browser: blind })), 'page-verdict').outcome, 'fail')
   const broken = evaluate(observe({ browser: browser({}, { probes: { ...PROBES, keyboard: 'failed' } }) }))
   assert.equal(find(broken, 'probes').outcome, 'fail')
-  assert.equal(find(broken, 'probes').observed, 'failed: keyboard')
+  assert.equal(find(broken, 'probes').observed, '4 ok; failed: keyboard')
+  const waiting = evaluate(
+    observe({ browser: browser({}, { probes: { ...PROBES, keyboard: 'pending', credentials: 'unsupported' } }) }),
+  )
+  assert.equal(find(waiting, 'probes').outcome, 'unknown')
+  assert.equal(find(waiting, 'probes').observed, '3 ok; still waiting: keyboard; unsupported here: credentials')
 })
 
 test('a policy that blocks the script fails; a script from another origin is a risk, not a failure', () => {
@@ -204,11 +217,45 @@ test('a policy that blocks the script fails; a script from another origin is a r
     }),
   )
   assert.equal(find(blocked, 'csp').outcome, 'fail')
+  assert.equal(find(blocked, 'csp').observed, 'botscent.js was blocked: script (script-src)')
+  // A healthy install on a page whose policy blocks something else: context, never a fix to apply.
+  const image =
+    "Refused to load the image 'https://img.example/a.png?IMAGE_CANARY' because it violates the following Content Security Policy directive: \"img-src 'self'\"."
+  const other = evaluate(
+    observe({ self: page({ 'content-security-policy': "img-src 'self'" }), browser: browser({ blocked: [image] }) }),
+  )
+  assert.equal(find(other, 'csp').outcome, 'pass')
+  assert.equal(
+    find(other, 'csp').observed,
+    'a policy is set, and nothing of botscent was blocked; also blocked, not botscent: image (img-src)',
+  )
+  assert.equal(find(other, 'csp').fix, undefined)
   const cdn = evaluate(
     observe({ browser: browser({ scripts: ['https://cdn.example/npm/botscent/dist/botscent.js'] }) }),
   )
   assert.equal(find(cdn, 'script').outcome, 'unknown')
   assert.match(find(cdn, 'script').observed, /cdn\.example/)
+})
+
+test('--report carries only what botscent owns: its own entries, bounded text, no page detail', () => {
+  const image =
+    "Refused to load the image 'https://img.example/a.png?IMAGE_CANARY' because it violates the following Content Security Policy directive: \"img-src 'self'\"."
+  const o = observe({
+    self: page({
+      'server-timing':
+        'auth;desc="access_token=REVIEW_CANARY", botscent;desc="1;;1759300000000;ua.declared-agent-token"',
+    }),
+    browser: browser({
+      instance: null,
+      blocked: [image],
+      problems: ['TypeError at https://app.example/x?session=ERROR_CANARY'],
+    }),
+  })
+  const checks = evaluate(o)
+  const text = report(o, checks, exitCode(checks))
+  for (const canary of ['REVIEW_CANARY', 'IMAGE_CANARY', 'ERROR_CANARY']) assert.ok(!text.includes(canary), canary)
+  assert.match(text, /1;;1759300000000;ua\.declared-agent-token \(\+1 other entry\)/)
+  assert.match(find(checks, 'page-script').detail!, /ERROR_CANARY/, 'the terminal still shows the page error')
 })
 
 test('Server-Timing reaches pages only in secure contexts', () => {
@@ -220,7 +267,7 @@ test('Server-Timing reaches pages only in secure contexts', () => {
 
 test('a project: imports found, a wrapped proxy passes, a replaced one fails, none fails', () => {
   const project = (
-    proxy: { file: string; state: 'new' | 'wrapped' | 'replaced' | 'unchanged' } | null,
+    proxy: { file: string; state: 'new' | 'wrapped' | 'replaced' | 'changed' | 'unchanged' } | null,
     imports = ['botscent/next in proxy.ts'],
   ) => ({
     root: '/app',
@@ -240,6 +287,8 @@ test('a project: imports found, a wrapped proxy passes, a replaced one fails, no
   assert.equal(replaced.outcome, 'fail')
   assert.match(replaced.fix!, /withBotscent\(existing\) in middleware\.ts/)
   assert.equal(find(evaluate(observe({ project: project(null, []) })), 'adapters').outcome, 'fail')
+  const changed = find(evaluate(observe({ project: project({ file: 'proxy.ts', state: 'changed' }) })), 'adapters')
+  assert.equal(changed.outcome, 'unknown')
 })
 
 test('reachability: bot protection is unknown, an error page or no answer fails', () => {

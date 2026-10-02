@@ -19,9 +19,28 @@ const wheel = readdirSync(`${root}python/dist`).find((f) => f.endsWith('.whl'))!
 
 const install = (example: string) =>
   run('npm', ['install', '--no-audit', '--no-fund', '--force', '../botscent.tgz'], `${root}examples/${example}`)
+// The minimal quickstarts, type-checked as a consumer sees them: the packed types against the framework's own.
+const quickstart = (example: string, files: string[]) =>
+  run(
+    `${root}node_modules/.bin/tsc`,
+    [
+      '--ignoreConfig',
+      '--noEmit',
+      '--strict',
+      '--skipLibCheck',
+      '--module',
+      'nodenext',
+      '--target',
+      'es2022',
+      ...files,
+    ],
+    `${root}examples/${example}`,
+  )
 install('next')
+quickstart('next', ['quickstart/proxy.ts', 'quickstart/middleware.ts', 'quickstart/instrumentation-client.ts'])
 run('node_modules/.bin/next', ['build'], `${root}examples/next`)
 install('astro')
+quickstart('astro', ['quickstart.config.ts'])
 run('node_modules/.bin/astro', ['build'], `${root}examples/astro`, { BOTSCENT_EXAMPLE_TRANSPORT: 'always' })
 install('nuxt')
 run('node_modules/.bin/nuxt', ['build'], `${root}examples/nuxt`, { NUXT_TELEMETRY_DISABLED: '1' })

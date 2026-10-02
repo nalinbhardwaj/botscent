@@ -46,12 +46,16 @@ function create(): Instance {
   let transported: Evidence[] = []
   let snapshot: Verdict = HUMAN
   let stopObserving: (() => void) | null = null
+  // True while start() installs: evidence is held but nobody is told until everything is in place,
+  // so a listener that calls start() or stop() sees one finished installation.
+  let starting = false
   let log: ((line: string) => void) | null = null
   const listeners = new Set<(verdict: Verdict) => void>()
   const diag: Diagnostics = { version: VERSION, started: false, startedAt: null, probes: {}, transport: 'pending' }
   const ms = () => Math.round(performance.now())
 
   function recompute() {
+    if (starting) return
     const evidence = [...transported, ...evidenceOf(held, declaredName)]
     const next = decide(evidence)
     if (
@@ -78,7 +82,8 @@ function create(): Instance {
 
   function start(options: StartOptions = {}): () => void {
     if (options.debug && !log) log = (line) => console.debug(`[botscent] ${line}`)
-    if (stopObserving) return stop
+    if (stopObserving || starting) return stop
+    starting = true
     diag.started = true
     diag.startedAt = ms()
     log?.(`started ${VERSION} at ${diag.startedAt} ms`)
@@ -104,7 +109,8 @@ function create(): Instance {
           declaredName ??= name
         },
         status(probe, status) {
-          if (status !== 'ok' && diag.probes[probe] !== status) log?.(`probe ${probe}: ${status}`)
+          if (diag.probes[probe] !== status && (status !== 'ok' || diag.probes[probe] === 'pending'))
+            log?.(`probe ${probe}: ${status}`)
           diag.probes[probe] = status
         },
       })
@@ -115,6 +121,7 @@ function create(): Instance {
       stopObserve()
       stopForm()
     }
+    starting = false
     recompute()
     return stop
   }

@@ -5,7 +5,7 @@
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { VERSION } from '../generated/core.ts'
-import { evaluate, exitCode, type Check, type Observations } from './evaluate.ts'
+import { bare, evaluate, exitCode, report, type Check, type Observations } from './evaluate.ts'
 import { findChrome, inBrowser, request, scanProject } from './probe.ts'
 
 const USAGE = `Usage: botscent check <url> [options]
@@ -84,16 +84,12 @@ async function observe(options: Options): Promise<Observations> {
 }
 
 /** The URL without its query or fragment. */
-const bare = (url: string) => {
-  const u = new URL(url)
-  return u.origin + u.pathname
-}
-
 function lines(url: string, checks: Check[], exit: number): string {
   const width = Math.max(...checks.map((c) => c.id.length))
   const out = [`botscent check ${VERSION}: ${bare(url)}`]
   for (const c of checks) {
     let line = `${c.outcome.toUpperCase().padEnd(8)} ${c.id.padEnd(width)}  ${c.observed}`
+    if (c.detail) line += ` (${c.detail})`
     if (c.cause) line += `. Likely: ${c.cause}`
     if (c.fix) line += `. Fix: ${c.fix}`
     out.push(line)
@@ -107,33 +103,6 @@ function lines(url: string, checks: Check[], exit: number): string {
         : 'Installed.',
   )
   return out.join('\n')
-}
-
-function report(o: Observations, checks: Check[], exit: number): string {
-  const b = o.browser
-  const entry = (f: Observations['self'] | undefined) =>
-    !f ? 'not asked' : 'error' in f ? `error (${f.error})` : (f.headers['server-timing'] ?? 'no Server-Timing')
-  const rows = checks.map((c) => `| ${c.id} | ${c.outcome} | ${c.observed.replaceAll('|', '\\|')} |`)
-  const text = [
-    '<details><summary>botscent check report</summary>',
-    '',
-    `- check: ${VERSION}, Node ${process.version}, ${'chrome' in b ? b.chrome : 'skipped' in b ? b.skipped : `browser error: ${b.error}`}`,
-    `- page: ${'instance' in b && b.instance ? `botscent ${b.instance.diagnostics.version}` : 'no page half seen'}; project: ${'skipped' in o.project ? o.project.skipped : `botscent ${o.project.botscent ?? 'not installed'}`}`,
-    `- stack: ${checks.find((c) => c.id === 'stack')?.observed}`,
-    `- adapters: ${checks.find((c) => c.id === 'adapters')?.observed}`,
-    `- URL: ${bare(o.url)}`,
-    `- Server-Timing: check's request: ${entry(o.self)}; anonymous: ${entry(o.anonymous)}; origin: ${entry(o.origin)}; browser document: ${'entries' in b ? b.entries.join(', ') || 'none' : 'not seen'}`,
-    `- diagnostics: \`${'instance' in b && b.instance ? JSON.stringify(b.instance.diagnostics) : 'none'}\``,
-    `- exit: ${exit}`,
-    '',
-    '| check | outcome | observed |',
-    '| --- | --- | --- |',
-    ...rows,
-    '',
-    '</details>',
-  ].join('\n')
-  // No addresses: IPv4 literals become [address].
-  return text.replace(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g, '[address]')
 }
 
 async function main(argv: string[]): Promise<number> {

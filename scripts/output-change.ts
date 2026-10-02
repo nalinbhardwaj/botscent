@@ -50,7 +50,12 @@ if (!since) {
     `First release: ${names} names, ${tokens} user-agent tokens, ${Object.keys(keys).length} signers with ${Object.values(keys).flat().length} keys, and ${cases} request vectors.`,
   )
 } else {
-  lines.push(`## Output changes since ${since}`, '')
+  lines.push(
+    `## Output changes since ${since}`,
+    '',
+    'Coverage: what the request vectors and the registry pin. A changed page predicate or server rule that no vector exercises does not show here; the replay of the benchmark corpus (the research repository, `analysis/library`, with `--check`) covers the page half.',
+    '',
+  )
   // Vectors: every case whose verdict moved, and cases added or removed.
   const before = new Map<string, Verdict>(
     ((then('vectors/requests.json')?.cases ?? []) as { name: string; verdict: Verdict }[]).map((c) => [

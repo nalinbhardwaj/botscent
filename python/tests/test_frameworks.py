@@ -151,6 +151,13 @@ def flask_client():
     def page():
         return "<p>page</p>", 200, {"Server-Timing": 'db;dur=12, botscent;desc="1;old;1;stale"'}
 
+    @app.get("/timings")
+    def timings():
+        response = Response("<p>page</p>")
+        response.headers.add("Server-Timing", "db;dur=1")
+        response.headers.add("Server-Timing", "app;dur=2")
+        return response
+
     @app.get("/redirect")
     def moved():
         response = redirect("/elsewhere", 303)
@@ -181,6 +188,11 @@ def test_flask(flask_client):
     agent = c.get("/page", headers={"User-Agent": AGENT, "Sec-Fetch-Dest": "document"})
     assert agent.headers["Server-Timing"].startswith('db;dur=12, botscent;desc="1;chatgpt-user;')
     assert agent.headers["Cache-Control"] == "no-store"
+    # Separate Server-Timing field lines: kept as they are, or joined when the entry is added.
+    person = c.get("/timings", headers={"User-Agent": PERSON, "Sec-Fetch-Dest": "document"})
+    assert person.headers.getlist("Server-Timing") == ["db;dur=1", "app;dur=2"]
+    agent = c.get("/timings", headers={"User-Agent": AGENT, "Sec-Fetch-Dest": "document"})
+    assert agent.headers["Server-Timing"].startswith('db;dur=1, app;dur=2, botscent;desc="1;chatgpt-user;')
     r = c.get("/redirect", headers={"User-Agent": AGENT, "Sec-Fetch-Dest": "document"})
     assert r.status_code == 303 and r.headers["Location"] == "/elsewhere"
     assert "session=abc" in r.headers["Set-Cookie"]
@@ -189,3 +201,58 @@ def test_flask(flask_client):
     assert c.post("/echo", data=body, headers={"User-Agent": AGENT}).data == body
     with pytest.raises(RuntimeError, match="the application's own error"):
         c.get("/boom", headers={"User-Agent": AGENT})
+
+
+# --- request objects as the frameworks build them ----------------------------------
+
+
+def test_starlette_request_is_read_by_its_headers():
+    """A Starlette request is a mapping of its ASGI scope, not of headers."""
+    from starlette.requests import Request
+
+    import botscent
+    from botscent._server import view
+
+    scope = {
+        "type": "http",
+        "method": "GET",
+        "scheme": "https",
+        "path": "/a/b",
+        "raw_path": b"/a%2Fb",
+        "query_string": b"x=1",
+        "headers": [(b"host", b"example.com"), (b"user-agent", AGENT.encode())],
+    }
+    request = Request(scope)
+    assert botscent.inspect(request) == {
+        "type": "agent",
+        "agent_name": "chatgpt-user",
+        "reasons": ["ua.declared-agent-token"],
+    }
+    v = view(request)
+    assert (v.url, v.target, v.authority) == ("https://example.com/a%2Fb?x=1", "/a%2Fb?x=1", "example.com")
+
+
+def test_flask_request_target_is_the_one_sent():
+    """Werkzeug decodes the path; a signature covers the target as sent, so the view takes the
+    server's raw target, and has none when the server does not give it."""
+    from flask import Flask, request
+
+    from botscent._server import view
+
+    app = Flask(__name__)
+    with app.test_request_context("/a%2Fb?x=1", headers={"Host": "example.com"}):
+        assert request.path == "/a/b"
+        v = view(request)
+        assert (v.url, v.target) == ("http://example.com/a%2Fb?x=1", "/a%2Fb?x=1")
+    with app.test_request_context("/a%2Fb", headers={"Host": "example.com"}):
+        del request.environ["RAW_URI"], request.environ["REQUEST_URI"]
+        v = view(request)
+        assert (v.url, v.target, v.authority) == (None, None, "example.com")
+
+
+def test_http2_authority_wins_over_host():
+    from botscent._server import view
+
+    assert view({":authority": "different-origin.example", "host": "example.com"}).authority == (
+        "different-origin.example"
+    )

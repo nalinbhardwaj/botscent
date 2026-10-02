@@ -18,7 +18,7 @@ export function isNavigation(header: (name: string) => string | null, method: st
 }
 
 /** Server-Timing entries, split at commas outside quoted strings. */
-function entries(value: string): string[] {
+export function entries(value: string): string[] {
   const out: string[] = []
   let start = 0
   let quoted = false

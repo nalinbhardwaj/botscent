@@ -28,16 +28,23 @@ Every framework below has a tested app in [`examples/`](examples). Run `npx bots
 ### Next.js
 
 ```ts
-// instrumentation-client.ts: the page half, before hydration
+// instrumentation-client.ts (Next.js 15.3 or later): the page half, before hydration
 import 'botscent/auto'
 ```
 
+Before Next.js 15.3, which has no `instrumentation-client.ts`, render `<Botscent />` from `botscent/react` once in the root layout instead.
+
 ```ts
-// proxy.ts (middleware.ts before Next.js 16): the server half
+// proxy.ts (Next.js 16 or later): the server half
 export { proxy } from 'botscent/next'
 ```
 
-An existing proxy is wrapped, not replaced: `export const proxy = withBotscent(existingProxy)`, with `withBotscent` from `botscent/next`.
+```ts
+// middleware.ts (before Next.js 16): the server half
+export { middleware } from 'botscent/next'
+```
+
+An existing proxy or middleware is wrapped, not replaced: `export const proxy = withBotscent(existingProxy)` (`export const middleware = withBotscent(existingMiddleware)` before Next.js 16), with `withBotscent` from `botscent/next`.
 
 ```tsx
 'use client'
@@ -161,6 +168,8 @@ await fetch('/api/checkout', { method: 'POST', headers: { 'content-type': 'appli
 <form method="post" action="/checkout" data-botscent-field>...</form>
 ```
 
+The form gets a `botscent` field only on its own POST submission to the same origin (a click, Enter or `requestSubmit()`); `form.submit()` and `new FormData(form)` never get it, because their data can go anywhere. A form your code sends with `fetch` carries the report through `headers(url)` instead.
+
 On the server, a report never mixes with the request's own evidence unless you join them:
 
 ```ts
@@ -170,11 +179,14 @@ const own = await inspect(request) // what this request declared: use this for d
 const report = readReport(request.headers.get('botscent-report')) // what the page reported; reasons gain 'page.'
 const combined = combine(own, report) // for measurement: most agent wins
 if (isVerified(own)) {
-  // a verified signature or platform field, never a page report
+  // some bot proved who sent the request: a verified signature or the platform's verified-bot field
+}
+if (isVerified(own, 'chatgpt')) {
+  // a signature verified against ChatGPT's bundled keys
 }
 ```
 
-A page report can be forged by the page's own scripts, so access decisions use `isVerified` on the request's own verdict, never a reason string and never a report.
+A page report can be forged by the page's own scripts, and anyone can send the headers that produce a name, so access decisions use `isVerified` on the request's own verdict, never a reason string, a bare `agent_name` or a report. To let one agent through, pass its name: `isVerified(own) && own.agent_name === 'chatgpt'` can pair the platform's verification of some bot with a name that bot merely declared.
 
 ## How the request's verdict reaches the page
 
@@ -365,7 +377,7 @@ The page half makes no network request, writes no cookie or storage, and writes 
 
 ## Stability
 
-The behaviour is pinned by [the contract](spec/contract.md) and by shared test vectors that the TypeScript and Python halves must both pass. Signer keys are frozen into each release, so the server half makes no outbound request; a scheduled job opens a pull request when a signer's published keys change. Any release that changes a verdict for some visitor is a minor version, with an output-change report in its release notes.
+The behaviour is pinned by [the contract](spec/contract.md) and by shared test vectors that the TypeScript and Python halves must both pass. Signer keys are frozen into each release, so the server half makes no outbound request; a scheduled job opens a pull request when a signer's published keys change. Those keys are pinned as of the release, not checked live: a key a signer later removes still verifies in an installation that bundles it, so if you grant access on `isVerified`, keep the package current. Any release that changes a verdict for some visitor is a minor version, with an output-change report in its release notes.
 
 ## License
 

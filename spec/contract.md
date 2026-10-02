@@ -44,7 +44,7 @@ type Verdict = {
 function inspect(request: RequestLike, options?: InspectOptions): Promise<Verdict>
 function readReport(value: string | Verdict | null | undefined): Verdict | null
 function combine(request: Verdict, report: Verdict | null): Verdict
-function isVerified(verdict: Verdict): boolean
+function isVerified(verdict: Verdict, name?: string): boolean
 function isNavigation(request: RequestLike): boolean
 function applyTransport(headers: Headers, verdict: Verdict, request: RequestLike, options: { send: boolean; now?: number; debug?: Debug }): 'decorated' | 'scrubbed' | 'untouched'
 const VERSION: string
@@ -62,14 +62,14 @@ type InspectOptions = {
 def inspect(request, *, cf=None, now=None) -> Verdict: ...      # synchronous
 def read_report(value) -> Verdict | None: ...
 def combine(request: Verdict, report: Verdict | None) -> Verdict: ...
-def is_verified(verdict: Verdict) -> bool: ...
+def is_verified(verdict: Verdict, name=None) -> bool: ...
 VERSION: str
 ```
 
 14. `inspect` reads request headers, the method, the URL when given, and platform hints. It never reads a body or a page report, never makes a network request and never throws: on an internal failure it returns the verdict of the evidence gathered so far, at worst `{ type: 'human', reasons: [] }`. In TypeScript it returns a promise because WebCrypto's verification is asynchronous; in Python it is synchronous. Python's `request` is any object with a `headers` mapping (Django, Starlette, Flask and Werkzeug requests) or a mapping of headers; the method comes from `request.method` when present.
 15. `readReport` parses a page report: the wire string of section 9 or a verdict-shaped object (for a report passed as an argument). Anything malformed, over-long or of an unknown major version gives `null`. Every reason of a parsed report carries the `page.` prefix, so a report can never pass `isVerified`.
 16. `combine` adds a report's evidence to the request's: the result is an agent when either is, its reasons are the request's followed by the report's, and its name is the request's name when it has one, otherwise the report's. A missing or empty report returns the request verdict unchanged. A combined verdict is for measurement and adaptation, never for access.
-17. `isVerified(verdict)` is true exactly when `reasons` contains `signer.web-bot-auth.verified` or `signer.edge-verified-bot` without a prefix. Only `inspect` produces those.
+17. `isVerified(verdict)` is true exactly when `reasons` contains `signer.web-bot-auth.verified` or `signer.edge-verified-bot` without a prefix. Only `inspect` produces those. `isVerified(verdict, name)` is true exactly when `reasons` contains `signer.web-bot-auth.verified`, `agent_name` is `name`, and no reason has the `page.` prefix. On `inspect`'s verdict that binds the name to the signature: every signer with bundled keys has a name, a verified signer's host is a declaration, and declarations name only when they all agree (section 4). The platform's verified-bot field never satisfies a named check: it says that some bot was verified, not which one. So the access recipe for a particular agent is `isVerified(verdict, 'chatgpt')`, never `isVerified(verdict) && verdict.agent_name === 'chatgpt'`.
 
 ## 6. Declared user-agent tokens
 
@@ -89,7 +89,7 @@ VERSION: str
     - the Ed25519 signature verifies over the signature base built as in RFC 9421 section 2.5, with `@authority` lower-cased and without a default port.
 24. The request gets `signer.web-bot-auth.verified` when any Web Bot Auth signature verifies, otherwise `signer.web-bot-auth.declared` when any is present. Each signature's signer host is a declaration for naming, verified or not.
 25. Why a signature did not verify goes to the debug output only, never into the verdict.
-26. The library makes no request to refresh keys. Between a signer's rotation and an upgrade, its signatures are declared rather than verified.
+26. The library makes no request to refresh keys: it verifies against static pins, the signers' directories as the maintainers fetched them for that release (`fetched_at` in `registry/keys.json`, and in the release notes). That is not the same as checking a signer's live directory. A key a signer adds after the snapshot gives `declared` until the installation upgrades; a key a signer removes, because it rotated or because it leaked, stays `verified` in every installation that bundles it until that installation upgrades. Nothing inside a deployed copy can revoke it. An application that grants access on `isVerified` therefore takes on keeping the package current, and the age of its snapshot is the bound on how stale its trust can be.
 
 ## 8. Platform hints
 
@@ -147,7 +147,8 @@ ext     = *( %x21-7E except ";" )         ; ignored: room for later minor versio
 
 - Framework values render the server's snapshot (`{ type: 'human', reasons: [] }`) and follow the page's verdict after hydration, so hydration always matches.
 - A Next.js proxy cannot see headers the route sets later, and Next.js keeps one value per header, so on the agent navigations it decorates, its `Server-Timing` replaces one the route set. People's responses are untouched.
-- Vercel Routing Middleware also runs before the response exists, so it cannot remove an entry the response itself carries, and Vercel appends the middleware's `Server-Timing` to the response's own. Measured on a deployment whose static page carried a stale entry: a person received the stale entry, which the page rejects as stale, and an agent received both, which the page ignores as doubled. Both fail safe; neither replays a verdict.
+- Vercel Routing Middleware also runs before the response exists, so it cannot remove an entry the response itself carries, and Vercel appends the middleware's `Server-Timing` to the response's own. Measured on a deployment whose static page carried a stale entry: a person received the stale entry, which the page rejected as stale, and an agent received both, which the page ignored as doubled. That shows what happens to an old entry, not that an inherited entry is always harmless.
+- Freshness bounds how long an entry can be replayed; it does not show that the entry was written for this response. A fresh entry inherited from another source is accepted: for example a cache that ignores `Cache-Control: no-store` (a CDN rule that caches everything with its own TTL) and serves an agent's decorated page to a person within two minutes. So the transport is correct only where no cache or other response source can contribute a `botscent` entry that the adapter cannot remove. Adapters that run after every cache and remove inherited entries (item 30) meet that by construction; Vercel Routing Middleware and the Next.js proxy, which cannot remove an entry the response carries, and every origin adapter rely on the deployment for it. That is why origin adapters leave the transport off by default, and why the `always` option is the developer's statement that the condition holds. The server half's verdict does not depend on it.
 
 ## 11. Page half
 
@@ -159,7 +160,7 @@ function subscribe(listener: (verdict: Verdict) => void): () => void
 function subscribe<T>(select: (verdict: Verdict) => T, listener: (selected: T, verdict: Verdict) => void): () => void
 function headers(url: string | URL): Record<string, string>
 function diagnostics(): Diagnostics
-function isVerified(verdict: Verdict): boolean
+function isVerified(verdict: Verdict, name?: string): boolean
 const VERSION: string
 ```
 
@@ -173,7 +174,7 @@ const VERSION: string
 
 38. Nothing leaves the page unless the developer uses a carrier.
 39. `headers(url)` returns `{ 'Botscent-Report': <entry> }` when the verdict is an agent and `url` resolves to the page's own origin, and `{}` otherwise.
-40. A form opts in with the `data-botscent-field` attribute on the form or on an element inside it. When an opted-in form is serialised (submission, `requestSubmit()`, `submit()`, `new FormData(form)`), its entry list gains `botscent=<entry>` if the verdict is an agent, the effective method is POST (a submitter's `formmethod` counts) and the action is same-origin. Nothing is written to the DOM.
+40. A form opts in with the `data-botscent-field` attribute on the form or on an element inside it. Its own submission, the one a `submit` event announces (a click, Enter, `requestSubmit()`), gains `botscent=<entry>` in its entry list when that event finished dispatching without being canceled, the verdict is an agent, the effective method is POST (a submitter's `formmethod` counts) and the effective action is same-origin (a submitter's `formaction` counts). `form.submit()` and `new FormData(form)` fire no `submit` event, and the data they produce can be sent anywhere, so they never gain it; neither does a form serialised by a `submit` listener while that event is still dispatching. Code that sends a form's data itself uses `headers(url)`. Nothing is written to the DOM.
 41. For a report passed as an argument, the server accepts `verdict()`'s object through `readReport`.
 
 ## 13. Diagnostics and debug output
@@ -199,9 +200,10 @@ npx botscent check <url> [--origin <url>] [--project <dir>] [--chrome <path>] [-
 
 - It requests the page twice as a navigation: first as itself (`User-Agent: botscent-check/<version> (+https://botscent.nibnalin.me/check)`, a registered token), then at once with an empty user agent, so that a cache which stored the first response serves it to the second. With `--origin` it also requests the origin as itself, and names a hop that removes `Server-Timing` only when it saw both sides.
 - It opens the page in a local Chrome or Chromium over the DevTools protocol (which sets the webdriver flag, as any automation does) and reads the page half's `diagnostics()` and verdict, the entries the document carried, console errors and Content Security Policy violations. Without a browser those checks are `skipped`.
-- Run inside a project, or with `--project`, it reads the declared frameworks and every `botscent` import, and compares a Next.js proxy or Vercel middleware that uses `botscent/next` or `botscent/vercel` with its version at git `HEAD`: code of its own there and none now, without `withBotscent(existing)`, is a replaced proxy.
+- Run inside a project, or with `--project`, it reads the declared frameworks and every `botscent` import, and compares a Next.js proxy or Vercel middleware that uses `botscent/next` or `botscent/vercel` with its version at git `HEAD`: code of its own there and nothing now but botscent's own lines is a replaced proxy (a failure); a `withBotscent(existing)` call, also under an imported alias, is a wrap; any other edit is `changed`, which it reports as `unknown`, because a text scan cannot tell whether the old code still runs. A configuration that names an entry as a string (Nuxt's `modules: ['botscent/nuxt']`) counts as an import.
 - Each check is one line: an outcome (`pass`, `fail`, `unknown`, `skipped`), the observation, and for anything but a pass the likely cause and the fix. The checks, in order: `reachable`, `server-half`, `entry` (fresh and single), `no-store`, `person`, `cache`, `page-script`, `page-verdict`, `transport`, `probes`, `csp`, `script`, `stack`, `adapters`.
-- `--json` prints `{ check, url, checks: [{ id, outcome, observed, cause?, fix? }], exit }`. `--report` adds a block to paste into an issue: versions, the stack, the adapters found, the entry at each hop, the diagnostics and every check; it carries no query string, cookie or address.
+- `csp` fails only when a violation names botscent's own script; anything else the policy blocks is reported as context, by kind and directive without its URL, and never with a fix. `probes` tells apart `failed` (a fail), `pending` (the browser had not answered; `unknown`) and `unsupported` (reported, a pass).
+- `--json` prints `{ check, url, checks: [{ id, outcome, observed, detail?, cause?, fix? }], exit }`; `detail` holds the page's own text, such as its error messages. `--report` adds a block to paste into an issue, built only from what botscent owns or bounds: versions, the stack, the adapters found, botscent's own entry at each hop (other `Server-Timing` entries are counted, not copied), the diagnostics and each check's `observed`, never `detail`; it carries no query string, cookie or address.
 - Exit codes: `0` installed; `1` broken, a check failed; `2` unverified, neither half confirmed; `64` a usage error.
 
 ## 14. Releases

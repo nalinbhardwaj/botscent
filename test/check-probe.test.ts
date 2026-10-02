@@ -9,7 +9,7 @@ import { createServer, type IncomingHttpHeaders } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { request, scanProject } from '../src/check/probe.ts'
+import { chromeCandidates, request, scanProject } from '../src/check/probe.ts'
 
 function project(files: Record<string, string>, committed: Record<string, string> = {}) {
   const root = mkdtempSync(join(tmpdir(), 'botscent-project-'))
@@ -52,6 +52,24 @@ test('wrapped, new and unchanged proxies', () => {
   const u = scanProject(project({}, { 'middleware.ts': same }))
   assert.ok(!('skipped' in u))
   assert.deepEqual(u.proxy, { file: 'middleware.ts', state: 'unchanged' })
+})
+
+test('a wrap under another name is a wrap; an edit a scan cannot judge is changed, not replaced', () => {
+  const alias = `import { withBotscent as wrap } from 'botscent/next'\nimport { auth } from './auth'\nexport const proxy = wrap(auth)\n`
+  const a = scanProject(project({ 'proxy.ts': alias }, { 'proxy.ts': AUTH }))
+  assert.ok(!('skipped' in a))
+  assert.deepEqual(a.proxy, { file: 'proxy.ts', state: 'wrapped' })
+  const moved = `import { proxy as botscent } from 'botscent/next'\nimport { gate } from './gate'\nexport async function proxy(r) {\n  return (await gate(r)) ?? botscent(r)\n}\n`
+  const m = scanProject(project({ 'proxy.ts': moved }, { 'proxy.ts': AUTH }))
+  assert.ok(!('skipped' in m))
+  assert.deepEqual(m.proxy, { file: 'proxy.ts', state: 'changed' })
+})
+
+test("Nuxt's documented install, modules: ['botscent/nuxt'], is found", () => {
+  const root = project({ 'nuxt.config.ts': "export default defineNuxtConfig({ modules: ['botscent/nuxt'] })\n" })
+  const p = scanProject(root)
+  assert.ok(!('skipped' in p))
+  assert.deepEqual(p.imports, ['botscent/nuxt in nuxt.config.ts'])
 })
 
 test('imports are grouped by entry; a script tag counts; nested projects are left to --project', () => {
@@ -114,4 +132,21 @@ test("the two requests: check's own token, then an empty user agent, both as nav
   const port = (closed.address() as AddressInfo).port
   await new Promise((resolve) => closed.close(resolve))
   assert.deepEqual(await request(`http://127.0.0.1:${port}/`, ''), { error: 'ECONNREFUSED' })
+})
+
+test("browser discovery looks in each platform's own places", () => {
+  const none = '/nonexistent-playwright-cache'
+  const linux = chromeCandidates('linux', { PLAYWRIGHT_BROWSERS_PATH: none }, '/home/u')
+  assert.ok(linux.includes('/usr/bin/chromium'), linux.join('\n'))
+  assert.ok(linux.includes('/usr/bin/google-chrome'))
+  const win = chromeCandidates(
+    'win32',
+    { PROGRAMFILES: 'C:\\Program Files', PLAYWRIGHT_BROWSERS_PATH: none },
+    'C:\\Users\\u',
+  )
+  assert.ok(win.some((p) => p.endsWith('chrome.exe')))
+  assert.ok(!win.some((p) => p.startsWith('/usr/bin/')))
+  const mac = chromeCandidates('darwin', { PLAYWRIGHT_BROWSERS_PATH: none }, '/Users/u', '/x/chrome')
+  assert.equal(mac[0], '/x/chrome')
+  assert.ok(mac.includes('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'))
 })

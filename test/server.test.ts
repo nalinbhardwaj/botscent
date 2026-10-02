@@ -1,9 +1,11 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
+import http2 from 'node:http2'
+import { view } from '../src/server/request.ts'
 import { TOKENS } from '../src/generated/server.ts'
 import { inspectWith } from '../src/server/inspect.ts'
-import { inspect } from '../src/server/index.ts'
+import { inspect, isVerified } from '../src/server/index.ts'
 import { hasOurEntry, isNavigation, scrubServerTiming, serverTimingEntry } from '../src/server/timing.ts'
 import { matchTokens } from '../src/server/tokens.ts'
 import { decide } from '../src/core/verdict.ts'
@@ -69,6 +71,61 @@ test('debug output says why a signature did not verify', async () => {
   )
   assert.ok(lines.every((l) => l.startsWith('[botscent] ')))
   assert.ok(lines.at(-1)!.includes('verdict agent test-signer [signer.web-bot-auth.declared]'))
+})
+
+test("the platform's verified-bot field never verifies a name a failed signature declares", async () => {
+  const c = vectors.cases.find((x: { name: string }) => x.name === 'unknown keyid')
+  const v = await inspectWith(
+    registry,
+    { headers: new Headers(c.headers) },
+    { now: c.now, cf: { botManagement: { verifiedBot: true } } },
+  )
+  assert.deepEqual(v.reasons, ['signer.edge-verified-bot', 'signer.web-bot-auth.declared'])
+  assert.equal(v.agent_name, 'test-signer')
+  assert.equal(isVerified(v), true)
+  assert.equal(isVerified(v, 'test-signer'), false)
+})
+
+test('a signer host that names an inherited property is unknown, not a name', async () => {
+  const c = vectors.cases.find((x: { name: string }) => x.name === 'unknown keyid')
+  for (const host of ['constructor', '__proto__', 'tostring']) {
+    const headers = new Headers(c.headers)
+    headers.set('signature-agent', `"https://${host}"`)
+    const v = await inspect({ headers }, { now: c.now })
+    assert.equal(v.agent_name, undefined, host)
+    assert.equal(JSON.stringify(v), '{"type":"agent","reasons":["signer.web-bot-auth.declared"]}', host)
+  }
+})
+
+test("a Node HTTP/2 request's authority is :authority, not a Host header beside it", async () => {
+  const seen = new Promise<string | null>((resolve) => {
+    const server = http2.createServer((req, res) => {
+      resolve(view({ headers: req.headers, method: req.method, url: req.url }).authority)
+      res.end()
+      server.close()
+    })
+    server.listen(0, () => {
+      const client = http2.connect(`http://127.0.0.1:${(server.address() as { port: number }).port}`)
+      const req = client.request({ ':authority': 'different-origin.example', host: 'example.com' })
+      req.on('close', () => client.close())
+      req.resume()
+      req.end()
+    })
+  })
+  assert.equal(await seen, 'different-origin.example')
+})
+
+test('a debug sink that throws changes nothing', async () => {
+  const headers = { 'user-agent': 'Mozilla/5.0 (compatible; ChatGPT-User/1.0; +https://openai.com/bot)' }
+  const v = await inspect(
+    { headers },
+    {
+      debug: () => {
+        throw new Error('sink')
+      },
+    },
+  )
+  assert.equal(JSON.stringify(v), JSON.stringify(await inspect({ headers })))
 })
 
 test('tokens match only as whole tokens', () => {

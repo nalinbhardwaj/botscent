@@ -185,12 +185,13 @@ async function one(
     if (!type || (type.t === 'tok' && type.v === 'directory')) agentValue = str(agentMember)
   }
   const host = originHost(agentValue)
-  const name = host ? registry.signers[host] : undefined
+  // Own properties only: the host is untrusted, and "constructor" is a key of every object.
+  const name = host && Object.hasOwn(registry.signers, host) ? registry.signers[host] : undefined
   const fail = (why: string): Signature => ({ label, host, name, verified: false, why })
 
   try {
     if (!host) return fail('no https Signature-Agent origin for this signature')
-    const keys = registry.keys[host]
+    const keys = Object.hasOwn(registry.keys, host) ? registry.keys[host] : undefined
     if (!keys) return fail('signer not in the bundled registry')
     const components = input.list.map((c) => (c.item.t === 'str' ? c.item.v : ''))
     if (!components.includes('@authority') && !components.includes('@target-uri'))

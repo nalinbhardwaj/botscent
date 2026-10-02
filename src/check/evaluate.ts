@@ -4,10 +4,13 @@
 // each line gives the observation first and then a qualified cause.
 import type { Verdict } from '../core/verdict.ts'
 import { decode } from '../core/wire.ts'
-import { ourEntries } from '../server/timing.ts'
+import { VERSION } from '../generated/core.ts'
+import { entries, ourEntries } from '../server/timing.ts'
 
 export type Outcome = 'pass' | 'fail' | 'unknown' | 'skipped'
-export type Check = { id: string; outcome: Outcome; observed: string; cause?: string; fix?: string }
+/** observed is bounded and safe to share; detail holds the page's own text (its error messages),
+ * printed locally and never put in --report. */
+export type Check = { id: string; outcome: Outcome; observed: string; detail?: string; cause?: string; fix?: string }
 
 /** One HTTP response: the headers check reads (lower-case names) and hints from the HTML. */
 export type Page = { status: number; headers: Record<string, string>; scripts: string[]; markers: string[] }
@@ -35,7 +38,9 @@ export type Browser =
       scripts: string[]
     }
 
-export type Proxy = { file: string; state: 'new' | 'wrapped' | 'replaced' | 'unchanged' }
+/** replaced: the committed file had code and now holds only botscent's re-export; changed: it was
+ * edited in some other way, which a scan of its text cannot judge. */
+export type Proxy = { file: string; state: 'new' | 'wrapped' | 'replaced' | 'changed' | 'unchanged' }
 export type Project =
   | { skipped: string }
   | { root: string; botscent: string | null; frameworks: string[]; imports: string[]; proxy: Proxy | null }
@@ -269,7 +274,8 @@ function pageScript(o: Observations): Check {
     return {
       id,
       outcome: 'fail',
-      observed: `no botscent on the page${b.problems.length ? `; page errors: ${b.problems.slice(0, 3).join(' | ')}` : ''}`,
+      observed: `no botscent on the page${b.problems.length ? `; ${b.problems.length} page error${b.problems.length > 1 ? 's' : ''}` : ''}`,
+      ...(b.problems.length ? { detail: `page errors: ${b.problems.slice(0, 3).join(' | ')}` } : {}),
       cause: 'the page half is not loaded on this page, or a script error stopped it',
       fix: 'import botscent/auto in the client entry (Next.js: instrumentation-client.ts), add <Botscent />, or add <script defer src="/botscent.js"></script>',
     }
@@ -341,38 +347,79 @@ function probes(o: Observations): Check {
   const b = o.browser
   if (!('instance' in b) || !b.instance) return { id, outcome: 'skipped', observed: 'no page half to ask' }
   const all = Object.entries(b.instance.diagnostics.probes)
-  const bad = all.filter(([, s]) => s === 'failed').map(([p]) => p)
-  if (bad.length)
+  const named = (status: string) => all.filter(([, s]) => s === status).map(([p]) => p)
+  const [failed, pending, unsupported] = [named('failed'), named('pending'), named('unsupported')]
+  const ok = all.length - failed.length - pending.length - unsupported.length
+  const observed = [
+    `${ok} ok`,
+    failed.length && `failed: ${failed.join(', ')}`,
+    pending.length && `still waiting: ${pending.join(', ')}`,
+    unsupported.length && `unsupported here: ${unsupported.join(', ')}`,
+  ]
+    .filter(Boolean)
+    .join('; ')
+  if (failed.length)
     return {
       id,
       outcome: 'fail',
-      observed: `failed: ${bad.join(', ')}`,
+      observed,
       cause: 'a script on the page broke a browser API a probe reads',
       fix: 'run check with --report and open an issue with the report',
     }
-  const unsupported = all.filter(([, s]) => s === 'unsupported').map(([p]) => p)
-  return {
-    id,
-    outcome: 'pass',
-    observed: `${all.length} ok${unsupported.length ? `, unsupported here: ${unsupported.join(', ')}` : ''}`,
-  }
+  if (pending.length)
+    return {
+      id,
+      outcome: 'unknown',
+      observed,
+      cause: 'the browser had not answered these probes two seconds after load',
+      fix: 'run check again; if it repeats, open an issue with the --report output',
+    }
+  return { id, outcome: 'pass', observed }
+}
+
+/** A violation without its URL: what was refused, and the directive, e.g. "image (img-src)". */
+export function violation(text: string): string {
+  // Chrome: "Loading the script '…' violates …"; older Chrome and others: "Refused to load the image '…' because …".
+  const what =
+    /(?:Refused to (?:load|execute|apply|connect to|frame)|Loading|Executing|Applying)(?: the| an?)? ([a-z -]+?)(?: '|\s+because|\s+violates| from)/i.exec(
+      text,
+    )
+  const directive = /violates\b[^"']*?["']?([a-z]+(?:-[a-z]+)+)/i.exec(text)
+  return `${what?.[1]?.trim() ?? 'a resource'}${directive ? ` (${directive[1]})` : ''}`
 }
 
 function csp(o: Observations): Check {
   const id = 'csp'
   const b = o.browser
   const header = failed(o.self) ? undefined : o.self.headers['content-security-policy']
-  if ('blocked' in b && b.blocked.length)
+  if (!('blocked' in b))
+    return { id, outcome: 'skipped', observed: header ? 'a policy is set; no browser to test it' : 'no policy' }
+  // Only a violation that names botscent's own script is a botscent failure. Anything else the policy
+  // blocks is the site's own business, reported as context, never as something to loosen.
+  const ours = b.blocked.filter((t) => /\/botscent(?:\.min)?\.js/i.test(t))
+  const others = [...new Set(b.blocked.filter((t) => !ours.includes(t)).map(violation))]
+  const context = others.length ? `; also blocked, not botscent: ${others.join(', ')}` : ''
+  if (ours.length)
     return {
       id,
       outcome: 'fail',
-      observed: b.blocked[0]!,
-      cause: "the site's Content Security Policy blocked a script",
+      observed: `botscent.js was blocked: ${violation(ours[0]!)}`,
+      cause: "the site's Content Security Policy does not allow botscent.js",
       fix: "allow the script's origin in script-src, or serve botscent.js from your own origin",
     }
-  if (!('blocked' in b))
-    return { id, outcome: 'skipped', observed: header ? 'a policy is set; no browser to test it' : 'no policy' }
-  return { id, outcome: 'pass', observed: header ? 'a policy is set, and nothing was blocked' : 'no policy' }
+  const running = 'instance' in b && !!b.instance
+  if (!running && others.some((v) => v.includes('script')))
+    return {
+      id,
+      outcome: 'unknown',
+      observed: `the page half did not start, and the policy blocked ${others.join(', ')}`,
+      cause: 'if the page half is bundled into a blocked script, the policy stopped it; otherwise see page-script',
+    }
+  return {
+    id,
+    outcome: 'pass',
+    observed: `${header ? 'a policy is set, and nothing of botscent was blocked' : 'no policy'}${context}`,
+  }
 }
 
 function script(o: Observations): Check {
@@ -425,9 +472,17 @@ function adapters(o: Observations): Check {
     return {
       id,
       outcome: 'fail',
-      observed: `${imports}; ${p.proxy.file} no longer has the code it had at HEAD`,
+      observed: `${imports}; ${p.proxy.file} had code of its own at HEAD and now only re-exports botscent's`,
       cause: 'an existing proxy or middleware was replaced rather than wrapped',
       fix: `restore it and wrap it: export default withBotscent(existing) in ${p.proxy.file}`,
+    }
+  if (p.proxy?.state === 'changed')
+    return {
+      id,
+      outcome: 'unknown',
+      observed: `${imports}; ${p.proxy.file} changed since HEAD, and no withBotscent call was recognised`,
+      cause: 'check cannot tell from the text whether the existing proxy still runs',
+      fix: `confirm that ${p.proxy.file} still calls the code it had at HEAD, wrapped by withBotscent`,
     }
   return {
     id,
@@ -463,4 +518,46 @@ export function exitCode(checks: Check[]): 0 | 1 | 2 {
   if (checks.some((c) => c.outcome === 'fail')) return 1
   const confirmed = checks.some((c) => (c.id === 'page-script' || c.id === 'server-half') && c.outcome === 'pass')
   return confirmed ? 0 : 2
+}
+
+/** A URL without its query or fragment. */
+export function bare(url: string): string {
+  const u = new URL(url)
+  return u.origin + u.pathname
+}
+
+/** The block to paste into an issue, built only from what botscent owns or bounds: its own
+ * Server-Timing entries (others are counted, never copied), its diagnostics, and each check's
+ * observed text (never detail). */
+export function report(o: Observations, checks: Check[], exit: number): string {
+  const b = o.browser
+  const timing = (value: string | undefined) => {
+    if (!value) return 'no Server-Timing'
+    const ours = ourEntries(value)
+    const others = entries(value).length - ours.length
+    return `${ours.join(', ') || 'no botscent entry'}${others ? ` (+${others} other entr${others > 1 ? 'ies' : 'y'})` : ''}`
+  }
+  const entry = (f: Observations['self'] | undefined) =>
+    !f ? 'not asked' : 'error' in f ? 'error' : timing(f.headers['server-timing'])
+  const rows = checks.map((c) => `| ${c.id} | ${c.outcome} | ${c.observed.replaceAll('|', '\\|')} |`)
+  const text = [
+    '<details><summary>botscent check report</summary>',
+    '',
+    `- check: ${VERSION}, Node ${process.version}, ${'chrome' in b ? b.chrome : 'skipped' in b ? 'browser skipped' : 'browser error'}`,
+    `- page: ${'instance' in b && b.instance ? `botscent ${b.instance.diagnostics.version}` : 'no page half seen'}; project: ${'skipped' in o.project ? 'not scanned' : `botscent ${o.project.botscent ?? 'not installed'}`}`,
+    `- stack: ${checks.find((c) => c.id === 'stack')?.observed}`,
+    `- adapters: ${checks.find((c) => c.id === 'adapters')?.observed}`,
+    `- URL: ${bare(o.url)}`,
+    `- Server-Timing: check's request: ${entry(o.self)}; anonymous: ${entry(o.anonymous)}; origin: ${entry(o.origin)}; browser document: ${'entries' in b ? b.entries.join(', ') || 'none' : 'not seen'}`,
+    `- diagnostics: \`${'instance' in b && b.instance ? JSON.stringify(b.instance.diagnostics) : 'none'}\``,
+    `- exit: ${exit}`,
+    '',
+    '| check | outcome | observed |',
+    '| --- | --- | --- |',
+    ...rows,
+    '',
+    '</details>',
+  ].join('\n')
+  // A last guard for addresses in the bounded text: IPv4 literals become [address].
+  return text.replace(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g, '[address]')
 }

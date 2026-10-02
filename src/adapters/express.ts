@@ -29,17 +29,35 @@ export function botscent(
     inspect(request, { debug: options.debug }).then(
       (verdict) => {
         req.botscent = verdict
-        onHeaders(res, () => {
-          const headers = new Headers()
+        onHeaders(res, (given) => {
+          // Server-Timing as set on res and as passed to writeHead; every other header is left as it is.
+          const values: string[] = []
           const timing = res.getHeader('server-timing')
-          if (timing !== undefined)
-            headers.set('server-timing', Array.isArray(timing) ? timing.join(', ') : String(timing))
+          if (timing !== undefined) values.push(...[timing].flat().map(String))
+          const pairs = rawPairs(given)
+          for (const [name, value] of pairs ?? Object.entries(given ?? {}))
+            if (name.toLowerCase() === 'server-timing' && value !== undefined)
+              values.push(...[value].flat().map(String))
+          const headers = new Headers()
+          if (values.length) headers.set('server-timing', values.join(', '))
           const outcome = applyTransport(headers, verdict, request, { send, debug: options.debug })
-          if (outcome === 'untouched') return
+          if (outcome === 'untouched') return given
           const value = headers.get('server-timing')
-          if (value === null) res.removeHeader('server-timing')
-          else res.setHeader('server-timing', value)
-          if (outcome === 'decorated') res.setHeader('cache-control', 'no-store')
+          const set: [string, string][] = []
+          if (value !== null) set.push(['server-timing', value])
+          if (outcome === 'decorated') set.push(['cache-control', 'no-store'])
+          const owned = new Set(['server-timing', ...set.map(([name]) => name)])
+          for (const name of owned) res.removeHeader(name)
+          if (pairs) {
+            const kept = pairs.filter(([name]) => !owned.has(name.toLowerCase()))
+            return [...kept, ...set].flat()
+          }
+          if (!given) {
+            for (const [name, v] of set) res.setHeader(name, v)
+            return given
+          }
+          const kept = Object.fromEntries(Object.entries(given).filter(([name]) => !owned.has(name.toLowerCase())))
+          return { ...kept, ...Object.fromEntries(set) }
         })
         next()
       },
@@ -48,26 +66,34 @@ export function botscent(
   }
 }
 
-/** Runs listener once, just before the response's headers are written, with every
- * header the application set (including those passed to writeHead) already on res. */
-function onHeaders(res: ServerResponse, listener: () => void): void {
+type HeadersArgument = Record<string, unknown> | unknown[] | undefined
+
+/** writeHead's raw forms, [name, value, name, value, ...] or [[name, value], ...], as pairs;
+ * null for an object. Node accepts the flat form back for either. */
+function rawPairs(given: HeadersArgument): [string, unknown][] | null {
+  if (!Array.isArray(given)) return null
+  if (Array.isArray(given[0])) return (given as unknown[][]).map(([name, value]) => [String(name), value])
+  const pairs: [string, unknown][] = []
+  for (let i = 0; i + 1 < given.length; i += 2) pairs.push([String(given[i]), given[i + 1]])
+  return pairs
+}
+
+/** Runs listener once, just before the response's headers are written, with the headers argument
+ * of writeHead (if any); its result replaces that argument. Node itself merges the argument with
+ * the headers already on res, with its own rules for repeated names, so nothing here copies
+ * headers between the two. */
+function onHeaders(res: ServerResponse, listener: (given: HeadersArgument) => HeadersArgument): void {
   const writeHead = res.writeHead
   let fired = false
   res.writeHead = function (this: ServerResponse, statusCode: number, ...rest: unknown[]) {
     if (!fired) {
       fired = true
-      // writeHead(status, [message], [headers]): move the headers onto res first.
-      const headers = typeof rest[0] === 'string' ? rest[1] : rest[0]
-      if (headers && typeof headers === 'object') {
-        if (Array.isArray(headers)) {
-          for (let i = 0; i + 1 < headers.length; i += 2) this.setHeader(String(headers[i]), headers[i + 1] as string)
-        } else
-          for (const [name, value] of Object.entries(headers))
-            if (value !== undefined) this.setHeader(name, value as string)
-        rest = typeof rest[0] === 'string' ? [rest[0]] : []
-      }
+      // writeHead(status, [message], [headers])
+      const at = typeof rest[0] === 'string' ? 1 : 0
+      const given = rest[at]
       try {
-        listener()
+        const next = listener(given && typeof given === 'object' ? (given as HeadersArgument) : undefined)
+        if (next !== given && next !== undefined) rest[at] = next
       } catch {}
     }
     return (writeHead as (...args: unknown[]) => ServerResponse).call(this, statusCode, ...rest)

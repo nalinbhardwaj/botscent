@@ -93,12 +93,21 @@ def _reasons_of(verdict: object) -> list:
     return reasons if isinstance(reasons, list) else []
 
 
-def is_verified(verdict: object) -> bool:
-    """True exactly when the request itself was verified: by a Web Bot Auth
-    signature against a bundled key, or by the hosting platform. A reason with
-    the ``page.`` prefix never counts."""
+def is_verified(verdict: object, name: str | None = None) -> bool:
+    """True when the request itself was verified: by a Web Bot Auth signature
+    against a bundled key, or by the hosting platform. With a name, true only
+    when a verified signature names that agent; the platform's field verifies
+    that some bot sent the request, not which one. A reason with the ``page.``
+    prefix never counts, and a named check fails on any verdict that holds one."""
     reasons = _reasons_of(verdict)
-    return "signer.web-bot-auth.verified" in reasons or "signer.edge-verified-bot" in reasons
+    signed = "signer.web-bot-auth.verified" in reasons
+    if name is None:
+        return signed or "signer.edge-verified-bot" in reasons
+    return (
+        signed
+        and verdict.get("agent_name") == name
+        and not any(isinstance(r, str) and r.startswith("page.") for r in reasons)
+    )
 
 
 def combine(request: Verdict, report: Verdict | None) -> Verdict:

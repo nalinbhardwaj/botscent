@@ -67,24 +67,56 @@ def _headers_of(source) -> Callable[[str], str | None]:
     return lambda name: lowered.get(name.lower())
 
 
+def _raw_target(request) -> tuple[bool, str | None]:
+    """(is a framework request, its request target as sent). Frameworks decode the
+    path (``/a%2Fb`` becomes ``/a/b``), and a signature covers the target as sent, so
+    only the server's raw value counts: ASGI's ``raw_path``, or WSGI's ``RAW_URI``
+    (Gunicorn) or ``REQUEST_URI`` (Werkzeug's server, uWSGI). None when absent."""
+    scope = getattr(request, "scope", None)
+    if isinstance(scope, Mapping) and scope.get("type") in ("http", "websocket"):
+        raw = scope.get("raw_path")
+        if not isinstance(raw, bytes):
+            return True, None
+        query = scope.get("query_string") or b""
+        return True, raw.decode("latin-1") + (f"?{query.decode('latin-1')}" if query else "")
+    environ = getattr(request, "environ", None)
+    if not isinstance(environ, Mapping):
+        environ = getattr(request, "META", None)
+    if isinstance(environ, Mapping) and "REQUEST_METHOD" in environ:
+        raw = environ.get("RAW_URI") or environ.get("REQUEST_URI")
+        if isinstance(raw, str) and _ABSOLUTE.match(raw):
+            m = _URL_PARTS.match(raw)
+            raw = (m.group(3) or "/") + (m.group(4) or "") if m else None
+        return True, raw if isinstance(raw, str) and raw.startswith("/") else None
+    return False, None
+
+
 def view(request) -> RequestView:
     """A Django, Starlette, Flask or Werkzeug request, any object with a
-    ``headers`` mapping, or a mapping of headers itself."""
-    source = getattr(request, "headers", None) if not isinstance(request, Mapping) else request
-    header = _headers_of(source)
+    ``headers`` mapping, or a mapping of headers itself. A Starlette request is a
+    mapping too (of its ASGI scope), so ``headers`` is looked for first."""
+    source = getattr(request, "headers", None)
+    is_headers = source is None and isinstance(request, Mapping)
+    header = _headers_of(request if is_headers else source)
     method = str(getattr(request, "method", None) or "GET").upper()
-    raw_url = getattr(request, "url", None)
-    raw_url = str(raw_url) if raw_url is not None and not isinstance(request, Mapping) else None
+    host = header(":authority") or header("host")
+    framework, raw = _raw_target(request)
     url = target = None
-    if raw_url and _ABSOLUTE.match(raw_url):
-        url = raw_url
-        m = _URL_PARTS.match(raw_url)
-        target = (m.group(3) or "/") + (m.group(4) or "") if m else None
-    elif callable(getattr(request, "get_full_path", None)):
-        target = request.get_full_path()
-    elif raw_url and raw_url.startswith("/"):
-        target = raw_url
-    host = header("host") or header(":authority")
+    if framework:
+        # The framework's URL has a decoded path: rebuild it from the raw target, or leave it unknown.
+        scheme = getattr(request, "scheme", None) or getattr(getattr(request, "url", None), "scheme", None)
+        target = raw
+        if raw and host and isinstance(scheme, str):
+            url = f"{scheme.lower()}://{host}{raw}"
+    elif not is_headers:
+        raw_url = getattr(request, "url", None)
+        raw_url = str(raw_url) if raw_url is not None else None
+        if raw_url and _ABSOLUTE.match(raw_url):
+            url = raw_url
+            m = _URL_PARTS.match(raw_url)
+            target = (m.group(3) or "/") + (m.group(4) or "") if m else None
+        elif raw_url and raw_url.startswith("/"):
+            target = raw_url
     if not host and url:
         m = _URL_PARTS.match(url)
         host = m.group(2) if m else None
