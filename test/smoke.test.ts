@@ -31,3 +31,12 @@ test('the page entry and the script build expose exactly the reviewed surface', 
   const server = await import('../src/server/index.ts')
   assert.deepEqual(Object.keys(server).sort(), ['VERSION', 'combine', 'inspect', 'isVerified', 'readReport'])
 })
+
+test('one version, spelled for npm and for PyPI', async () => {
+  const { pep440 } = await import('../scripts/pep440.ts')
+  assert.equal(pep440('1.0.0'), '1.0.0')
+  assert.equal(pep440('1.0.0-rc.0'), '1.0.0rc0')
+  assert.equal(pep440('2.1.0-beta.3'), '2.1.0b3')
+  assert.equal(pep440('2.1.0-alpha.1'), '2.1.0a1')
+  assert.throws(() => pep440('1.0.0-next.0'))
+})

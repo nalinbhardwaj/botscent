@@ -36,6 +36,8 @@ jobs:
       actions: read
     outputs:
       version: ${{ steps.plan.outputs.version }}
+      pyversion: ${{ steps.plan.outputs.pyversion }}
+      prerelease: ${{ steps.plan.outputs.prerelease }}
       sha: ${{ steps.plan.outputs.sha }}
       pending: ${{ steps.plan.outputs.pending }}
       tag: ${{ steps.plan.outputs.tag }}
@@ -57,6 +59,10 @@ jobs:
         run: |
           head=$(git rev-parse HEAD)
           version=$(node -p "require('./package.json').version")
+          # PyPI spells a prerelease differently (1.0.0-rc.0 is 1.0.0rc0); npm puts it under `next`.
+          pyversion=$(node scripts/pep440.ts "$version")
+          prerelease=false
+          case "$version" in *-*) prerelease=true ;; esac
           pending=false
           for f in .changeset/*.md; do
             if [ -e "$f" ] && [ "$(basename "$f")" != README.md ]; then pending=true; fi
@@ -78,7 +84,7 @@ jobs:
           on_npm=false
           npm view "botscent@$version" version > /dev/null 2>&1 && on_npm=true
           on_pypi=false
-          curl -sf "https://pypi.org/pypi/botscent/$version/json" > /dev/null && on_pypi=true
+          curl -sf "https://pypi.org/pypi/botscent/$pyversion/json" > /dev/null && on_pypi=true
           if [ "$release" = true ] && [ "$tag" = true ] && { [ "$on_npm" = true ] || [ "$on_pypi" = true ]; }; then
             echo "::error::$version is published but v$version is not tagged: which commit it came from needs a person"
             exit 1
@@ -100,6 +106,8 @@ jobs:
           fi
           {
             echo "version=$version"
+            echo "pyversion=$pyversion"
+            echo "prerelease=$prerelease"
             echo "sha=$sha"
             echo "pending=$pending"
             echo "tag=$tag"
@@ -170,10 +178,11 @@ jobs:
       - name: One version everywhere
         env:
           VERSION: ${{ needs.plan.outputs.version }}
+          PYVERSION: ${{ needs.plan.outputs.pyversion }}
         run: |
-          grep -qx "version = \"$VERSION\"" python/pyproject.toml
+          grep -qx "version = \"$PYVERSION\"" python/pyproject.toml
           grep -q "VERSION: string = \"$VERSION\"" src/generated/core.ts
-          grep -qx "VERSION = \"$VERSION\"" python/src/botscent/_generated.py
+          grep -qx "VERSION = \"$PYVERSION\"" python/src/botscent/_generated.py
       - env:
           VERSION: ${{ needs.plan.outputs.version }}
           SHA: ${{ needs.plan.outputs.sha }}
@@ -205,7 +214,8 @@ jobs:
       - run: npm ci
       # ci passed on this commit (plan checked); this only builds what is published.
       - run: npm run build
-      - run: npm publish --access public
+      # A prerelease goes under `next`, so `npm install botscent` keeps the last release.
+      - run: npm publish --access public ${{ needs.plan.outputs.prerelease == 'true' && '--tag next' || '' }}
 
   pypi:
     needs: [plan, tag]
@@ -227,8 +237,8 @@ jobs:
         working-directory: python
       - name: The tag's version
         env:
-          VERSION: ${{ needs.plan.outputs.version }}
-        run: test -f "python/dist/botscent-$VERSION-py3-none-any.whl"
+          PYVERSION: ${{ needs.plan.outputs.pyversion }}
+        run: test -f "python/dist/botscent-$PYVERSION-py3-none-any.whl"
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: python/dist/
@@ -252,10 +262,12 @@ jobs:
       - env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.plan.outputs.version }}
+          PRERELEASE: ${{ needs.plan.outputs.prerelease }}
         run: |
           # Against the release before this one, not the tag just made.
           since=$(git describe --tags --abbrev=0 --match 'v*' --exclude "v$VERSION" HEAD 2>/dev/null || true)
           node scripts/output-change.ts ${since:+--since "$since"} > "$RUNNER_TEMP/changes.md"
           awk -v heading="## $VERSION" '$0 == heading { keep = 1; next } /^## / { keep = 0 } keep' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
           { echo; cat "$RUNNER_TEMP/changes.md"; } >> "$RUNNER_TEMP/notes.md"
-          gh release create "v$VERSION" --verify-tag --title "v$VERSION" --notes-file "$RUNNER_TEMP/notes.md"
+          gh release create "v$VERSION" --verify-tag --title "v$VERSION" --notes-file "$RUNNER_TEMP/notes.md" \
+            $([ "$PRERELEASE" = true ] && echo --prerelease)

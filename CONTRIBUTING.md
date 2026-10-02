@@ -22,3 +22,9 @@ The sign-off certifies that you wrote the change or otherwise have the right to 
 2. Add what identifies it: a user-agent token in `registry/tokens.json` (with a link to the vendor's own documentation of the token in the pull request), a Web Bot Auth signer in `registry/signers.json` and its keys in `registry/keys.json`, or a page declaration in `registry/page.json`.
 3. Run `npm run generate`, add a case to `scripts/vectors.ts` and run `npm run vectors`, then `node scripts/docs.ts`.
 4. Add a changeset (`npx changeset`, minor): any change to a verdict is a minor release.
+
+## Releasing
+
+Releases come from CI only (`.github/workflows/release.yml`): merging the release pull request tags the commit `ci` passed, then publishes npm (with provenance) and PyPI from that tag, then creates the GitHub release. If a step fails, running the workflow again finishes what is missing.
+
+To rehearse a release, enter changesets' prerelease mode first: `npx changeset pre enter rc`, add the changeset, and merge the release pull request. It publishes `x.y.z-rc.N` to npm under the `next` tag (so `npm install botscent` keeps the last release) and `x.y.zrcN` to PyPI, which pip installs only when asked (`pip install --pre`). `npx changeset pre exit` returns to plain releases.
