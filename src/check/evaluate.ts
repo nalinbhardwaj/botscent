@@ -244,6 +244,14 @@ function cache(o: Observations): Check {
       outcome: 'pass',
       observed: `not served from a shared cache${cc ? ` (Cache-Control: ${cc})` : ''}`,
     }
+  if (entriesOf(o.anonymous).length)
+    return {
+      id,
+      outcome: 'fail',
+      observed: `cached HTML (${hit}) carrying a botscent entry`,
+      cause: 'a cache stores decorated responses and serves them to everyone, whatever their Cache-Control says',
+      fix: 'turn the transport off, or exempt decorated responses from the cache rule',
+    }
   if (failed(o.self) || entriesOf(o.self).length === 0)
     return { id, outcome: 'pass', observed: `cached HTML (${hit}), and no entry to leak` }
   if (cacheHit(o.self.headers))

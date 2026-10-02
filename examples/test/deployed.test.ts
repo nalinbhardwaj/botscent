@@ -3,6 +3,8 @@
 //   BOTSCENT_DEPLOYED_SERVER        a deployed server example's origin (it answers /verdict), transport on
 //   BOTSCENT_DEPLOYED_PAGES         page URLs behind an adapter that decorates after the cache lookup
 //   BOTSCENT_DEPLOYED_CACHED_PAGES  page URLs behind a cache in front of the adapter (Workers Cache)
+//   BOTSCENT_DEPLOYED_UNSAFE_PAGES  page URLs behind a cache that ignores no-store, with the transport
+//                                   forced on: a misconfiguration that check must report as broken
 // Comma-separated where there are several. Every page must also pass the packed `botscent check`.
 //   BOTSCENT_DEPLOYED_PAGES=https://… node --test examples/test/deployed.test.ts
 import { describe, test } from 'node:test'
@@ -95,5 +97,22 @@ for (const url of list('BOTSCENT_DEPLOYED_CACHED_PAGES'))
         [],
       )
       assert.equal(r.exit, 0)
+    })
+  })
+
+for (const url of list('BOTSCENT_DEPLOYED_UNSAFE_PAGES'))
+  describe(`behind a cache that ignores no-store, transport forced on: ${url}`, () => {
+    test("a person receives the agent's fresh entry: the hazard contract section 10a describes", async () => {
+      await ask(url, AGENT_UA)
+      const person = await ask(url, '')
+      assert.ok(fresh(person.entry), `a person received ${person.all}`)
+    })
+    test('npx botscent check reports it: person and cache fail, the install is broken', async () => {
+      await ask(url, AGENT_UA)
+      const r = await check(url)
+      const outcome = (id: string) => r.checks.find((c) => c.id === id)?.outcome
+      assert.equal(outcome('person'), 'fail')
+      assert.equal(outcome('cache'), 'fail')
+      assert.equal(r.exit, 1)
     })
   })

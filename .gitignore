@@ -13,3 +13,7 @@ examples/botscent.tgz
 examples/next/package-lock.json
 examples/*/package-lock.json
 examples/*/.wrangler/
+examples/deployed/*/node_modules/
+examples/deployed/*/public/botscent.js
+examples/deployed/*/.netlify/
+examples/deployed/*/.wrangler/

@@ -1,0 +1,6 @@
+{
+  "name": "botscent-deploytest-origin",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-01",
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true }
+}

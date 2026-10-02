@@ -112,8 +112,18 @@ test('a cache that stores decorated responses: the person check fails, and the i
   )
   assert.equal(find(checks, 'person').outcome, 'fail')
   assert.match(find(checks, 'person').observed, /without agent evidence received botscent;desc="1;botscent-check;/)
-  assert.equal(find(checks, 'cache').outcome, 'unknown')
+  assert.equal(find(checks, 'cache').outcome, 'fail')
   assert.equal(exitCode(checks), 1)
+  // Both requests answered from the cache (measured behind nginx ignoring no-store, 2 October):
+  // the cache check must not read the stored entry as "decorated after the cache lookup".
+  const bothHits = evaluate(
+    observe({
+      self: page({ 'server-timing': stored, 'cache-control': 'no-store', 'x-cache': 'HIT' }),
+      anonymous: page({ 'server-timing': stored, 'cache-control': 'no-store', 'x-cache': 'HIT' }),
+    }),
+  )
+  assert.equal(find(bothHits, 'cache').outcome, 'fail')
+  assert.doesNotMatch(find(bothHits, 'cache').observed, /after the cache lookup/)
 })
 
 test("another visitor's stale entry on check's own request fails as foreign and stale", () => {

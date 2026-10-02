@@ -1,0 +1,11 @@
+[build]
+  publish = "public"
+
+[[edge_functions]]
+  path = "/*"
+  function = "botscent"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

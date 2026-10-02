@@ -1,0 +1,17 @@
+<!doctype html><meta charset="utf-8" /><meta name="viewport" content="width=device-width" />
+<title>
+  botscent deploy test: an agent's navigation (the edge function presents ChatGPT-User's user agent to inspect)
+</title>
+<script defer src="/botscent.js"></script>
+<h1>an agent's navigation (the edge function presents ChatGPT-User's user agent to inspect)</h1>
+<pre id="out">waiting for the page half</pre>
+<script>
+  addEventListener('load', () => setTimeout(() => {
+    const b = window.botscent, nav = performance.getEntriesByType('navigation')[0]
+    document.getElementById('out').textContent = JSON.stringify({
+      verdict: b && b.verdict(), diagnostics: b && b.diagnostics(),
+      serverTiming: nav && nav.serverTiming ? nav.serverTiming.map((e) => e.name + ' ' + e.description) : 'not exposed',
+      secure: isSecureContext, webdriver: navigator.webdriver, userAgent: navigator.userAgent,
+    }, null, 2)
+  }, 2000))
+</script>
