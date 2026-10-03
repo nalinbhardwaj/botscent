@@ -1,3 +1,5 @@
+[![Botscent — Detect AI agents on your site.](docs/assets/botscent-social.png)](https://botscent.nibnalin.me)
+
 # Botscent
 
 <!--
