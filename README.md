@@ -31,7 +31,7 @@ type Verdict = {
 
 ### What v1 promises
 
-Botscent 1.0 detects the agents in [Coverage](#coverage), with the evidence each is detected by, and names one only when that evidence identifies it. `human` means no agent evidence was seen; it is never proof of a person. Some evidence describes an agent's surface rather than who is at the keyboard, so a person working inside one is reported as that agent by design: the Codex in-app browser, Grok Bot's cloud computer, and a Muse or ChatGPT agent session the person has taken over. Out of scope: automation built to look like a person, crawler management and robots policy, and authorization. Comet and Windows assistive tools have not been measured.
+Botscent 1.0 detects the agents in [Coverage](#coverage), with the evidence each is detected by, and names one only when that evidence identifies it. `human` means no agent evidence was seen; it is never proof of a person. Some evidence describes an agent's surface rather than who is at the keyboard, so a person working inside one is reported as that agent by design: the Codex in-app browser, and a Muse or ChatGPT agent session the person has taken over. Out of scope: automation built to look like a person, crawler management and robots policy, and authorization. Grok Bot is named when its requests carry its Web Bot Auth signature; its unsigned traffic, from a cloud computer whose screen layout changed within a day, is not detected. Comet and Windows assistive tools have not been measured.
 
 ## Quickstart
 
@@ -247,7 +247,6 @@ Reasons, strongest first. A reason that names gives `agent_name` when every nami
 | `muse.credentials.accessor-family` | page    | yes, muse             | The credential methods are replaced by the accessor family Muse's cloud browser installs.                                                                 |
 | `instinct.credentials.wrappers`    | page    | yes, instinct         | The credential methods are wrapped the way Instinct's cloud desktop wraps them; counts only together with the GeeTest pair.                               |
 | `instinct.geetest.accessor-pair`   | page    | yes, instinct         | The GeeTest initialisers are the accessor pair Instinct installs; counts only together with the credential wrappers.                                      |
-| `grok.computer.profile`            | page    | yes, grok-bot         | The page runs on Grok Bot's cloud computer: its exact screen, window, pixel ratio and time zone, with no media devices.                                   |
 | `codex.prompt.anonymous-native`    | page    | yes, codex-browser    | window.prompt has the Codex in-app browser's shape; counts only with a second Codex shell signal.                                                         |
 | `codex.keyboard.empty-layout-map`  | page    | yes, codex-browser    | The keyboard layout map is empty, as in the Codex in-app browser; counts only with a second Codex shell signal.                                           |
 | `codex.overlay.shadow-root`        | page    | yes, codex-browser    | The Codex in-app browser's overlay is attached to the document; counts only with a second Codex shell signal.                                             |
@@ -274,7 +273,7 @@ Named agents: 100, from [the registry](registry/names.json). Software the regist
 | Codex in-app browser | OpenAI                  | `codex-browser`  | page: two of `codex.prompt.anonymous-native`, `codex.keyboard.empty-layout-map`, `codex.overlay.shadow-root` |
 | Devin                | Cognition               | `devin`          | user agent `Devin`                                                                                           |
 | Google-Agent         | Google                  | `google-agent`   | user agent `Google-Agent`                                                                                    |
-| Grok Bot             | Anysphere               | `grok-bot`       | signature from `cursorusercontent.com`; page: `grok.computer.profile`                                        |
+| Grok Bot             | Anysphere               | `grok-bot`       | signature from `cursorusercontent.com`                                                                       |
 | Instinct             | Spear Street Technology | `instinct`       | page: `instinct.credentials.wrappers` with `instinct.geetest.accessor-pair`                                  |
 | Manus                | Manus                   | `manus`          | signature from `api.manus.im`; user agent `Manus-User`                                                       |
 | Muse                 | Meta                    | `muse`           | page: `muse.credentials.accessor-family`                                                                     |

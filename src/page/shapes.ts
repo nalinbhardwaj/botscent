@@ -130,29 +130,3 @@ export function elementShape(el: Element): ElementShape {
     pointerEvents: style.pointerEvents,
   }
 }
-
-/** The screen (size, available area and its origin), the window (size and position) and the pixel ratio,
- * joined into one comparable string. availLeft and availTop are not in every engine; missing, they leave a
- * gap no profile matches. */
-export function screenProfile(): string {
-  const s = screen as Screen & { availLeft?: number; availTop?: number }
-  return [
-    s.width,
-    s.height,
-    s.availWidth,
-    s.availHeight,
-    s.availLeft,
-    s.availTop,
-    outerWidth,
-    outerHeight,
-    screenX,
-    screenY,
-    devicePixelRatio,
-  ].join()
-}
-
-/** The screen profile and the time zone. The first Intl.DateTimeFormat in a document costs milliseconds
- * (the time zone data is loaded then), so callers compare screenProfile() first. */
-export function computerProfile(): string {
-  return `${screenProfile()},${Intl.DateTimeFormat().resolvedOptions().timeZone}`
-}

@@ -11,7 +11,7 @@
       "display": "Grok Bot",
       "vendor": "Anysphere",
       "kind": "computer-use-agent",
-      "sources": ["signer cursorusercontent.com", "page grok.computer.profile"]
+      "sources": ["signer cursorusercontent.com"]
     },
     "manus": {
       "display": "Manus",

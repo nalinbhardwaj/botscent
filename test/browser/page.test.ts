@@ -112,35 +112,6 @@ describe('chromium', () => {
     await page.context().close()
   })
 
-  test("Grok Bot's computer: the exact VM profile with no media devices; one device and it is a person", async () => {
-    // The VM as its pages see it, with the device list given per case.
-    const vm = (devices: string) => `(() => {
-      const define = (owner, values) => { for (const [k, v] of Object.entries(values)) Object.defineProperty(owner, k, { get: () => v, configurable: true }) }
-      define(Screen.prototype, { width: 1280, height: 800, availWidth: 1280, availHeight: 743, availLeft: 0, availTop: 0 })
-      define(window, { outerWidth: 1280, outerHeight: 743, screenX: 0, screenY: 0, devicePixelRatio: 1 })
-      const options = Intl.DateTimeFormat.prototype.resolvedOptions
-      Intl.DateTimeFormat.prototype.resolvedOptions = function () { return { ...options.call(this), timeZone: 'UTC' } }
-      navigator.mediaDevices.enumerateDevices = () => Promise.resolve(${devices})
-    })()`
-    const grok = await open('chromium-clean', '/plain', vm('[]'))
-    await grok.page.waitForFunction(() => (window as any).botscent.verdict().type === 'agent')
-    assert.deepEqual(await verdict(grok.page), {
-      type: 'agent',
-      agent_name: 'grok-bot',
-      reasons: ['grok.computer.profile'],
-    })
-    await grok.page.context().close()
-    const person = await open(
-      'chromium-clean',
-      '/plain',
-      vm("[{ kind: 'audiooutput', deviceId: '', groupId: '', label: '' }]"),
-    )
-    await person.page.waitForTimeout(300)
-    assert.deepEqual(await verdict(person.page), { type: 'human', reasons: [] })
-    assert.equal(await person.page.evaluate(() => (window as any).botscent.diagnostics().probes.computer), 'ok')
-    await person.page.context().close()
-  })
-
   test('Instinct: the wrappers alone are nothing; the GeeTest pair three seconds later completes it', async () => {
     const { page } = await open(
       'chromium-clean',

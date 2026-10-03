@@ -106,6 +106,8 @@ The first run set the budgets. The gate then ran five times, and the only failur
 
 ### 1. Start-up is one call: the time zone
 
+_Later on 3 October the Grok Bot page rule that needed the time zone was removed (its VM's screen changed within a day, so the profile stopped matching), so start-up no longer reads it at all. The measurements below are the history that led there._
+
 A CPU profile of start-up (10 loads, sampled every 20 µs) puts 6.7 ms of about 8 ms of library JavaScript in `computerProfile()`. Nearly all of that is its `Intl.DateTimeFormat().resolvedOptions().timeZone`: the first `Intl.DateTimeFormat` in a document loads the time zone data. Timed alone on a fresh page it costs 5.9 ms unthrottled and 24 ms at 4x; a second call costs nothing.
 
 `computerProfile()` exists for one rule, Grok Bot's computer (one exact 1280×800 VM profile). It runs at start on every page for every visitor, although almost no screen matches. Without the time zone read, start-up is 1.5 ms unthrottled and 6.2 ms at 4x.
