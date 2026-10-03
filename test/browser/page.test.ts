@@ -138,7 +138,7 @@ describe('chromium', () => {
   })
 
   // Grok Bot's cloud computer as its pages see it, with each sign chosen per case.
-  const cloudComputer = (o: { fonts: string[]; utc: boolean; conditional: boolean; brand: boolean }) => `(() => {
+  const cloudComputer = (o: { fonts: string[]; conditional: boolean; brand: boolean }) => `(() => {
     const define = (owner, values) => { for (const [k, v] of Object.entries(values)) Object.defineProperty(owner, k, { get: () => v, configurable: true }) }
     define(Screen.prototype, { width: 1280, height: 800 })
     define(Navigator.prototype, { platform: 'Linux x86_64', userAgentData: { brands: ${o.brand ? "[{ brand: 'Google Chrome', version: '141' }]" : "[{ brand: 'Chromium', version: '141' }]"} } })
@@ -149,7 +149,6 @@ describe('chromium', () => {
       // The canvas normalises the font string (quotes may go), so match the family name alone.
       return fonts.some((f) => this.font.includes(f)) ? { width: m.width + 1 } : m
     }
-    ${o.utc ? "const options = Intl.DateTimeFormat.prototype.resolvedOptions; Intl.DateTimeFormat.prototype.resolvedOptions = function () { return { ...options.call(this), timeZone: 'UTC' } }" : ''}
     PublicKeyCredential.isConditionalMediationAvailable = () => Promise.resolve(${o.conditional})
     window.__webglAsked = 0
     const getContext = HTMLCanvasElement.prototype.getContext
@@ -173,9 +172,13 @@ describe('chromium', () => {
   }
 
   test("Grok Bot's cloud computer: all six signs, then five (one changed), on the host", async () => {
-    for (const utc of [true, false]) {
+    for (const cambria of [true, false]) {
       const { page, context } = await onLinux(
-        cloudComputer({ fonts: ['Ubuntu', 'Droid Sans'], utc, conditional: false, brand: true }),
+        cloudComputer({
+          fonts: ['Ubuntu', 'Droid Sans', ...(cambria ? ['Cambria'] : [])],
+          conditional: false,
+          brand: true,
+        }),
       )
       await page.waitForFunction(() => (window as any).botscent.verdict().type === 'agent')
       assert.deepEqual(
@@ -185,16 +188,14 @@ describe('chromium', () => {
           agent_name: 'grok-bot',
           reasons: ['grok.cloud-computer.environment'],
         },
-        utc ? 'six signs' : 'five signs',
+        cambria ? 'six signs' : 'five signs',
       )
       await context.close()
     }
   })
 
-  test('A person on a stock Ubuntu cloud desktop, even with SwiftShader forced: four signs, human', async () => {
-    const { page, context } = await onLinux(
-      cloudComputer({ fonts: ['Ubuntu'], utc: true, conditional: true, brand: true }),
-    )
+  test('A person on a stock Ubuntu cloud desktop, even with SwiftShader forced: three signs, human', async () => {
+    const { page, context } = await onLinux(cloudComputer({ fonts: ['Ubuntu'], conditional: true, brand: true }))
     await page.waitForTimeout(500)
     assert.deepEqual(await verdict(page), { type: 'human', reasons: [] })
     assert.equal(

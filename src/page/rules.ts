@@ -45,14 +45,15 @@ export const isCloudHost = (platform: string, userAgent: string): boolean =>
 export const isSoftwareRenderer = (renderer: string | null): boolean => !!renderer?.includes('SwiftShader')
 
 /** Grok Bot's cloud computer: on the host, at least 5 of these 6 signs, so one may change: a 1280x800
- * screen, the Ubuntu font, the Droid Sans font, conditional mediation unavailable, UTC, and Google Chrome
- * among the brands. A person on a stock Ubuntu cloud desktop holds 4, with or without SwiftShader forced on. */
+ * screen, the Ubuntu font, the Droid Sans font, conditional mediation unavailable, the Cambria font, and
+ * Google Chrome among the brands. A person on a stock Ubuntu cloud desktop holds 3, with or without
+ * SwiftShader forced on. The time zone is not a sign: Grok's computer now takes its user's. */
 export type GrokSigns = [
   screen: boolean,
   ubuntu: boolean,
   droid: boolean,
   noConditional: boolean,
-  utc: boolean,
+  cambria: boolean,
   brand: boolean,
 ]
 export const GROK_SIGNS_NEEDED = 5

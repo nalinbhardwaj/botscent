@@ -95,8 +95,8 @@ export function observe(sink: Sink): () => void {
       if (isCodexPrompt(sourceShape(window, 'prompt'))) sink.hold(R.prompt)
     })
 
-  // Grok Bot's computer, once, at the first idle moment after start, only on the cloud host: the cheap signs first, then the time
-  // zone, then conditional mediation, then (with 5 of 6) the renderer.
+  // Grok Bot's computer, once, at the first idle moment after start, only on the cloud host: the cheap signs first, then the
+  // Cambria font, then conditional mediation, then (with 5 of 6) the renderer.
   const computer = () =>
     run('computer', () => {
       if (!isCloudHost(navigator.platform, navigator.userAgent)) return
@@ -110,7 +110,7 @@ export function observe(sink: Sink): () => void {
         brands.some((b) => b.brand === 'Google Chrome'),
       ] as Parameters<typeof isGrokComputer>[0]
       if (signs.filter(Boolean).length < 3) return
-      signs[4] = Intl.DateTimeFormat().resolvedOptions().timeZone === 'UTC'
+      signs[4] = hasFont('Cambria')
       if (signs.filter(Boolean).length < 4) return
       const key = (window as { PublicKeyCredential?: { isConditionalMediationAvailable?: () => Promise<boolean> } })
         .PublicKeyCredential

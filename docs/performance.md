@@ -21,7 +21,7 @@ On the reference device (defined below; roughly a budget phone's CPU), against t
 | A day left open                    | 17,280 callbacks; heap 103 KB at rest, no growth after the JIT settles     | met                                          |
 | Requests, storage, DOM writes      | none                                                                       | none: met                                    |
 
-Start-up does no work for the two cloud-browser rules. Muse's renderer read happens only after its other clauses match, in a later task. Grok Bot's computer check runs once at the first idle moment (within 300 ms), and on any machine other than a Linux x86_64 Chrome 139 or later it returns after reading the platform and the user agent. Neither reads the time zone or the renderer on a person's machine; see [History](#history).
+Start-up does no work for the two cloud-browser rules. Muse's renderer read happens only after its other clauses match, in a later task. Grok Bot's computer check runs once at the first idle moment (within 300 ms), and on any machine other than a Linux x86_64 Chrome 139 or later it returns after reading the platform and the user agent. Neither reads a font or the renderer on a person's machine; see [History](#history).
 
 ## Method
 

@@ -95,10 +95,10 @@
       "id": "grok.cloud-computer.environment",
       "half": "page",
       "names": "grok-bot",
-      "summary": "Grok Bot's cloud computer: Chrome 139 or later on Linux x86_64 rendering WebGL with SwiftShader, with at least 5 of 6 signs (a 1280x800 screen, the Ubuntu and Droid Sans fonts, conditional mediation unavailable, UTC, the Google Chrome brand).",
+      "summary": "Grok Bot's cloud computer: Chrome 139 or later on Linux x86_64 rendering WebGL with SwiftShader, with at least 5 of 6 signs (a 1280x800 screen, the Ubuntu, Droid Sans and Cambria fonts, conditional mediation unavailable, the Google Chrome brand).",
       "collision_kind": "agent-surface",
-      "collisions": "A person working inside Grok Bot's own computer is reported as Grok Bot by design. A person on a stock Ubuntu cloud desktop at 1280x800 in UTC holds 4 of the 6 signs and no SwiftShader (measured 3 October); matching needs Chrome launched with --enable-unsafe-swiftshader and both remaining signs. Another product on the same machine image would be named grok-bot.",
-      "tested": "2026-10-03: Grok Bot 37 of 37 documents across three VM generations (28 September, 1-2 October, 3 October) and both network routes; 0 of 82 human documents; 0 of 210 other agents' documents"
+      "collisions": "A person working inside Grok Bot's own computer is reported as Grok Bot by design. A person on a stock Ubuntu cloud desktop at 1280x800 holds 3 of the 6 signs and no SwiftShader (measured 3 October); matching needs Chrome launched with --enable-unsafe-swiftshader and two more signs, among them Cambria, a Microsoft font. Another product on the same machine image would be named grok-bot.",
+      "tested": "2026-10-04: Grok Bot 67 of 67 documents with all six signs, from 28 September to 3 October, on both network routes and two time zones (UTC, and its user's); 0 of 90 human documents; 0 of 210 other agents' documents"
     },
     {
       "id": "codex.prompt.anonymous-native",
