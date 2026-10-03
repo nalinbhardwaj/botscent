@@ -1,5 +1,17 @@
 # Botscent
 
+<!--
+TODO (owner, later pass): differences between this README, its examples and the code, found while writing the site's docs (3 October). The site's docs follow the code.
+- Nuxt: the README uses `inspect(event.request)`; the contract and the example use `event.node.req`.
+- SvelteKit: the example calls `inspect` in a route, not in `hooks.server.ts`.
+- Express and Astro: the adapters accept `transport: 'always' | 'never'` only, but the README's transport section says every adapter takes the `'auto'` default.
+- Trust model: the sentence on letting one agent through garbles the recipe; it should be `isVerified(own, 'chatgpt')`, not `isVerified(own) && own.agent_name === 'chatgpt'`.
+- `npx botscent check`: the fix text for a replaced Next.js proxy says `export default withBotscent(existing)`; it should be `export const proxy = withBotscent(existing)`.
+- Express: the adapter does not add `botscent` to Express's `Request` type.
+- docs/performance.md: mixes pre-fix and post-fix numbers outside its summary.
+- `readReport`: its parameter is typed `unknown` in the published .d.ts.
+-->
+
 Tells a website when software rather than a person is operating a visit, and names the agent when the evidence allows.
 
 > Pre-release. The API follows [the contract](spec/contract.md) and is settling; nothing is published yet.
