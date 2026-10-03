@@ -27,11 +27,11 @@
       "note": "the time field is read and dropped"
     },
     {
-      "value": "1.4;muse;;muse.credentials.accessor-family;future;fields",
+      "value": "1.4;muse;;muse.cloud-browser.password-manager;future;fields",
       "report": {
         "type": "agent",
         "agent_name": "muse",
-        "reasons": ["page.muse.credentials.accessor-family"]
+        "reasons": ["page.muse.cloud-browser.password-manager"]
       },
       "note": "a newer minor version and its extra fields parse"
     },

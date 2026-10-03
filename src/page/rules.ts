@@ -7,7 +7,7 @@ import type { ElementShape, GlobalShape, MethodShape, SourceShape } from './shap
 export const R = {
   webdriver: 'browser.webdriver-flag',
   declared: 'ua.page-declared-engine',
-  muse: 'muse.credentials.accessor-family',
+  muse: 'muse.cloud-browser.password-manager',
   wrappers: 'instinct.credentials.wrappers',
   geetest: 'instinct.geetest.accessor-pair',
   prompt: 'codex.prompt.anonymous-native',
@@ -28,11 +28,20 @@ export type Credentials = [
   cma: MethodShape,
 ]
 
-/** Muse's cloud browser replaces all five with own, enumerable, non-configurable accessors. */
-export const isMuse = (c: Credentials): boolean =>
+/** 1Password replaces all five with own, enumerable, non-configurable accessors, on every page. Muse's
+ * cloud browser runs 1Password, so this alone is any 1Password user (decision 35). */
+export const isPasswordManagerFamily = (c: Credentials): boolean =>
   c.every(
     (s) => s.status === 'ok' && s.own && s.accessor && s.configurable === false && s.enumerable && s.getter && s.setter,
   )
+
+/** Muse's host, around that family: Linux x86_64 and Chrome 139 or later, which no longer falls back to
+ * SwiftShader without a flag or policy. Checked before the renderer is read (wiki/MUSE_RULE_RESEARCH.md). */
+export const isMuseHost = (platform: string, userAgent: string): boolean =>
+  platform === 'Linux x86_64' && Number(/\bChrome\/(\d+)/.exec(userAgent)?.[1] ?? 0) >= 139
+
+/** The last clause: WebGL renders in software, with SwiftShader, as on a cloud machine without a GPU. */
+export const isSoftwareRenderer = (renderer: string | null): boolean => !!renderer?.includes('SwiftShader')
 
 /** Instinct wraps get and create in anonymous one-argument functions and leaves the statics native. */
 export function isInstinctWrappers(c: Credentials): boolean {

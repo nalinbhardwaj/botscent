@@ -60,7 +60,7 @@ test('reasons follow the catalogue, unknown ones after in their own order', () =
 
 test('naming: declarations first and only when they agree; shapes only without declarations; generic never', () => {
   const d = (name: string): Evidence => ({ reason: 'ua.declared-agent-token', name, source: 'declaration' })
-  const s = (name: string): Evidence => ({ reason: 'muse.credentials.accessor-family', name, source: 'shape' })
+  const s = (name: string): Evidence => ({ reason: 'muse.cloud-browser.password-manager', name, source: 'shape' })
   const g: Evidence = { reason: 'browser.webdriver-flag' }
   assert.equal(nameOf([d('chatgpt'), d('chatgpt'), g]).name, 'chatgpt')
   assert.equal(nameOf([d('chatgpt'), d('manus')]).name, undefined)
@@ -86,7 +86,7 @@ test('decide: order and duplicates never change the verdict', () => {
     { reason: 'signer.edge-verified-bot' },
     { reason: 'ua.declared-agent-token', name: 'manus', source: 'declaration' },
     { reason: 'browser.webdriver-flag' },
-    { reason: 'muse.credentials.accessor-family', name: 'muse', source: 'shape' },
+    { reason: 'muse.cloud-browser.password-manager', name: 'muse', source: 'shape' },
     { reason: 'chatgpt.badge.active', name: 'chatgpt-chrome', source: 'shape' },
     { reason: 'hidden.input.trusted-pointerdown' },
     { reason: 'x.from-a-newer-server' },

@@ -42,7 +42,7 @@ def test_decide_is_order_and_duplicate_independent():
         Evidence("signer.edge-verified-bot"),
         Evidence("ua.declared-agent-token", "manus", "declaration"),
         Evidence("browser.webdriver-flag"),
-        Evidence("muse.credentials.accessor-family", "muse", "shape"),
+        Evidence("muse.cloud-browser.password-manager", "muse", "shape"),
         Evidence("x.from-a-newer-server"),
     ]
     rng = random.Random(7)

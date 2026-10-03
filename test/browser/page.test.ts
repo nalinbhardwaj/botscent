@@ -94,22 +94,47 @@ describe('chromium', () => {
     await page.context().close()
   })
 
-  test('Muse: the credential accessor family', async () => {
-    const { page } = await open(
-      'chromium-clean',
-      '/plain',
-      `(() => {
-        const accessor = (owner, name) => { const original = owner[name]; Object.defineProperty(owner, name, { get() { return original }, set(v) {}, enumerable: true, configurable: false }) }
-        accessor(navigator.credentials, 'get'); accessor(navigator.credentials, 'create')
-        for (const name of ['getClientCapabilities', 'isUserVerifyingPlatformAuthenticatorAvailable', 'isConditionalMediationAvailable']) accessor(PublicKeyCredential, name)
-      })()`,
-    )
+  // 1Password's accessor family on the five credential methods, as Muse's cloud browser and every
+  // 1Password user have it; with host = true, also Muse's host: Linux x86_64, Chrome 139+, SwiftShader.
+  const passwordManager = (host: boolean) => `(() => {
+    const accessor = (owner, name) => { const original = owner[name]; Object.defineProperty(owner, name, { get() { return original }, set(v) {}, enumerable: true, configurable: false }) }
+    accessor(navigator.credentials, 'get'); accessor(navigator.credentials, 'create')
+    for (const name of ['getClientCapabilities', 'isUserVerifyingPlatformAuthenticatorAvailable', 'isConditionalMediationAvailable']) accessor(PublicKeyCredential, name)
+    window.__webglAsked = 0
+    const getContext = HTMLCanvasElement.prototype.getContext
+    HTMLCanvasElement.prototype.getContext = function (kind, ...rest) {
+      if (kind !== 'webgl') return getContext.call(this, kind, ...rest)
+      window.__webglAsked++
+      return { getExtension: (name) => name === 'WEBGL_debug_renderer_info' ? { UNMASKED_RENDERER_WEBGL: 37446 } : name === 'WEBGL_lose_context' ? { loseContext() {} } : null,
+        getParameter: () => ${host ? "'ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)'" : "'ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)'"} }
+    }
+    ${host ? "Object.defineProperty(Navigator.prototype, 'platform', { get: () => 'Linux x86_64', configurable: true })" : ''}
+  })()`
+
+  test("1Password alone is a person: the accessor family without Muse's host, and the renderer is never read", async () => {
+    const { page } = await open('chromium-clean', '/plain', passwordManager(false))
+    await page.waitForTimeout(400)
+    assert.deepEqual(await verdict(page), { type: 'human', reasons: [] })
+    assert.equal(await page.evaluate(() => (window as any).__webglAsked), 0)
+    await page.context().close()
+  })
+
+  test("Muse: 1Password's accessor family on its host (Linux, Chrome 139+, SwiftShader)", async () => {
+    const context = await browsers.get('chromium-clean')!.newContext({
+      userAgent:
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+    })
+    const page = await context.newPage()
+    await page.addInitScript(passwordManager(true))
+    await page.goto(server.origin + '/plain')
+    await page.waitForFunction(() => (window as any).botscent?.verdict().type === 'agent')
     assert.deepEqual(await verdict(page), {
       type: 'agent',
       agent_name: 'muse',
-      reasons: ['muse.credentials.accessor-family'],
+      reasons: ['muse.cloud-browser.password-manager'],
     })
-    await page.context().close()
+    assert.equal(await page.evaluate(() => (window as any).__webglAsked), 1, 'read once')
+    await context.close()
   })
 
   test('Instinct: the wrappers alone are nothing; the GeeTest pair three seconds later completes it', async () => {

@@ -9,10 +9,12 @@ import {
   isCodexPrompt,
   isGeetestPair,
   isInstinctWrappers,
-  isMuse,
+  isMuseHost,
+  isPasswordManagerFamily,
+  isSoftwareRenderer,
   type Credentials,
 } from './rules.ts'
-import { CLAUDE_ACTIVE, elementShape, globalShape, methodShape, sourceShape } from './shapes.ts'
+import { CLAUDE_ACTIVE, elementShape, globalShape, methodShape, sourceShape, webglRenderer } from './shapes.ts'
 
 export type ProbeStatus = 'pending' | 'ok' | 'unsupported' | 'failed'
 
@@ -58,6 +60,7 @@ export function observe(sink: Sink): () => void {
     sink.hold(R.declared)
   }
 
+  let rendererAsked = false
   const credentials = () =>
     run('credentials', () => {
       const container = navigator.credentials
@@ -70,7 +73,11 @@ export function observe(sink: Sink): () => void {
         methodShape(key, 'isUserVerifyingPlatformAuthenticatorAvailable'),
         methodShape(key, 'isConditionalMediationAvailable'),
       ]
-      if (isMuse(shapes)) sink.hold(R.muse)
+      // The renderer is read once, off this task, and only where the family and the host already match.
+      if (!rendererAsked && isPasswordManagerFamily(shapes) && isMuseHost(navigator.platform, navigator.userAgent)) {
+        rendererAsked = true
+        setTimeout(() => run('renderer', () => void (live && isSoftwareRenderer(webglRenderer()) && sink.hold(R.muse))))
+      }
       if (isInstinctWrappers(shapes)) sink.hold(R.wrappers)
     })
 

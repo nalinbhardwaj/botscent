@@ -65,13 +65,13 @@
       "tested": "2026-10-02: replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
     },
     {
-      "id": "muse.credentials.accessor-family",
+      "id": "muse.cloud-browser.password-manager",
       "half": "page",
       "names": "muse",
-      "summary": "The credential methods are replaced by the accessor family Muse's cloud browser installs.",
+      "summary": "1Password's accessor family on the credential methods, in Chrome 139 or later on Linux x86_64 rendering WebGL with SwiftShader: Muse's cloud browser.",
       "collision_kind": "none-known",
-      "collisions": "Password managers and passkey providers seen so far replace these methods with named functions, not this accessor family. A person driving the same remote browser would match.",
-      "tested": "2026-10-02: replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
+      "collisions": "1Password alone installs the accessor family for every user (measured with 1Password 8.12, 3 October); the rule also needs Muse's host. A person matches only with 1Password, Linux, and Chrome launched with --enable-unsafe-swiftshader (untested; rare). Another automation host running 1Password would be named muse.",
+      "tested": "2026-10-03: Muse 21 of 21 evaluable documents (28 September, 1 October); 0 of 82 human documents, 0 of 4 with 1Password"
     },
     {
       "id": "instinct.credentials.wrappers",

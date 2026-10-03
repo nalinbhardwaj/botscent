@@ -39,7 +39,7 @@
       "display": "Muse",
       "vendor": "Meta",
       "kind": "computer-use-agent",
-      "sources": ["page muse.credentials.accessor-family"]
+      "sources": ["page muse.cloud-browser.password-manager"]
     },
     "instinct": {
       "display": "Instinct",

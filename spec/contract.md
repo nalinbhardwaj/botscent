@@ -32,7 +32,7 @@ type Verdict = {
 
 10. Names are lower-case ids from `registry/names.json`. Only identity-grade sources name:
     - **declarations**: a Web Bot Auth signer host (verified or declared, `registry/signers.json`), a user-agent token (`registry/tokens.json`), what the page's own navigator declares (`registry/page.json`), and, in the page, the name carried by the server's `Server-Timing` entry;
-    - **product shapes**: Muse's accessor family, Instinct's wrappers with its GeeTest pair, the Codex shell (two of three), the ChatGPT badge, the Claude marker.
+    - **product shapes**: Muse's cloud browser (1Password's accessor family, on Linux x86_64 in Chrome 139 or later rendering WebGL with SwiftShader), Instinct's wrappers with its GeeTest pair, the Codex shell (two of three), the ChatGPT badge, the Claude marker.
 11. If any declaration gives a name, the verdict is named only when every declared name is the same name. Otherwise, if any product shape gives a name, it is named only when every shape gives the same name. Every other case has no name.
 12. Generic mechanisms never name: the webdriver flag, a HeadlessChrome user agent, hidden-document input, and the platform's verified-bot field.
 13. Verification never changes a name; it decides only whether a signature's reason is `verified` or `declared`.

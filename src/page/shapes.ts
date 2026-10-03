@@ -130,3 +130,15 @@ export function elementShape(el: Element): ElementShape {
     pointerEvents: style.pointerEvents,
   }
 }
+
+/** WebGL's unmasked renderer, or null without WebGL. Creates one context and releases it at once. */
+export function webglRenderer(): string | null {
+  const gl = document.createElement('canvas').getContext('webgl')
+  if (!gl) return null
+  try {
+    const info = gl.getExtension('WEBGL_debug_renderer_info')
+    return info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : null
+  } finally {
+    gl.getExtension('WEBGL_lose_context')?.loseContext()
+  }
+}
