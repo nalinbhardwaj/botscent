@@ -9,12 +9,13 @@ import {
   isCodexPrompt,
   isGeetestPair,
   isInstinctWrappers,
-  isMuseHost,
+  isCloudHost,
+  isGrokComputer,
   isPasswordManagerFamily,
   isSoftwareRenderer,
   type Credentials,
 } from './rules.ts'
-import { CLAUDE_ACTIVE, elementShape, globalShape, methodShape, sourceShape, webglRenderer } from './shapes.ts'
+import { CLAUDE_ACTIVE, elementShape, globalShape, hasFont, methodShape, sourceShape, webglRenderer } from './shapes.ts'
 
 export type ProbeStatus = 'pending' | 'ok' | 'unsupported' | 'failed'
 
@@ -61,6 +62,9 @@ export function observe(sink: Sink): () => void {
   }
 
   let rendererAsked = false
+  // WebGL's renderer, read at most once per document and only where a rule's other clauses already hold.
+  let rendererRead: string | null | undefined
+  const renderer = () => (rendererRead === undefined ? (rendererRead = webglRenderer()) : rendererRead)
   const credentials = () =>
     run('credentials', () => {
       const container = navigator.credentials
@@ -74,9 +78,9 @@ export function observe(sink: Sink): () => void {
         methodShape(key, 'isConditionalMediationAvailable'),
       ]
       // The renderer is read once, off this task, and only where the family and the host already match.
-      if (!rendererAsked && isPasswordManagerFamily(shapes) && isMuseHost(navigator.platform, navigator.userAgent)) {
+      if (!rendererAsked && isPasswordManagerFamily(shapes) && isCloudHost(navigator.platform, navigator.userAgent)) {
         rendererAsked = true
-        setTimeout(() => run('renderer', () => void (live && isSoftwareRenderer(webglRenderer()) && sink.hold(R.muse))))
+        setTimeout(() => run('renderer', () => void (live && isSoftwareRenderer(renderer()) && sink.hold(R.muse))))
       }
       if (isInstinctWrappers(shapes)) sink.hold(R.wrappers)
     })
@@ -89,6 +93,32 @@ export function observe(sink: Sink): () => void {
   const prompt = () =>
     run('prompt', () => {
       if (isCodexPrompt(sourceShape(window, 'prompt'))) sink.hold(R.prompt)
+    })
+
+  // Grok Bot's computer, once, with the first later pass (1.5 s), only on the cloud host: the cheap signs first, then the time
+  // zone, then conditional mediation, then (with 5 of 6) the renderer.
+  const computer = () =>
+    run('computer', () => {
+      if (!isCloudHost(navigator.platform, navigator.userAgent)) return
+      const brands = (navigator as { userAgentData?: { brands?: { brand: string }[] } }).userAgentData?.brands ?? []
+      const signs = [
+        screen.width === 1280 && screen.height === 800,
+        hasFont('Ubuntu'),
+        hasFont('Droid Sans'),
+        false,
+        false,
+        brands.some((b) => b.brand === 'Google Chrome'),
+      ] as Parameters<typeof isGrokComputer>[0]
+      if (signs.filter(Boolean).length < 3) return
+      signs[4] = Intl.DateTimeFormat().resolvedOptions().timeZone === 'UTC'
+      if (signs.filter(Boolean).length < 4) return
+      const key = (window as { PublicKeyCredential?: { isConditionalMediationAvailable?: () => Promise<boolean> } })
+        .PublicKeyCredential
+      if (typeof key?.isConditionalMediationAvailable !== 'function') return false
+      return key.isConditionalMediationAvailable().then((available) => {
+        signs[3] = available === false
+        return isGrokComputer(signs, signs.filter(Boolean).length >= 5 ? renderer() : null) && R.grok
+      })
     })
 
   const keyboard = () =>
@@ -139,6 +169,7 @@ export function observe(sink: Sink): () => void {
   pass()
 
   const timers: ReturnType<typeof setTimeout>[] = LATER_PASSES_MS.map((ms) => setTimeout(pass, ms))
+  timers.push(setTimeout(computer, LATER_PASSES_MS[0]))
   const slow = setInterval(() => {
     if (document.visibilityState === 'visible') {
       overlay()

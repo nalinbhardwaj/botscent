@@ -142,3 +142,17 @@ export function webglRenderer(): string | null {
     gl.getExtension('WEBGL_lose_context')?.loseContext()
   }
 }
+
+/** Whether a font is installed, as the research collector reads it: the sample's width differs from at least
+ * one of the generic fallbacks. */
+const SAMPLE = 'mmmmmmmmmmlli0123456789'
+export function hasFont(font: string): boolean {
+  const ctx = document.createElement('canvas').getContext('2d')
+  if (!ctx) return false
+  return ['monospace', 'serif', 'sans-serif'].some((base) => {
+    ctx.font = `32px ${base}`
+    const fallback = ctx.measureText(SAMPLE).width
+    ctx.font = `32px "${font}",${base}`
+    return ctx.measureText(SAMPLE).width !== fallback
+  })
+}

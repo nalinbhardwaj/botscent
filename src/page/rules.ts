@@ -8,6 +8,7 @@ export const R = {
   webdriver: 'browser.webdriver-flag',
   declared: 'ua.page-declared-engine',
   muse: 'muse.cloud-browser.password-manager',
+  grok: 'grok.cloud-computer.environment',
   wrappers: 'instinct.credentials.wrappers',
   geetest: 'instinct.geetest.accessor-pair',
   prompt: 'codex.prompt.anonymous-native',
@@ -35,13 +36,28 @@ export const isPasswordManagerFamily = (c: Credentials): boolean =>
     (s) => s.status === 'ok' && s.own && s.accessor && s.configurable === false && s.enumerable && s.getter && s.setter,
   )
 
-/** Muse's host, around that family: Linux x86_64 and Chrome 139 or later, which no longer falls back to
- * SwiftShader without a flag or policy. Checked before the renderer is read (wiki/MUSE_RULE_RESEARCH.md). */
-export const isMuseHost = (platform: string, userAgent: string): boolean =>
+/** The cloud browsers' host: Linux x86_64 and Chrome 139 or later, which no longer falls back to SwiftShader
+ * without a flag or policy. Checked before any renderer read (wiki/MUSE_RULE_RESEARCH.md, GROK_RULE_RESEARCH.md). */
+export const isCloudHost = (platform: string, userAgent: string): boolean =>
   platform === 'Linux x86_64' && Number(/\bChrome\/(\d+)/.exec(userAgent)?.[1] ?? 0) >= 139
 
 /** The last clause: WebGL renders in software, with SwiftShader, as on a cloud machine without a GPU. */
 export const isSoftwareRenderer = (renderer: string | null): boolean => !!renderer?.includes('SwiftShader')
+
+/** Grok Bot's cloud computer (decision 36): on the host, at least 5 of these 6 signs, so one may change:
+ * a 1280x800 screen, the Ubuntu font, the Droid Sans font, conditional mediation unavailable, UTC, and
+ * Google Chrome among the brands. A stock Ubuntu cloud desktop holds 4. */
+export type GrokSigns = [
+  screen: boolean,
+  ubuntu: boolean,
+  droid: boolean,
+  noConditional: boolean,
+  utc: boolean,
+  brand: boolean,
+]
+export const GROK_SIGNS_NEEDED = 5
+export const isGrokComputer = (signs: GrokSigns, renderer: string | null): boolean =>
+  signs.filter(Boolean).length >= GROK_SIGNS_NEEDED && isSoftwareRenderer(renderer)
 
 /** Instinct wraps get and create in anonymous one-argument functions and leaves the statics native. */
 export function isInstinctWrappers(c: Credentials): boolean {
@@ -77,6 +93,7 @@ export const isCodexOverlay = (e: ElementShape): boolean =>
 
 const NAMES: Partial<Record<string, string>> = {
   [R.muse]: 'muse',
+  [R.grok]: 'grok-bot',
   [R.wrappers]: 'instinct',
   [R.geetest]: 'instinct',
   [R.prompt]: 'codex-browser',
@@ -99,6 +116,7 @@ export function evidenceOf(held: ReadonlySet<string>, declaredName?: string): Ev
     shape(R.wrappers)
     shape(R.geetest)
   }
+  if (held.has(R.grok)) shape(R.grok)
   const codex = [R.prompt, R.keyboard, R.overlay].filter((r) => held.has(r))
   if (codex.length >= 2) codex.forEach(shape)
   if (held.has(R.badge)) shape(R.badge)

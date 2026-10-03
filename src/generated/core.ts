@@ -3,7 +3,7 @@
 export const VERSION: string = "0.0.0"
 
 /** Reason ids, strongest first (registry/reasons.json). */
-export const REASONS: readonly KnownReason[] = ["signer.web-bot-auth.verified","signer.edge-verified-bot","signer.web-bot-auth.declared","ua.declared-agent-token","ua.page-declared-engine","browser.webdriver-flag","ua.headless-chrome","muse.cloud-browser.password-manager","instinct.credentials.wrappers","instinct.geetest.accessor-pair","codex.prompt.anonymous-native","codex.keyboard.empty-layout-map","codex.overlay.shadow-root","chatgpt.badge.active","claude.marker.active","hidden.input.focus-emulated","hidden.input.trusted-pointerdown"]
+export const REASONS: readonly KnownReason[] = ["signer.web-bot-auth.verified","signer.edge-verified-bot","signer.web-bot-auth.declared","ua.declared-agent-token","ua.page-declared-engine","browser.webdriver-flag","ua.headless-chrome","muse.cloud-browser.password-manager","instinct.credentials.wrappers","instinct.geetest.accessor-pair","grok.cloud-computer.environment","codex.prompt.anonymous-native","codex.keyboard.empty-layout-map","codex.overlay.shadow-root","chatgpt.badge.active","claude.marker.active","hidden.input.focus-emulated","hidden.input.trusted-pointerdown"]
 export type KnownReason =
   | "signer.web-bot-auth.verified"
   | "signer.edge-verified-bot"
@@ -15,6 +15,7 @@ export type KnownReason =
   | "muse.cloud-browser.password-manager"
   | "instinct.credentials.wrappers"
   | "instinct.geetest.accessor-pair"
+  | "grok.cloud-computer.environment"
   | "codex.prompt.anonymous-native"
   | "codex.keyboard.empty-layout-map"
   | "codex.overlay.shadow-root"

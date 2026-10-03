@@ -137,6 +137,74 @@ describe('chromium', () => {
     await context.close()
   })
 
+  // Grok Bot's cloud computer as its pages see it, with each sign chosen per case (decision 36).
+  const cloudComputer = (o: { fonts: string[]; utc: boolean; conditional: boolean; brand: boolean }) => `(() => {
+    const define = (owner, values) => { for (const [k, v] of Object.entries(values)) Object.defineProperty(owner, k, { get: () => v, configurable: true }) }
+    define(Screen.prototype, { width: 1280, height: 800 })
+    define(Navigator.prototype, { platform: 'Linux x86_64', userAgentData: { brands: ${o.brand ? "[{ brand: 'Google Chrome', version: '141' }]" : "[{ brand: 'Chromium', version: '141' }]"} } })
+    const fonts = ${JSON.stringify(o.fonts)}
+    const measure = CanvasRenderingContext2D.prototype.measureText
+    CanvasRenderingContext2D.prototype.measureText = function (text) {
+      const m = measure.call(this, text)
+      // The canvas normalises the font string (quotes may go), so match the family name alone.
+      return fonts.some((f) => this.font.includes(f)) ? { width: m.width + 1 } : m
+    }
+    ${o.utc ? "const options = Intl.DateTimeFormat.prototype.resolvedOptions; Intl.DateTimeFormat.prototype.resolvedOptions = function () { return { ...options.call(this), timeZone: 'UTC' } }" : ''}
+    PublicKeyCredential.isConditionalMediationAvailable = () => Promise.resolve(${o.conditional})
+    window.__webglAsked = 0
+    const getContext = HTMLCanvasElement.prototype.getContext
+    HTMLCanvasElement.prototype.getContext = function (kind, ...rest) {
+      if (kind !== 'webgl') return getContext.call(this, kind, ...rest)
+      window.__webglAsked++
+      return { getExtension: (name) => name === 'WEBGL_debug_renderer_info' ? { UNMASKED_RENDERER_WEBGL: 37446 } : name === 'WEBGL_lose_context' ? { loseContext() {} } : null,
+        getParameter: () => 'ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)' }
+    }
+  })()`
+  const onLinux = async (init: string) => {
+    const context = await browsers.get('chromium-clean')!.newContext({
+      userAgent:
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+    })
+    const page = await context.newPage()
+    await page.addInitScript(init)
+    await page.goto(server.origin + '/plain')
+    await page.waitForFunction(() => (window as any).botscent !== undefined)
+    return { page, context }
+  }
+
+  test("Grok Bot's cloud computer: all six signs, then five (one changed), on the host", async () => {
+    for (const utc of [true, false]) {
+      const { page, context } = await onLinux(
+        cloudComputer({ fonts: ['Ubuntu', 'Droid Sans'], utc, conditional: false, brand: true }),
+      )
+      await page.waitForFunction(() => (window as any).botscent.verdict().type === 'agent')
+      assert.deepEqual(
+        await verdict(page),
+        {
+          type: 'agent',
+          agent_name: 'grok-bot',
+          reasons: ['grok.cloud-computer.environment'],
+        },
+        utc ? 'six signs' : 'five signs',
+      )
+      await context.close()
+    }
+  })
+
+  test('A person on a stock Ubuntu cloud desktop, even with SwiftShader forced: four signs, human', async () => {
+    const { page, context } = await onLinux(
+      cloudComputer({ fonts: ['Ubuntu'], utc: true, conditional: true, brand: true }),
+    )
+    await page.waitForTimeout(500)
+    assert.deepEqual(await verdict(page), { type: 'human', reasons: [] })
+    assert.equal(
+      await page.evaluate(() => (window as any).__webglAsked),
+      0,
+      'the renderer is not read below five signs',
+    )
+    await context.close()
+  })
+
   test('Instinct: the wrappers alone are nothing; the GeeTest pair three seconds later completes it', async () => {
     const { page } = await open(
       'chromium-clean',
