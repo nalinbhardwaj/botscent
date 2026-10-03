@@ -95,7 +95,7 @@ export function observe(sink: Sink): () => void {
       if (isCodexPrompt(sourceShape(window, 'prompt'))) sink.hold(R.prompt)
     })
 
-  // Grok Bot's computer, once, with the first later pass (1.5 s), only on the cloud host: the cheap signs first, then the time
+  // Grok Bot's computer, once, at the first idle moment after start, only on the cloud host: the cheap signs first, then the time
   // zone, then conditional mediation, then (with 5 of 6) the renderer.
   const computer = () =>
     run('computer', () => {
@@ -169,7 +169,11 @@ export function observe(sink: Sink): () => void {
   pass()
 
   const timers: ReturnType<typeof setTimeout>[] = LATER_PASSES_MS.map((ms) => setTimeout(pass, ms))
-  timers.push(setTimeout(computer, LATER_PASSES_MS[0]))
+  // At the first idle moment (within 300 ms): pages an agent leaves within seconds still get the check.
+  const idle = (window as { requestIdleCallback?: (f: () => void, o: { timeout: number }) => number })
+    .requestIdleCallback
+  const idleId = typeof idle === 'function' ? idle(() => live && computer(), { timeout: 300 }) : undefined
+  if (idleId === undefined) timers.push(setTimeout(computer, 300))
   const slow = setInterval(() => {
     if (document.visibilityState === 'visible') {
       overlay()
@@ -238,6 +242,7 @@ export function observe(sink: Sink): () => void {
   return () => {
     live = false
     timers.forEach(clearTimeout)
+    if (idleId !== undefined) (window as { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(idleId)
     clearInterval(slow)
     if (pending !== undefined) clearTimeout(pending)
     observer?.disconnect()
