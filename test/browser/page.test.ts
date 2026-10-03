@@ -137,7 +137,7 @@ describe('chromium', () => {
     await context.close()
   })
 
-  // Grok Bot's cloud computer as its pages see it, with each sign chosen per case (decision 36).
+  // Grok Bot's cloud computer as its pages see it, with each sign chosen per case.
   const cloudComputer = (o: { fonts: string[]; utc: boolean; conditional: boolean; brand: boolean }) => `(() => {
     const define = (owner, values) => { for (const [k, v] of Object.entries(values)) Object.defineProperty(owner, k, { get: () => v, configurable: true }) }
     define(Screen.prototype, { width: 1280, height: 800 })

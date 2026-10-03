@@ -482,7 +482,7 @@ function adapters(o: Observations): Check {
       outcome: 'fail',
       observed: `${imports}; ${p.proxy.file} had code of its own at HEAD and now only re-exports botscent's`,
       cause: 'an existing proxy or middleware was replaced rather than wrapped',
-      fix: `restore it and wrap it: export default withBotscent(existing) in ${p.proxy.file}`,
+      fix: `restore it, and export withBotscent(existing) in ${p.proxy.file} under the name the original had (proxy, middleware, or default)`,
     }
   if (p.proxy?.state === 'changed')
     return {

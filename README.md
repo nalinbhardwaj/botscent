@@ -2,13 +2,8 @@
 
 <!--
 TODO (owner, later pass): differences between this README, its examples and the code, found while writing the site's docs (3 October). The site's docs follow the code.
-- Nuxt: the README uses `inspect(event.request)`; the contract and the example use `event.node.req`.
 - SvelteKit: the example calls `inspect` in a route, not in `hooks.server.ts`.
-- Express and Astro: the adapters accept `transport: 'always' | 'never'` only, but the README's transport section says every adapter takes the `'auto'` default.
-- Trust model: the sentence on letting one agent through garbles the recipe; it should be `isVerified(own, 'chatgpt')`, not `isVerified(own) && own.agent_name === 'chatgpt'`.
-- `npx botscent check`: the fix text for a replaced Next.js proxy says `export default withBotscent(existing)`; it should be `export const proxy = withBotscent(existing)`.
 - Express: the adapter does not add `botscent` to Express's `Request` type.
-- docs/performance.md: mixes pre-fix and post-fix numbers outside its summary.
 - `readReport`: its parameter is typed `unknown` in the published .d.ts.
 -->
 
@@ -107,9 +102,15 @@ export default defineConfig({ integrations: [botscent()] })
 SvelteKit and Nuxt have no server adapter; where a route needs the request's verdict, ask for it:
 
 ```ts
-// SvelteKit hooks.server.ts, or a Nitro server middleware in Nuxt
+// SvelteKit: hooks.server.ts or a +server.ts route
 import { inspect } from 'botscent/server'
 const verdict = await inspect(event.request)
+```
+
+```ts
+// Nuxt: a Nitro server middleware or route
+import { inspect } from 'botscent/server'
+const verdict = await inspect(event.node.req)
 ```
 
 ### A plain script tag
@@ -219,7 +220,7 @@ if (isVerified(own, 'chatgpt')) {
 }
 ```
 
-A page report can be forged by the page's own scripts, and anyone can send the headers that produce a name, so access decisions use `isVerified` on the request's own verdict, never a reason string, a bare `agent_name` or a report. To let one agent through, pass its name: `isVerified(own) && own.agent_name === 'chatgpt'` can pair the platform's verification of some bot with a name that bot merely declared.
+A page report can be forged by the page's own scripts, and anyone can send the headers that produce a name, so access decisions use `isVerified` on the request's own verdict, never a reason string, a bare `agent_name` or a report. To let one agent through, pass its name: `isVerified(own, 'chatgpt')`. Checking `isVerified(own) && own.agent_name === 'chatgpt'` instead can pair the platform's verification of some bot with a name that bot merely declared.
 
 ## The trust model
 
@@ -227,7 +228,7 @@ The request's own verdict (`inspect`) is what the request declared, and it is th
 
 ## How the request's verdict reaches the page
 
-For an agent's document navigation, the server adapters can add a `Server-Timing: botscent;desc="…"` entry with `Cache-Control: no-store`, which the page half reads, so a single page sees both halves. People's responses never carry it, and the page ignores an entry that is stale or doubled. Every adapter takes `transport`. The default, `'auto'`, turns it on only where the adapter runs per request in front of the cache: the Next.js proxy on Vercel, Vercel Routing Middleware, Cloudflare Workers, Netlify Edge Functions, and Hono on Cloudflare Workers. An origin (Express, Astro, Hono on Node.js, Django, FastAPI, Flask, self-hosted Next.js) cannot see whether a CDN in front of it stores HTML, so there it is off unless you set `transport: 'always'` (Python: `transport=True`), which states that no shared cache stores your HTML. If one does and ignores `Cache-Control: no-store`, a person can be served an agent's entry; `npx botscent check` reports that case.
+For an agent's document navigation, the server adapters can add a `Server-Timing: botscent;desc="…"` entry with `Cache-Control: no-store`, which the page half reads, so a single page sees both halves. People's responses never carry it, and the page ignores an entry that is stale or doubled. Every server adapter takes `transport`. Where an adapter can know it runs per request in front of the cache it accepts `'auto'`, the default, which turns it on there: the Next.js proxy on Vercel, Vercel Routing Middleware, Cloudflare Workers, Netlify Edge Functions, and Hono on Cloudflare Workers. An origin (Express, Astro, Hono on Node.js, Django, FastAPI, Flask, self-hosted Next.js) cannot see whether a CDN in front of it stores HTML, so there it is off unless you set `transport: 'always'` (Python: `transport=True`), which states that no shared cache stores your HTML. If one does and ignores `Cache-Control: no-store`, a person can be served an agent's entry; `npx botscent check` reports that case.
 
 ## Reasons
 

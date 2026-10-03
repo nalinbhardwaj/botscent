@@ -5,7 +5,7 @@
     "rate x reference.calibrationMs / its own calibration, so it emulates the same device and the same budgets apply.",
     "`max`, `min` or `equals` fail the run when `gate` is not false. `target` is the plan's number (section 8.7 or principle 5),",
     "shown as met or not met and never failing the run. `why` says how each number was derived; measured values are",
-    "from docs/performance.md: six full runs on the reference machine, each the median of 11 loads, 5 scripted visits, 2 churn windows, 1 idle minute and 4 simulated days."
+    "from docs/performance.md: two full runs on the reference machine (4 October), each the median of 11 loads, 5 scripted visits, 2 churn windows, 1 idle minute and 4 simulated days."
   ],
   "reference": {
     "machine": "Apple M3 Max (one performance core), macOS, Chromium 153",
@@ -16,30 +16,30 @@
     "startup.article.ms": {
       "max": 12,
       "target": 2,
-      "why": "Measured 4.7 ms (27.5-31.4 ms before the time zone was read only on a matching screen, 3 October). 12 ms leaves about 2.5x headroom for hardware the calibration evens out imperfectly; the plan's 2 ms is not met, with no single hot spot left."
+      "why": "Measured 4.6-4.8 ms (27.5-31.4 ms before the time zone was read only on a matching screen, 3 October). 12 ms leaves about 2.5x headroom for hardware the calibration evens out imperfectly; the plan's 2 ms is not met, with no single hot spot left."
     },
     "startup.feed.ms": {
       "max": 12,
       "target": 2,
-      "why": "As for the article page; start-up does not depend on the page (measured 4.9 ms)."
+      "why": "As for the article page; start-up does not depend on the page (measured 5.3-5.5 ms)."
     },
     "startup.cold.ms": {
       "max": 12,
       "target": 2,
-      "why": "The first document of a newly launched browser: measured 4.9 ms, no worse than warm. Same ceiling."
+      "why": "The first document of a newly launched browser: measured 4.7-5.1 ms, no worse than warm. Same ceiling."
     },
     "firstSecond.article.ms": {
       "max": 1,
-      "why": "Library time in the second after start-up on a page that does not change: measured 0."
+      "why": "Library time in the second after start-up on a page that does not change: measured 0.1 ms, the idle callback that runs the Grok Bot check and returns at the host check."
     },
     "firstSecond.feed.ms": {
       "max": 8,
-      "why": "The same on the churning feed: observer callbacks and debounced marker reads, measured 2.1-2.5 ms; about 3x headroom."
+      "why": "The same on the churning feed: observer callbacks and debounced marker reads, measured 1.9-2.5 ms; about 3x headroom."
     },
     "startup.article.longTasks": {
       "max": 0,
       "target": 0,
-      "why": "Plan 8.7: no long tasks. Measured 0 of 11 loads (the load task 29 ms) since the time zone is read only on a matching screen; before, 4 to 11 of 11."
+      "why": "Plan 8.7: no long tasks. Measured 0 of 11 loads (the load task 29-30 ms); before the time zone was read only on a matching screen, 4 to 11 of 11."
     },
     "startup.feed.longTasks": {
       "max": 0,
@@ -48,11 +48,11 @@
     },
     "lcp.article.added": {
       "max": 16,
-      "why": "Measured +4 ms; on a page this light the deferred script runs before the first paint, so the paint waits for start-up. 16 ms is one frame. Before the lazy time zone it was +28 to +36 ms."
+      "why": "Measured +4 ms; on a page this light the deferred script runs before the first paint, so the paint waits for start-up. 16 ms is one frame."
     },
     "lcp.feed.added": {
       "max": 16,
-      "why": "Measured -8 to 0 ms: the feed paints after its own parsing. One frame, as for the article."
+      "why": "Measured -4 to 0 ms: the feed paints after its own parsing. One frame, as for the article."
     },
     "cls.article.added": {
       "equals": 0,
@@ -88,23 +88,23 @@
     },
     "input.article.p95": {
       "max": 2,
-      "why": "The 95th percentile is the marker read that a pointerdown or keydown triggers at most every 300 ms: measured 0.56-0.71 ms (max 0.85); about 3x headroom."
+      "why": "The 95th percentile is the marker read that a pointerdown or keydown triggers at most every 300 ms: measured 0.24-0.58 ms (max 1.02); about 3x headroom."
     },
     "input.feed.p95": {
       "max": 2,
-      "why": "Measured 0.63-0.77 ms (max 0.8): the marker read scans the whole document for one attribute, so it grows with the DOM."
+      "why": "Measured 0.36-0.48 ms (max 1.19) on the 10,000-node feed: the marker read looks only in <head> and for six ids, so it no longer grows with the DOM."
     },
     "inp.article.added": {
       "max": 16,
-      "why": "Measured 0 in every run (48 to 48 ms). Event Timing rounds durations to 8 ms, so one step either way is noise; two steps fail."
+      "why": "Measured -8 to 0 ms. Event Timing rounds durations to 8 ms, so one step either way is noise; two steps fail."
     },
     "inp.feed.added": {
       "max": 16,
-      "why": "Measured 0 in every run (48-56 ms both ways); as for the article page."
+      "why": "Measured -8 to 0 ms (48-56 ms both ways); as for the article page."
     },
     "churn.ms": {
       "max": 6,
-      "why": "Library time per second while the feed adds and removes a <body> child every frame: measured 1.3-2.45 ms/s (60 observer callbacks a second and about 4 marker reads of 0.26-0.36 ms on 10,000 nodes); about 2.5x headroom over the worst run."
+      "why": "Library time per second while the feed adds and removes a <body> child every frame: measured 0.74-0.89 ms/s (60 observer callbacks a second and about 4 marker reads of 0.11-0.16 ms); the ceiling was set when each read scanned the whole document (1.3-2.45 ms/s) and is kept."
     },
     "churn.timers": {
       "max": 4.5,
@@ -116,11 +116,11 @@
     },
     "day.retained": {
       "max": 160,
-      "why": "Heap the library holds once started, after a collection: measured 105-106 KB (code, the registry tables, closures); 1.5x headroom."
+      "why": "Heap the library holds once started, after a collection: measured 103 KB (code, the registry tables, closures); 1.5x headroom."
     },
     "day.firstDays": {
       "max": 48,
-      "why": "Heap growth over the first two simulated days beyond the page's own: measured 12.3-12.8 KB, the JIT tiering up the interval callback."
+      "why": "Heap growth over the first two simulated days beyond the page's own: measured 15.0 KB, the JIT tiering up the interval callback."
     },
     "day.steady": {
       "max": 8,
@@ -132,19 +132,19 @@
     },
     "idle.visible.timers": {
       "max": 8,
-      "why": "Expected 7 in 30 s: the passes at 1.5 s and 5 s and the slow sample every 5 s. Measured 7."
+      "why": "Expected 7 timers in 30 s: the passes at 1.5 s and 5 s and the slow sample every 5 s. Measured 7, plus the one idle callback that runs the Grok Bot check."
     },
     "idle.visible.queries": {
-      "max": 64,
-      "why": "8 DOM queries per marker read (one attribute query, the icon links, six ids) times 7 reads, measured 56; one read of slack."
+      "max": 48,
+      "why": "6 document queries per marker read (the six Claude ids; the badge queries are on <head>, an element, and not counted) times 7 reads, measured 42; one read of slack."
     },
     "idle.visible.ms": {
       "max": 10,
-      "why": "Measured 1.8-3.7 ms in 30 s. Single idle wake-ups are noisy (some take 1-2 ms), hence the loose ceiling; the counts are the tight checks."
+      "why": "Measured 1.1-2.4 ms in 30 s. Single idle wake-ups are noisy (some take 1-2 ms), hence the loose ceiling; the counts are the tight checks."
     },
     "idle.visible.perCall": {
       "max": 2,
-      "why": "Median callback measured 0.09-0.36 ms between runs (idle wake-ups are noisy); a marker read on this page is about 0.1 ms."
+      "why": "Median callback measured 0.07-0.36 ms between runs (idle wake-ups are noisy); a marker read on this page is about 0.1 ms."
     },
     "idle.hidden.timers": {
       "max": 7,
@@ -158,12 +158,12 @@
     "idle.hidden.ms": {
       "max": 10,
       "gate": false,
-      "why": "Recorded, not gated. Six callbacks that each return after one visibility check measured 3.8-13.2 ms in all (one took 6.1 ms): a hidden renderer runs at low priority and the first callback after hiding can include a collection the browser schedules, so the time is the environment's. The query count and the callback count are the checks."
+      "why": "Recorded, not gated. Six callbacks that each return after one visibility check measured 3.8-13.2 ms in all (one took 6.4 ms): a hidden renderer runs at low priority and the first callback after hiding can include a collection the browser schedules, so the time is the environment's. The query count and the callback count are the checks."
     },
     "idle.hidden.perCall": {
       "max": 1,
       "gate": false,
-      "why": "Recorded, not gated: median callback measured 0.38-0.66 ms between runs for the same no-op, for the reasons above."
+      "why": "Recorded, not gated: median callback measured 0.07-1.07 ms between runs for the same no-op, for the reasons above."
     },
     "idle.requests": {
       "equals": 0,
