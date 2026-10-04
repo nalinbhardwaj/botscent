@@ -16,7 +16,7 @@ for (const [file, budget] of Object.entries(BUDGETS)) {
 // The README states the script's size to the nearest whole KB of 1,024 bytes ("about 5 KB gzipped"); keep it true.
 const script = gz(readFileSync(new URL('botscent.js', dist)))
 const expected = String(Math.round(script / 1024))
-const stated = /about (\d+) KB gzipped/.exec(readFileSync(new URL('../README.md', import.meta.url), 'utf8'))
+const stated = /about (\d+) KB gzipped/i.exec(readFileSync(new URL('../README.md', import.meta.url), 'utf8'))
 if (stated?.[1] !== expected) {
   console.error(`README: say "about ${expected} KB gzipped" (the script is ${script} bytes)`)
   over++

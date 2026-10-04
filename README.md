@@ -2,21 +2,23 @@
 
 # Botscent
 
-Botscent tells your site if an AI agent, not a person, is browsing it, and which agent. Use it to hide ads from agents, change prices, log agent traffic, or give agents a simpler page.
+Botscent tells your site when an AI agent, not a person, is browsing it, and which agent.
 
 [Website](https://botscent.nibnalin.me) · [Docs](https://botscent.nibnalin.me/docs) · [Install with one prompt](#install-with-one-prompt)
 
-- **It names the agent.** Claude for Chrome, ChatGPT's agent, the Codex browser, Muse, Manus, Devin, Grok Bot and more. It also detects crawlers, fetchers and HTTP clients that say what they are. [Coverage](#coverage) lists every name.
-- **It is small.** The page script is about 5 KB gzipped, with 0 dependencies. It starts in about 5 ms on a budget phone's CPU, and CI [measures that](docs/performance.md) on every change.
-- **It sends nothing.** The page script makes no network request and writes no cookie or storage. Nothing leaves the page unless your code sends it.
-- **It runs where you do.** Next.js, React, Vue, Nuxt, SvelteKit, Astro, Express, Hono, Cloudflare Workers, Netlify and Vercel in TypeScript. FastAPI, Starlette, Django and Flask in Python.
-- **It only reports.** It has no blocking, challenges or rules of its own. You decide what to do with the verdict.
+- **Names the agent.** Claude for Chrome, ChatGPT's agent, Codex, Muse, Manus, Devin, Grok Bot and [more](#coverage).
+- **About 5 KB gzipped.** 0 dependencies. Starts in about 5 ms on a budget phone. [Measured in CI](docs/performance.md).
+- **Sends nothing.** No network requests, no cookies, no storage.
+- **Reports only.** No blocking. You decide what to do.
+- **TypeScript and Python.** Next.js, React, Vue, Nuxt, SvelteKit, Astro, Express, Hono, Cloudflare Workers, Netlify, Vercel, FastAPI, Django and Flask.
+
+Use it to hide ads from agents, change prices, log agent traffic, or show agents a simpler page.
 
 ```ts
 type Verdict = {
-  type: 'agent' | 'human' // 'human' means no agent evidence observed, not proof of a person
-  agent_name?: string // when the evidence names the agent, e.g. 'claude-chrome'
-  reasons: Reason[] // rule ids, strongest first; [] for 'human'
+  type: 'agent' | 'human' // 'human': no agent evidence, not proof of a person
+  agent_name?: string // when the evidence names the agent, for example 'claude-chrome'
+  reasons: Reason[] // reason ids, strongest first. [] for 'human'
 }
 ```
 
@@ -24,28 +26,37 @@ type Verdict = {
 
 Botscent has two halves. Both return the same verdict.
 
-- **The server half** reads what one request declares: a [Web Bot Auth](https://datatracker.ietf.org/doc/draft-ietf-webbotauth-httpsig-protocol/) signature checked against the keys bundled in each release, a user-agent token that an agent or crawler publishes for itself, or your host's verified-bot field. It reads headers only and calls no service. It sees agents that sign or declare their requests.
-- **The page half** watches the page for the marks that agents leave: the automation flag, the shape of agents' cloud browsers, the markers that agent extensions draw, and input that arrives while the page is hidden. It sees agents that run inside a person's own browser. Once it sees an agent, the page stays `agent`.
+- **The server half** reads the request headers. It checks a [Web Bot Auth](https://datatracker.ietf.org/doc/draft-ietf-webbotauth-httpsig-protocol/) signature, a user-agent token and your host's verified-bot field. It verifies signatures against keys bundled in each release. It calls no service.
+- **The page half** watches the page for marks that agents leave: the automation flag, agent cloud browsers, extension markers, and input on a hidden page. After it finds an agent, the page verdict stays `agent`.
 
-Botscent 1.0 detects the agents in [Coverage](#coverage), and names one only when the evidence identifies it. `human` means that Botscent saw no agent evidence. It is never proof of a person. Some evidence describes an agent's surface, not who is at the keyboard. So a person who works inside the Codex browser, inside Grok Bot's cloud computer, or in a Muse or ChatGPT agent session they took over, is reported as that agent. Grok Bot is named by its signature when its traffic leaves Grok's cloud, and by the page half when the Grok app sends it through the user's own computer (the default). Botscent does not detect automation built to look like a person, and it does not manage crawlers or decide access for you. Comet and Windows assistive tools are not yet measured.
+The server half finds agents that sign or declare their requests. The page half finds agents inside a person's browser.
+
+## What 1.0 promises
+
+- Botscent finds the agents in [Coverage](#coverage). It names an agent only when the evidence identifies that agent.
+- `human` means that Botscent found no agent evidence. It does not prove that a person is there.
+- Some evidence shows an agent's surface, not who uses it. A person who works inside the Codex browser, Grok Bot's cloud computer, or a Muse or ChatGPT agent session is reported as that agent.
+- The server half names Grok Bot when its traffic leaves Grok's cloud. The page half names Grok Bot when the Grok app sends its traffic through the user's computer, which is the default.
+- Botscent does not find automation built to look like a person. It does not manage crawlers or make access decisions.
+- Not measured yet: Comet and Windows assistive tools.
 
 ## Install with one prompt
 
-Paste this into Claude Code, Cursor, Codex or Copilot:
+Paste this prompt into Claude Code, Cursor, Codex or Copilot:
 
 ```text
 Install Botscent in this project. Follow https://botscent.nibnalin.me/install.md: detect this project's framework, install the botscent package, add the page half and the server half where it says, then run `npx botscent check <url>` against the running site.
 ```
 
-The agent follows the same steps as the quickstart below.
+The agent follows the quickstart below.
 
 ## Quickstart
 
 ```sh
-npm install botscent      # pip install botscent for the Python server half
+npm install botscent      # Python server half: pip install botscent
 ```
 
-Every framework below has a tested app in [`examples/`](examples). Run `npx botscent check <url>` afterwards (see [Verify](#verify)).
+Each framework below has a tested app in [`examples/`](examples). After the install, run `npx botscent check <url>` ([Verify](#verify)).
 
 ### Next.js
 
@@ -54,7 +65,7 @@ Every framework below has a tested app in [`examples/`](examples). Run `npx bots
 import 'botscent/auto'
 ```
 
-Before Next.js 15.3, which has no `instrumentation-client.ts`, render `<Botscent />` from `botscent/react` once in the root layout instead.
+Before Next.js 15.3, render `<Botscent />` from `botscent/react` once in the root layout.
 
 ```ts
 // proxy.ts (Next.js 16 or later): the server half
@@ -66,51 +77,51 @@ export { proxy } from 'botscent/next'
 export { proxy as middleware } from 'botscent/next'
 ```
 
-An existing proxy or middleware is wrapped, not replaced: `export const proxy = withBotscent(existingProxy)` (`export const middleware = withBotscent(existingMiddleware)` before Next.js 16), with `withBotscent` from `botscent/next`.
+If you already have a proxy, wrap it. Do not replace it: `export const proxy = withBotscent(existingProxy)`, with `withBotscent` from `botscent/next`. Before Next.js 16, wrap the middleware the same way.
 
 ```tsx
 'use client'
 import { useBotscent } from 'botscent/react'
 
 export function VerdictView() {
-  const verdict = useBotscent() // re-renders when the page's verdict changes
+  const verdict = useBotscent() // re-renders when the page verdict changes
   return <pre>{JSON.stringify(verdict)}</pre>
 }
 ```
 
-Route handlers ask about their own request: `const verdict = await inspect(request)`, with `inspect` from `botscent/server`.
+In a route handler, get the request's own verdict with `await inspect(request)`, from `botscent/server`.
 
 ### React, Vue, Nuxt, SvelteKit, Astro
 
 ```tsx
-// React without Next.js: <Botscent /> starts observation when it mounts
+// React without Next.js: <Botscent /> starts the page half when it mounts
 import { Botscent, useBotscent } from 'botscent/react'
 ```
 
 ```ts
-// Vue: the plugin starts observation; useBotscent() is a read-only ref
+// Vue: the plugin starts the page half. useBotscent() returns a read-only ref
 import { Botscent, useBotscent } from 'botscent/vue'
 createApp(App).use(Botscent).mount('#app')
 ```
 
 ```ts
-// Nuxt: a client plugin, and useBotscent() auto-imported
+// Nuxt: a client plugin. useBotscent() is auto-imported
 export default defineNuxtConfig({ modules: ['botscent/nuxt'] })
 ```
 
 ```ts
-// SvelteKit: in src/hooks.client.ts; then $botscent in any component
+// SvelteKit: in src/hooks.client.ts. Then read $botscent in any component
 import 'botscent/auto'
 import { botscent } from 'botscent/svelte'
 ```
 
 ```js
-// Astro: both halves; Astro.locals.botscent on on-demand routes
+// Astro: both halves. Astro.locals.botscent on on-demand routes
 import botscent from 'botscent/astro'
 export default defineConfig({ integrations: [botscent()] })
 ```
 
-SvelteKit and Nuxt have no server adapter; where a route needs the request's verdict, ask for it:
+SvelteKit and Nuxt have no server adapter. To get the request's own verdict in a route, call `inspect`:
 
 ```ts
 // SvelteKit: hooks.server.ts or a +server.ts route
@@ -128,12 +139,12 @@ const verdict = await inspect(event.node.req)
 
 ```html
 <script defer src="/botscent.js"></script>
-<!-- serve node_modules/botscent/dist/botscent.js from your own origin; add data-debug to log -->
+<!-- Serve node_modules/botscent/dist/botscent.js from your own origin. Add data-debug to log. -->
 ```
 
-The script has no inline code and no `eval`. Under a strict Content Security Policy, a bundled import runs under your application's own policy; the script tag needs `script-src` to allow its origin (`'self'` when you serve it yourself), or a nonce on the tag with `'strict-dynamic'`.
+The script has no inline code and no `eval`. With a strict Content Security Policy, allow the script's origin in `script-src` (`'self'` if you serve it). Or put a nonce on the tag and use `'strict-dynamic'`. A bundled import needs no change.
 
-It exposes `window.botscent` (`verdict()`, `subscribe()`, `reportHeaders()`, `diagnostics()`, `start()`, `VERSION`) and dispatches a `botscent` event on every change.
+The script adds `window.botscent` (`verdict`, `subscribe`, `reportHeaders`, `diagnostics`, `start`, `VERSION`). It sends a `botscent` event on each verdict change.
 
 ### Express, Hono, Cloudflare Workers, Netlify, Vercel
 
@@ -156,14 +167,14 @@ export default { fetch: withBotscent(async (request, env, ctx, verdict) => fetch
 ```
 
 ```ts
-// Netlify Edge Functions: the same adapter, continuing to the site
+// Netlify Edge Functions: the same adapter, then on to the site
 import type { Context } from '@netlify/edge-functions'
 import { withBotscent } from 'botscent/workers'
 export default withBotscent<Context>((request, context) => context.next())
 ```
 
 ```ts
-// Vercel Routing Middleware, for projects that are not Next.js: middleware.ts at the root
+// Vercel Routing Middleware, for projects that are not Next.js: middleware.ts at the project root
 export { default } from 'botscent/vercel'
 ```
 
@@ -187,7 +198,7 @@ Botscent(app)
 ```
 
 ```python
-# Anything else
+# Any other framework
 import botscent
 verdict = botscent.inspect(request)  # a Request, a dict of headers, or anything with .headers
 ```
@@ -198,19 +209,27 @@ verdict = botscent.inspect(request)  # a Request, a dict of headers, or anything
 npx botscent check https://your-site.example/
 ```
 
-`check` requests the page as itself and then anonymously, opens it in a local Chrome (which, like any automation, sets the webdriver flag the page half reports), and scans the project it runs in. Each check prints `pass`, `fail`, `unknown` or `skipped`, what was observed, and for anything but a pass the likely cause and the fix. `--json` is for scripts and agents, `--report` prints a block to paste into an issue, and the exit code is 0 when installed, 1 when broken and 2 when neither half could be confirmed.
+`check` does three things:
+
+1. It requests the page twice: once with its own user agent, and once with no agent evidence.
+2. It opens the page in a local Chrome. Like all automation, that Chrome sets the webdriver flag, so the page half reports an agent.
+3. It scans the project in the current directory.
+
+Each check prints `pass`, `fail`, `unknown` or `skipped`, and what it saw. A line that is not a pass also gives the likely cause and the fix. Use `--json` for scripts and agents. Use `--report` for a block to paste into an issue. The exit code is 0 when the install works, 1 when it is broken, and 2 when neither half was confirmed.
 
 ## Use the verdict
 
-Start by logging verdicts for a week, then decide what to change. Each use needs a different verdict:
+Start by logging verdicts for a week. Then decide what to change. Each use needs a different verdict:
 
-- **To adapt a page** (hide ads, show a simpler layout): read the page verdict with `useBotscent()`, `$botscent` or `verdict()`.
-- **To measure** (log agent traffic, count agents by name): send the page verdict to your server and join it to the request's own verdict with `combine`.
-- **To give an agent access** (skip a challenge, raise a rate limit): use only `isVerified` on the request's own verdict.
+| To                                                         | Use                                                                                       |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Adapt a page: hide ads, show a simpler layout              | The page verdict: `useBotscent`, `$botscent` or `verdict`                                 |
+| Measure: log agent traffic, count agents by name           | The page verdict, sent to your server and joined to the request's own verdict (`combine`) |
+| Give an agent access: skip a challenge, raise a rate limit | `isVerified` on the request's own verdict, and nothing else                               |
 
 ## From the page to your server
 
-The page half sends nothing on its own. To tell your server what the page saw, spread its headers into a same-origin request, or opt a form in:
+The page half sends nothing on its own. To send the page verdict to your server, add its headers to a same-origin request, or mark a form:
 
 ```ts
 import { reportHeaders } from 'botscent'
@@ -221,35 +240,48 @@ await fetch('/api/checkout', { method: 'POST', headers: { 'content-type': 'appli
 <form method="post" action="/checkout" data-botscent-field>...</form>
 ```
 
-The form gets a `botscent` field only on its own POST submission to the same origin (a click, Enter or `requestSubmit()`); `form.submit()` and `new FormData(form)` never get it, because their data can go anywhere. A form your code sends with `fetch` carries the report through `reportHeaders(url)` instead.
+The form gets a `botscent` field only when the browser submits the form to the same origin: a click, Enter or `requestSubmit()`. `form.submit()` and `new FormData(form)` do not get the field, because their data can go to any server. If your code sends a form with `fetch`, use `reportHeaders(url)`.
 
-On the server, a report never mixes with the request's own evidence unless you join them:
+On the server, the page report and the request's own verdict stay separate until you join them:
 
 ```ts
 import { combine, inspect, isVerified, readReport } from 'botscent/server'
 
-const own = await inspect(request) // what this request declared: use this for decisions
-const report = readReport(request.headers.get('botscent-report')) // what the page reported; reasons gain 'page.'
-const combined = combine(own, report) // for measurement: most agent wins
+const own = await inspect(request) // what the request declared. Use this for access
+const report = readReport(request.headers.get('botscent-report')) // what the page reported. Its reasons start with 'page.'
+const combined = combine(own, report) // for measurement. Agent wins over human
 if (isVerified(own)) {
-  // some bot proved who sent the request: a verified signature or the platform's verified-bot field
+  // a verified signature, or your host's verified-bot field
 }
 if (isVerified(own, 'chatgpt')) {
   // a signature verified against ChatGPT's bundled keys
 }
 ```
 
-A page report can be forged by the page's own scripts, and anyone can send the headers that produce a name, so access decisions use `isVerified` on the request's own verdict, never a reason string, a bare `agent_name` or a report. To let one agent through, pass its name: `isVerified(own, 'chatgpt')`. Checking `isVerified(own) && own.agent_name === 'chatgpt'` instead can pair the platform's verification of some bot with a name that bot merely declared.
+> **Warning:** Do not use a reason, a bare `agent_name` or a page report for access. Page scripts can forge a report, and anyone can send the headers that produce a name. Use `isVerified`.
+
+To allow one agent, pass its name: `isVerified(own, 'chatgpt')`. Do not write `isVerified(own) && own.agent_name === 'chatgpt'`. That check can pair your host's verification of one bot with a name that another bot only declared.
 
 ## The trust model
 
-The request's own verdict (`inspect`) is what the request declared. It is the only verdict to use for anything security-relevant. Within it, `isVerified` is the one check fit for letting an agent past something. With a name, it is true only when a Web Bot Auth signature from that agent verified against a key bundled in this release. Without a name, it is also true when your host verified the bot.
-
-`isVerified` authenticates the operator's infrastructure, not the person or the model in the session. A captured signature can be replayed to the same host within its window. A name without verification is a declaration or a product shape that anyone can produce, so it never grants access. The page verdict, a page report carried to your server, and anything `combine` returns are computed in the visitor's browser. Use them to adapt an interface and to measure, not for access. None of them is a claim about the person behind an agent, or about who performed a particular action.
+- Only the request's own verdict (`inspect`) is fit for security decisions. In that verdict, only `isVerified` is fit for access.
+- With a name, `isVerified` is true only when that agent's Web Bot Auth signature verified against a key in this release. Without a name, it is also true when your host verified the bot.
+- `isVerified` authenticates the operator's servers, not the person or the model in the session. Someone can replay a captured signature to the same host until it expires.
+- A name without verification is a declaration or a product shape. Anyone can produce one, so it never grants access.
+- The page verdict, a page report and the output of `combine` come from the visitor's browser. Use them to adapt a page and to measure, not for access.
+- No verdict says who the person behind an agent is, or who did a particular action.
 
 ## How the request's verdict reaches the page
 
-For an agent's document navigation, the server adapters can add a `Server-Timing: botscent;desc="…"` entry with `Cache-Control: no-store`, which the page half reads, so a single page sees both halves. People's responses never carry it, and the page ignores an entry that is stale or doubled. Every server adapter takes `transport`. Where an adapter can know it runs per request in front of the cache it accepts `'auto'`, the default, which turns it on there: the Next.js proxy on Vercel, Vercel Routing Middleware, Cloudflare Workers, Netlify Edge Functions, and Hono on Cloudflare Workers. An origin (Express, Astro, Hono on Node.js, Django, FastAPI, Flask, self-hosted Next.js) cannot see whether a CDN in front of it stores HTML, so there it is off unless you set `transport: 'always'` (Python: `transport=True`), which states that no shared cache stores your HTML. If one does and ignores `Cache-Control: no-store`, a person can be served an agent's entry; `npx botscent check` reports that case.
+On an agent's page load, a server adapter can add a `Server-Timing: botscent;desc="…"` entry and `Cache-Control: no-store`. The page half reads the entry, so one page sees both halves. Responses to people never carry the entry. The page ignores an entry that is old or repeated.
+
+Each server adapter has a `transport` option:
+
+- The default, `'auto'`, turns the entry on where the adapter runs per request in front of the cache. That is the Next.js proxy on Vercel, Vercel Routing Middleware, Cloudflare Workers, Netlify Edge Functions, and Hono on Cloudflare Workers.
+- At an origin (Express, Astro, Hono on Node.js, Django, FastAPI, Flask, self-hosted Next.js), the adapter cannot see if a CDN stores your HTML. The entry stays off.
+- `transport: 'always'` (Python: `transport=True`) turns the entry on. Set it only if no shared cache stores your HTML.
+
+> **Warning:** If a shared cache stores your HTML and ignores `Cache-Control: no-store`, a person can get an agent's entry. `npx botscent check` reports this case.
 
 ## Reasons
 
@@ -428,17 +460,22 @@ Named agents: 100, from [the registry](registry/names.json). Software the regist
 
 ## Privacy
 
-The page half makes no network request and writes no cookie, storage or DOM. It keeps only the ids of reasons that held, never an observed value, and its diagnostics never contain observed values. The server half reads request headers and nothing else. Nothing leaves the page unless your code sends it, and then only the verdict. [PRIVACY.md](PRIVACY.md) lists every probe and every header read.
+The page half makes no network request. It writes no cookie, storage or DOM. It keeps only the ids of reasons that held, never an observed value. The server half reads request headers only. Nothing leaves the page unless your code sends it, and then only the verdict. [PRIVACY.md](PRIVACY.md) lists every probe and every header.
 
 ## Debugging
 
-`start({ debug: true })`, `data-debug` on the script tag, `inspect(request, { debug: true })` or `BOTSCENT_DEBUG=1` log one line per decision, prefixed `[botscent]`: each probe, each signature and why it did or did not verify, each token, and each verdict change. Python logs the same lines to the `botscent` logger at `DEBUG`.
+To log each decision, use `start({ debug: true })`, `data-debug` on the script tag, `inspect(request, { debug: true })` or `BOTSCENT_DEBUG=1`. Each line starts with `[botscent]`. It shows a probe, a signature and why it verified or not, a token, or a verdict change. Python logs the same lines to the `botscent` logger at `DEBUG`.
 
 ## Stability
 
-If you route or block on verdicts, pin an exact version (`npm install --save-exact botscent`, `botscent==1.0.0` in Python). A minor release can change who is detected, there is no remote switch to undo it, and rolling back means installing the previous version.
+If you route or block on verdicts, pin an exact version: `npm install --save-exact botscent`, or `botscent==1.0.0` in Python. A minor release can change who is detected. To roll back, install the previous version.
 
-The behaviour is pinned by [the contract](spec/contract.md) and by shared test vectors that the TypeScript and Python halves must both pass. Signer keys are frozen into each release, so the server half makes no outbound request; a scheduled job opens a pull request when a signer's published keys change. Those keys are pinned as of the release, not checked live: a key a signer later removes still verifies in an installation that bundles it, so if you grant access on `isVerified`, keep the package current. Any release that changes a verdict for some visitor, or adds a reason or a name, is a minor version, with an output-change report in its release notes; renaming or removing a reason id or an agent name, which code and stored data depend on, is a major version. The names, with each agent's display name, vendor and kind, ship as data: `import names from 'botscent/names.json'`.
+- [The contract](spec/contract.md) and shared test vectors pin the behaviour. The TypeScript and Python halves pass the same vectors.
+- Each release bundles the signers' keys, so the server half makes no outbound request. A scheduled job opens a pull request when a signer's published keys change.
+- A key that a signer removes still verifies until you update. If you grant access with `isVerified`, keep the package current.
+- A release that changes a verdict, or adds a reason or a name, is a minor version. Its release notes carry an output-change report.
+- Renaming or removing a reason id or an agent name is a major version.
+- The names ship as data, with each agent's display name, vendor and kind: `import names from 'botscent/names.json'`.
 
 ## License
 
