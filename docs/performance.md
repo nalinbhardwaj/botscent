@@ -6,7 +6,7 @@ What the page half costs a page, measured in a real browser against the same pag
 
 On the reference device (defined below; roughly a budget phone's CPU), against the same page without the library:
 
-| What                               | Measured                                                                   | Plan (section 8.7, principle 5)              |
+| What                               | Measured                                                                   | Target                                       |
 | ---------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------- |
 | Start-up: the script and `start()` | **4.6–5.5 ms**                                                             | under 2 ms: **not met**                      |
 | Long tasks                         | none                                                                       | none: met                                    |
@@ -27,7 +27,7 @@ Start-up does no work for the two cloud-browser rules. Muse's renderer read happ
 
 ### The reference device and calibration
 
-Times depend on the machine, so every Chromium measurement runs with the CPU throttled through the DevTools protocol (`Emulation.setCPUThrottlingRate`). The **reference device** is the reference machine (an Apple M3 Max) throttled 4x, the slowdown Lighthouse applies for its mobile profile. In single-thread speed that is roughly a budget Android phone, slower than the plan's "mid-range phone".
+Times depend on the machine, so every Chromium measurement runs with the CPU throttled through the DevTools protocol (`Emulation.setCPUThrottlingRate`). The **reference device** is the reference machine (an Apple M3 Max) throttled 4x, the slowdown Lighthouse applies for its mobile profile. In single-thread speed that is roughly a budget Android phone, slower than a mid-range phone.
 
 Other machines emulate the same device. Before measuring, the harness times a fixed workload (object and descriptor work, function source reads, building 6,000 elements and an attribute query) unthrottled, in nine fresh documents. It then throttles by `4 × 7.0 ms / its own median`. On the reference machine that comes to 3.7x–4.2x between runs, because the calibration itself varies by about ±5%. A CI runner twice as slow throttles about 2x. Calibration evens out CPU speed; it cannot make a laptop into a phone (no thermal limits, memory bandwidth or storage differences), so the budgets keep headroom for that.
 
@@ -106,7 +106,7 @@ Every budget held in both runs, and every count (callbacks, queries, requests, w
 
 ### 1. Start-up is spread thin
 
-At 4.6–5.5 ms on the reference device (1.3 ms unthrottled), start-up has no single hot spot: module evaluation (the registry tables), compiling the script, `start()` itself, and the descriptor and source reads. The plan's 2 ms target stays unmet on this reference device, which is slower than a mid-range phone. Whether about 5 ms on a budget-phone CPU meets "under 2 ms on a mid-range phone" depends on the phone; the honest statement is the measured number and the device.
+At 4.6–5.5 ms on the reference device (1.3 ms unthrottled), start-up has no single hot spot: module evaluation (the registry tables), compiling the script, `start()` itself, and the descriptor and source reads. The 2 ms target stays unmet on this reference device, which is slower than a mid-range phone. Whether about 5 ms on a budget-phone CPU meets "under 2 ms on a mid-range phone" depends on the phone; the honest statement is the measured number and the device.
 
 ### 2. On a light page, start-up delays the first paint
 
@@ -145,9 +145,9 @@ Every budget, its value and how it was derived is in [`test/perf/budgets.json`](
   - callbacks in a day (17,280);
   - requests, storage and DOM writes (0).
 - **Times on the reference device, with headroom from the spread**, about 1.5x to 4x over the worst run, so that the calibration's ±5% and the gap between a laptop and a CI runner do not fail a run. Start-up's ceiling is 12 ms, about 2.5x the measured value and well under one long task. The light page's LCP ceiling is one frame (16 ms), because the delay is start-up.
-- **Not gated** where the time belongs to the environment (hidden callbacks), or where the measure has no fixed scale (the task that contains start-up includes the page's own parsing). These are printed, with the plan's target shown as met or not met.
+- **Not gated** where the time belongs to the environment (hidden callbacks), or where the measure has no fixed scale (the task that contains start-up includes the page's own parsing). These are printed, with the target shown as met or not met.
 
-The plan's targets (start-up under 2 ms, no long tasks, no requests, storage or DOM writes) are shown in their own column. A target never fails the run; a budget does.
+The targets (start-up under 2 ms, no long tasks, no requests, storage or DOM writes) are shown in their own column. A target never fails the run; a budget does.
 
 ## Running it
 

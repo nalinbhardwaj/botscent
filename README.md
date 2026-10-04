@@ -2,12 +2,15 @@
 
 # Botscent
 
-Tells a website when software rather than a person is operating a visit, and names the agent when the evidence allows.
+Botscent tells your site if an AI agent, not a person, is browsing it, and which agent. Use it to hide ads from agents, change prices, log agent traffic, or give agents a simpler page.
 
-Botscent has two halves that give the same small verdict:
+[Website](https://botscent.nibnalin.me) · [Docs](https://botscent.nibnalin.me/docs) · [Install with one prompt](#install-with-one-prompt)
 
-- **The server half** reads what one request declares: a [Web Bot Auth](https://datatracker.ietf.org/doc/draft-ietf-webbotauth-httpsig-protocol/) signature, verified against the signers' keys bundled in each release; a user-agent token that an AI agent, crawler or HTTP client publishes for itself; or the hosting platform's verified-bot field. It reads headers only, never the body, and calls no service. TypeScript (Node.js, Cloudflare Workers, Vercel, Deno, Bun) and Python.
-- **The page half** watches the document for evidence that an agent is operating it: the automation flag, the shapes and markers that agent browsers and extensions leave (ChatGPT's agent, Claude for Chrome, the Codex browser, Meta's Muse and others), and input that arrives while the document is hidden. Once seen, the document stays `agent`. It is about 5 KB gzipped, makes no network request, and its start-up and per-input costs are [measured and gated in CI](docs/performance.md).
+- **It names the agent.** Claude for Chrome, ChatGPT's agent, the Codex browser, Muse, Manus, Devin, Grok Bot and more. It also detects crawlers, fetchers and HTTP clients that say what they are. [Coverage](#coverage) lists every name.
+- **It is small.** The page script is about 5 KB gzipped, with 0 dependencies. It starts in about 5 ms on a budget phone's CPU, and CI [measures that](docs/performance.md) on every change.
+- **It sends nothing.** The page script makes no network request and writes no cookie or storage. Nothing leaves the page unless your code sends it.
+- **It runs where you do.** Next.js, React, Vue, Nuxt, SvelteKit, Astro, Express, Hono, Cloudflare Workers, Netlify and Vercel in TypeScript. FastAPI, Starlette, Django and Flask in Python.
+- **It only reports.** It has no blocking, challenges or rules of its own. You decide what to do with the verdict.
 
 ```ts
 type Verdict = {
@@ -17,9 +20,24 @@ type Verdict = {
 }
 ```
 
-### What v1 promises
+## How it works
 
-Botscent 1.0 detects the agents in [Coverage](#coverage), with the evidence each is detected by, and names one only when that evidence identifies it. `human` means no agent evidence was seen; it is never proof of a person. Some evidence describes an agent's surface rather than who is at the keyboard, so a person working inside one is reported as that agent by design: the Codex in-app browser, Grok Bot's cloud computer, and a Muse or ChatGPT agent session the person has taken over. Out of scope: automation built to look like a person, crawler management and robots policy, and authorization. Grok Bot is named from its signature when its traffic leaves Grok's cloud, and from its cloud computer in the page when the Grok app routes it through the user's own machine (the default), which drops the signature. Comet and Windows assistive tools have not been measured.
+Botscent has two halves. Both return the same verdict.
+
+- **The server half** reads what one request declares: a [Web Bot Auth](https://datatracker.ietf.org/doc/draft-ietf-webbotauth-httpsig-protocol/) signature checked against the keys bundled in each release, a user-agent token that an agent or crawler publishes for itself, or your host's verified-bot field. It reads headers only and calls no service. It sees agents that sign or declare their requests.
+- **The page half** watches the page for the marks that agents leave: the automation flag, the shape of agents' cloud browsers, the markers that agent extensions draw, and input that arrives while the page is hidden. It sees agents that run inside a person's own browser. Once it sees an agent, the page stays `agent`.
+
+Botscent 1.0 detects the agents in [Coverage](#coverage), and names one only when the evidence identifies it. `human` means that Botscent saw no agent evidence. It is never proof of a person. Some evidence describes an agent's surface, not who is at the keyboard. So a person who works inside the Codex browser, inside Grok Bot's cloud computer, or in a Muse or ChatGPT agent session they took over, is reported as that agent. Grok Bot is named by its signature when its traffic leaves Grok's cloud, and by the page half when the Grok app sends it through the user's own computer (the default). Botscent does not detect automation built to look like a person, and it does not manage crawlers or decide access for you. Comet and Windows assistive tools are not yet measured.
+
+## Install with one prompt
+
+Paste this into Claude Code, Cursor, Codex or Copilot:
+
+```text
+Install Botscent in this project. Follow https://botscent.nibnalin.me/install.md: detect this project's framework, install the botscent package, add the page half and the server half where it says, then run `npx botscent check <url>` against the running site.
+```
+
+The agent follows the same steps as the quickstart below.
 
 ## Quickstart
 
@@ -182,6 +200,14 @@ npx botscent check https://your-site.example/
 
 `check` requests the page as itself and then anonymously, opens it in a local Chrome (which, like any automation, sets the webdriver flag the page half reports), and scans the project it runs in. Each check prints `pass`, `fail`, `unknown` or `skipped`, what was observed, and for anything but a pass the likely cause and the fix. `--json` is for scripts and agents, `--report` prints a block to paste into an issue, and the exit code is 0 when installed, 1 when broken and 2 when neither half could be confirmed.
 
+## Use the verdict
+
+Start by logging verdicts for a week, then decide what to change. Each use needs a different verdict:
+
+- **To adapt a page** (hide ads, show a simpler layout): read the page verdict with `useBotscent()`, `$botscent` or `verdict()`.
+- **To measure** (log agent traffic, count agents by name): send the page verdict to your server and join it to the request's own verdict with `combine`.
+- **To give an agent access** (skip a challenge, raise a rate limit): use only `isVerified` on the request's own verdict.
+
 ## From the page to your server
 
 The page half sends nothing on its own. To tell your server what the page saw, spread its headers into a same-origin request, or opt a form in:
@@ -217,7 +243,9 @@ A page report can be forged by the page's own scripts, and anyone can send the h
 
 ## The trust model
 
-The request's own verdict (`inspect`) is what the request declared, and it is the only one to use for anything security-relevant. Within it, `isVerified` is the one check fit for letting an agent past something: with a name, it is true only when a Web Bot Auth signature from that agent verified against a key bundled in this release; without one, also when the hosting platform verified the bot. It authenticates the operator's infrastructure, not the person or the model in the session, and a captured signature can be replayed to the same host within its window. A name without verification is a declaration or a product shape that anyone can produce, so it never grants access. The page verdict, a page report carried to your server, and anything `combine` returns are computed in the visitor's browser: fine for adapting an interface and for measurement, wrong for access. None of them is a claim about the person behind an agent, and none says who performed a particular action.
+The request's own verdict (`inspect`) is what the request declared. It is the only verdict to use for anything security-relevant. Within it, `isVerified` is the one check fit for letting an agent past something. With a name, it is true only when a Web Bot Auth signature from that agent verified against a key bundled in this release. Without a name, it is also true when your host verified the bot.
+
+`isVerified` authenticates the operator's infrastructure, not the person or the model in the session. A captured signature can be replayed to the same host within its window. A name without verification is a declaration or a product shape that anyone can produce, so it never grants access. The page verdict, a page report carried to your server, and anything `combine` returns are computed in the visitor's browser. Use them to adapt an interface and to measure, not for access. None of them is a claim about the person behind an agent, or about who performed a particular action.
 
 ## How the request's verdict reaches the page
 
@@ -400,7 +428,7 @@ Named agents: 100, from [the registry](registry/names.json). Software the regist
 
 ## Privacy
 
-The page half makes no network request, writes no cookie, storage or DOM, and keeps no observed value, only the ids of reasons that held; its diagnostics never contain observed values. The server half reads request headers and nothing else. Nothing leaves the page unless your code sends it, and then only the verdict. [PRIVACY.md](PRIVACY.md) lists every probe and every header read.
+The page half makes no network request and writes no cookie, storage or DOM. It keeps only the ids of reasons that held, never an observed value, and its diagnostics never contain observed values. The server half reads request headers and nothing else. Nothing leaves the page unless your code sends it, and then only the verdict. [PRIVACY.md](PRIVACY.md) lists every probe and every header read.
 
 ## Debugging
 

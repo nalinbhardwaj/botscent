@@ -144,7 +144,7 @@ jobs:
           {
             echo "Merging this publishes botscent $version to npm and PyPI from one commit."
             echo
-            echo "Before merging: replay the benchmark snapshots in the research repository (analysis/library, \`--check\`) and add what moved below."
+            echo "Before merging: the maintainers replay their recorded sessions against this build and add what moved below."
             echo
             node scripts/output-change.ts
           } > "$RUNNER_TEMP/body.md"

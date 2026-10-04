@@ -2,7 +2,7 @@
 // against the last release tag, in the outputs anyone can see. The vectors pin
 // every verdict the implementations give on their cases, so a changed verdict is a
 // changed vector; the registry decides every name, token, signer and key. The
-// replay of the private benchmark snapshots is a separate step before a release.
+// maintainers' replay of recorded sessions is a separate step before a release.
 //
 //   node scripts/output-change.ts [--since <tag>]
 import { execFileSync } from 'node:child_process'
@@ -53,7 +53,7 @@ if (!since) {
   lines.push(
     `## Output changes since ${since}`,
     '',
-    'Coverage: what the request vectors and the registry pin. A changed page predicate or server rule that no vector exercises does not show here; the replay of the benchmark corpus (the research repository, `analysis/library`, with `--check`) covers the page half.',
+    'Coverage: what the request vectors and the registry pin. A changed page predicate or server rule that no vector exercises does not show here; the maintainers replay their recorded agent and person sessions before each release, which covers the page half.',
     '',
   )
   // Vectors: every case whose verdict moved, and cases added or removed.

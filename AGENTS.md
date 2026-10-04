@@ -17,7 +17,7 @@ Every step is safe to run again. The quickstart in [README.md](README.md) has th
 ## Working on this repository
 
 - Node.js 22.12 or later for TypeScript; [uv](https://docs.astral.sh/uv/) for Python, in `python/`.
-- Before a commit: `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`; for the page half `npm run test:browser`; for adapters `npm run test:examples`; for Python `cd python && uv run ruff check . && uv run pytest`.
+- Before a commit: `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`; for the page half `npm run test:browser` and `npm run perf` (after `npx playwright install`); for adapters `npm run test:examples` (needs uv, and downloads the example apps' packages); for other runtimes `npm run test:runtimes` (needs Deno and Bun); for Python `cd python && uv run ruff check . && uv run pytest`.
 - [spec/contract.md](spec/contract.md) is the specification. The TypeScript and Python halves must give byte-identical verdicts on [`vectors/`](vectors), so a change to one is a change to both.
 - `registry/*.json` is the one source for names, tokens, signers, keys, reasons and page declarations. After editing it run `npm run generate`; after changing vectors, `npm run vectors`; the README's tables come from `node scripts/docs.ts`. CI fails when any generated file is stale.
 - The npm package has no runtime dependencies; `cryptography` is the Python package's only one. Keep it so.
