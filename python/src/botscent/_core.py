@@ -169,7 +169,7 @@ def decode(value: object) -> dict | None:
     return entry
 
 
-def read_report(value: object) -> Verdict | None:
+def read_report(value: str | Mapping[str, object] | None) -> Verdict | None:
     """A page report as a verdict whose reasons carry the ``page.`` prefix, or
     None. Accepts the wire string (from the header or the form field) or a
     verdict mapping passed as an argument, held to the same grammar."""

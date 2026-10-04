@@ -2,16 +2,7 @@
 
 # Botscent
 
-<!--
-TODO (owner, later pass): differences between this README, its examples and the code, found while writing the site's docs (3 October). The site's docs follow the code.
-- SvelteKit: the example calls `inspect` in a route, not in `hooks.server.ts`.
-- Express: the adapter does not add `botscent` to Express's `Request` type.
-- `readReport`: its parameter is typed `unknown` in the published .d.ts.
--->
-
 Tells a website when software rather than a person is operating a visit, and names the agent when the evidence allows.
-
-> Pre-release. The API follows [the contract](spec/contract.md) and is settling; nothing is published yet.
 
 Botscent has two halves that give the same small verdict:
 

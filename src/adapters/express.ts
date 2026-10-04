@@ -20,6 +20,16 @@ export type BotscentExpressOptions = {
 }
 
 type Request = IncomingMessage & { botscent?: Verdict; originalUrl?: string }
+
+// req.botscent on Express's own Request type, wherever @types/express is installed.
+declare global {
+  namespace Express {
+    interface Request {
+      /** The request half's verdict, set by botscent() before any handler runs. */
+      botscent?: Verdict
+    }
+  }
+}
 type Next = (error?: unknown) => void
 
 /** Express middleware: `app.use(botscent())`, then `req.botscent` in any handler. */

@@ -45,7 +45,8 @@ export function decode(value: unknown): Entry | null {
 /** A page report as a verdict whose reasons carry the `page.` prefix, or null.
  * Accepts the wire string (from the header or the form field) or a verdict
  * object passed as an argument, which is held to the same grammar. */
-export function readReport(value: unknown): Verdict | null {
+// Typed as the contract states it; the value is still checked, since a report comes from the page.
+export function readReport(value: string | Verdict | null | undefined): Verdict | null {
   let entry: Entry | null = null
   if (typeof value === 'string') entry = decode(value)
   else if (value && typeof value === 'object') {

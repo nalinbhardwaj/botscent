@@ -1,6 +1,6 @@
 # Botscent v1 contract
 
-Status: **draft**. Every statement is a requirement on both implementations (TypeScript and Python) unless it names one. It freezes when the vertical slice passes; until then a change here comes with the test that motivated it. Data referenced here lives in `registry/`; examples that must hold byte for byte live in `vectors/`.
+Status: **frozen for 1.0** (4 October 2026). Every statement is a requirement on both implementations (TypeScript and Python) unless it names one. A change follows the versioning rules of item 44a and comes with the test that motivated it. Data referenced here lives in `registry/`; examples that must hold byte for byte live in `vectors/`.
 
 ## 1. The verdict
 
