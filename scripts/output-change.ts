@@ -14,9 +14,11 @@ const git = (...args: string[]) =>
   execFileSync('git', ['-C', root, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim()
 const arg = process.argv.indexOf('--since')
 let since: string | null = arg > 0 ? process.argv[arg + 1]! : null
+// The last release before this commit: a tag on this commit is the release being made, not its base.
 if (!since)
   try {
-    since = git('describe', '--tags', '--abbrev=0', '--match', 'v*')
+    const here = git('tag', '--points-at', 'HEAD').split('\n').filter(Boolean)
+    since = git('describe', '--tags', '--abbrev=0', '--match', 'v*', ...here.flatMap((t) => ['--exclude', t]))
   } catch {}
 
 const now = (path: string) => JSON.parse(readFileSync(`${root}${path}`, 'utf8'))
