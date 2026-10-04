@@ -1,6 +1,6 @@
 {
   "name": "botscent",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Tells a website when software rather than a person is operating a visit, and names the agent when the evidence allows.",
   "keywords": [
     "bot",
