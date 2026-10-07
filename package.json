@@ -1,6 +1,6 @@
 {
   "name": "botscent",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Botscent tells your site if an AI agent is browsing it, and which agent.",
   "keywords": [
     "bot",
