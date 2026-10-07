@@ -36,4 +36,4 @@ line-length = 120
 testpaths = ["tests"]
 
 [tool.ruff.format]
-exclude = ["src/botscent/_generated.py"]
+exclude = ["src/botscent/_generated.py", "README.md"]
