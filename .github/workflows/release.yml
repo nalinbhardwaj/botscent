@@ -69,13 +69,17 @@ jobs:
           done
           release=false
           if [ "$pending" = false ] && [ "$version" != 0.0.0 ]; then release=true; fi
-          # The release commit: the tag's, once it exists; otherwise the commit ci passed.
+          # The release commit: the tag's, once it exists; otherwise the commit ci passed. With
+          # pending changesets the release pull request is built from the commit ci passed, whatever
+          # the last release's tag points at.
           sha=$head
           tag=false
-          if git rev-parse -q --verify "refs/tags/v$version" > /dev/null; then
-            sha=$(git rev-parse "v$version^{commit}")
-          elif [ "$release" = true ]; then
-            tag=true
+          if [ "$release" = true ]; then
+            if git rev-parse -q --verify "refs/tags/v$version" > /dev/null; then
+              sha=$(git rev-parse "v$version^{commit}")
+            else
+              tag=true
+            fi
           fi
           if [ "$release" = true ]; then
             passed=$(gh api "repos/$REPO/actions/workflows/ci.yml/runs?head_sha=$sha&status=success" --jq .total_count)
@@ -89,7 +93,7 @@ jobs:
             echo "::error::$version is published but v$version is not tagged: which commit it came from needs a person"
             exit 1
           fi
-          if [ "$on_npm" = true ]; then
+          if [ "$release" = true ] && [ "$on_npm" = true ]; then
             published=$(npm view "botscent@$version" gitHead 2>/dev/null || true)
             if [ -n "$published" ] && [ "$published" != "$sha" ]; then
               echo "::error::npm's botscent@$version came from $published, not v$version ($sha)"

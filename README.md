@@ -6,13 +6,11 @@ Botscent tells your site if an AI agent is browsing it, and which agent.
 
 [Website](https://botscent.nibnalin.me) · [Docs](https://botscent.nibnalin.me/docs) · [Install with one prompt](#install-with-one-prompt)
 
-- **Names the agent.** Claude for Chrome, ChatGPT's agent, Codex, Muse, Manus, Devin, Grok Bot and [more](#coverage).
-- **About 5 KB gzipped.** 0 dependencies. Starts in about 5 ms on a budget phone. [Measured in CI](docs/performance.md).
+- **Names the agent.** Instinct, Muse, OpenAI Dot, Grok Bot, Claude for Chrome, ChatGPT for Chrome, Manus, Devin, Codex and [more](#coverage).
+- **About 5 KB.** 0 dependencies. Starts in about 5 ms on a budget phone. [Measured in CI](docs/performance.md).
 - **Sends nothing.** No network requests, no cookies, no storage.
-- **Reports only.** No blocking. You decide what to do.
+- **When an agent visits:** hide ads, change prices, log agents, simplify pages or block agents.
 - **TypeScript and Python.** Next.js, React, Vue, Nuxt, SvelteKit, Astro, Express, Hono, Cloudflare Workers, Netlify, Vercel, FastAPI, Django and Flask.
-
-When an agent visits: hide ads, change prices, log agents, or simplify pages.
 
 ```ts
 type Verdict = {
@@ -24,21 +22,12 @@ type Verdict = {
 
 ## How it works
 
-Botscent has two halves. Both return the same verdict.
+Botscent has two halves. Each returns a verdict: `agent` or `human`, with the agent's name when the evidence shows it.
 
 - **The server half** reads the request headers. It checks a [Web Bot Auth](https://datatracker.ietf.org/doc/draft-ietf-webbotauth-httpsig-protocol/) signature, a user-agent token and your host's verified-bot field. It verifies signatures against keys bundled in each release. It calls no service.
 - **The page half** watches the page for marks that agents leave: the automation flag, agent cloud browsers, extension markers, and input on a hidden page. After it finds an agent, the page verdict stays `agent`.
 
 The server half finds agents that sign or declare their requests. The page half finds agents inside a person's browser.
-
-## What 1.0 promises
-
-- Botscent finds the agents in [Coverage](#coverage). It names an agent only when the evidence identifies that agent.
-- `human` means that Botscent found no agent evidence. It does not prove that a person is there.
-- Some evidence shows an agent's surface, not who uses it. A person who works inside the Codex browser, Grok Bot's cloud computer, or a Muse or ChatGPT agent session is reported as that agent.
-- The server half names Grok Bot when its traffic leaves Grok's cloud. The page half names Grok Bot when the Grok app sends its traffic through the user's computer, which is the default.
-- Botscent does not find automation built to look like a person. It does not manage crawlers or make access decisions.
-- Not measured yet: Comet and Windows assistive tools.
 
 ## Install with one prompt
 
@@ -229,6 +218,7 @@ Start by logging verdicts for a week. Then decide what to change. Each use needs
 | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | Hide ads, change prices, simplify pages                    | The page verdict: `useBotscent`, `$botscent` or `verdict`                                 |
 | Log agents: count visits by agent name                     | The page verdict, sent to your server and joined to the request's own verdict (`combine`) |
+| Block agents                                               | The request's own verdict on the server, or the page verdict in the page                  |
 | Give an agent access: skip a challenge, raise a rate limit | `isVerified` on the request's own verdict, and nothing else                               |
 
 ## From the page to your server
