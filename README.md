@@ -1,8 +1,8 @@
-[![Botscent — Detect AI agents on your site.](docs/assets/botscent-social.png)](https://botscent.nibnalin.me)
+[![Botscent — Detect AI agents on your site.](https://raw.githubusercontent.com/nalinbhardwaj/botscent/main/docs/assets/botscent-social.png)](https://botscent.nibnalin.me)
 
 # Botscent
 
-Botscent tells your site when an AI agent, not a person, is browsing it, and which agent.
+Botscent tells your site if an AI agent is browsing it, and which agent.
 
 [Website](https://botscent.nibnalin.me) · [Docs](https://botscent.nibnalin.me/docs) · [Install with one prompt](#install-with-one-prompt)
 
@@ -12,7 +12,7 @@ Botscent tells your site when an AI agent, not a person, is browsing it, and whi
 - **Reports only.** No blocking. You decide what to do.
 - **TypeScript and Python.** Next.js, React, Vue, Nuxt, SvelteKit, Astro, Express, Hono, Cloudflare Workers, Netlify, Vercel, FastAPI, Django and Flask.
 
-Use it to hide ads from agents, change prices, log agent traffic, or show agents a simpler page.
+When an agent visits: hide ads, change prices, log agents, or simplify pages.
 
 ```ts
 type Verdict = {
@@ -45,7 +45,11 @@ The server half finds agents that sign or declare their requests. The page half 
 Paste this prompt into Claude Code, Cursor, Codex or Copilot:
 
 ```text
-Install Botscent in this project. Follow https://botscent.nibnalin.me/install.md: detect this project's framework, install the botscent package, add the page half and the server half where it says, then run `npx botscent check <url>` against the running site.
+Install Botscent in this project. Botscent is a small open-source library that tells a site if an AI agent is browsing it, and which agent.
+
+Follow https://botscent.nibnalin.me/install.md: detect this project's framework, install the botscent package, add the page half and the server half where it says, then run `npx botscent check <url>` against the running site.
+
+Run the commands yourself. Re-running any step must not duplicate code. When you are done, list the files you changed and paste what check reported.
 ```
 
 The agent follows the quickstart below.
@@ -223,8 +227,8 @@ Start by logging verdicts for a week. Then decide what to change. Each use needs
 
 | To                                                         | Use                                                                                       |
 | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Adapt a page: hide ads, show a simpler layout              | The page verdict: `useBotscent`, `$botscent` or `verdict`                                 |
-| Measure: log agent traffic, count agents by name           | The page verdict, sent to your server and joined to the request's own verdict (`combine`) |
+| Hide ads, change prices, simplify pages                    | The page verdict: `useBotscent`, `$botscent` or `verdict`                                 |
+| Log agents: count visits by agent name                     | The page verdict, sent to your server and joined to the request's own verdict (`combine`) |
 | Give an agent access: skip a challenge, raise a rate limit | `isVerified` on the request's own verdict, and nothing else                               |
 
 ## From the page to your server

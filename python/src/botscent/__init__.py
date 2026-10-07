@@ -1,4 +1,4 @@
-"""Botscent: tells a website when software rather than a person is operating a visit.
+"""Botscent: tells your site if an AI agent is browsing it, and which agent.
 
 import botscent
 verdict = botscent.inspect(request)   # {"type": "agent" | "human", "agent_name"?: str, "reasons": [...]}
