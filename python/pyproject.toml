@@ -1,6 +1,6 @@
 [project]
 name = "botscent"
-version = "1.0.1"
+version = "1.1.0"
 description = "Botscent tells your site if an AI agent is browsing it, and which agent."
 readme = "README.md"
 license = "MIT"
