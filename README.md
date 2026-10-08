@@ -288,8 +288,8 @@ Reasons, strongest first. A reason that names gives `agent_name` when every nami
 | `signer.web-bot-auth.verified`        | request | yes, signer           | A Web Bot Auth signature on the request verified against a key bundled with this release.                                                                                                                                                              |
 | `signer.edge-verified-bot`            | request | no                    | The hosting platform verified the request as a known bot (Cloudflare's verified-bot category).                                                                                                                                                         |
 | `signer.web-bot-auth.declared`        | request | yes, signer           | The request carries a Web Bot Auth signature that did not verify here: an unknown or expired key, a signature outside its window, or a check that failed.                                                                                              |
-| `ua.declared-agent-token`             | request | yes, token            | The user agent contains a token that declares software: an agent, fetcher, crawler, link previewer or HTTP client.                                                                                                                                     |
-| `ua.page-declared-engine`             | page    | yes, page-declaration | The page's own navigator declares a hosted browser engine.                                                                                                                                                                                             |
+| `ua.declared-agent-token`             | request | yes, token            | The user agent contains a token that declares software: an agent or an agent's in-app browser, a fetcher, crawler, link previewer or HTTP client.                                                                                                      |
+| `ua.page-declared-engine`             | page    | yes, page-declaration | The page's own navigator declares an agent's browser: a hosted browser engine, or an agent's in-app browser by its user-agent token.                                                                                                                   |
 | `browser.webdriver-flag`              | page    | no                    | navigator.webdriver is true: the browser declares that automation controls it.                                                                                                                                                                         |
 | `ua.headless-chrome`                  | request | no                    | The user agent declares headless Chrome.                                                                                                                                                                                                               |
 | `muse.cloud-browser.password-manager` | page    | yes, muse             | 1Password's accessor family on the credential methods, in Chrome 139 or later on Linux x86_64 rendering WebGL with SwiftShader: Muse's cloud browser.                                                                                                  |
@@ -310,23 +310,24 @@ Reasons, strongest first. A reason that names gives `agent_name` when every nami
 
 <!-- generated:coverage -->
 
-Named agents: 100, from [the registry](registry/names.json). Software the registry does not name, such as a browser under automation, is still reported as an agent, without a name.
+Named agents: 101, from [the registry](registry/names.json). Software the registry does not name, such as a browser under automation, is still reported as an agent, without a name.
 
 **Agents that operate a browser**
 
-| Agent                | Vendor                  | `agent_name`     | Evidence                                                                                                     |
-| -------------------- | ----------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------ |
-| ChatGPT              | OpenAI                  | `chatgpt`        | signature from `chatgpt.com`                                                                                 |
-| ChatGPT for Chrome   | OpenAI                  | `chatgpt-chrome` | page: `chatgpt.badge.active`                                                                                 |
-| Claude for Chrome    | Anthropic               | `claude-chrome`  | page: `claude.marker.active`                                                                                 |
-| Codex in-app browser | OpenAI                  | `codex-browser`  | page: two of `codex.prompt.anonymous-native`, `codex.keyboard.empty-layout-map`, `codex.overlay.shadow-root` |
-| Devin                | Cognition               | `devin`          | user agent `Devin`                                                                                           |
-| Google-Agent         | Google                  | `google-agent`   | user agent `Google-Agent`                                                                                    |
-| Grok Bot             | Anysphere               | `grok-bot`       | signature from `cursorusercontent.com`; page: `grok.cloud-computer.environment`                              |
-| Instinct             | Spear Street Technology | `instinct`       | page: `instinct.credentials.wrappers` with `instinct.geetest.accessor-pair`                                  |
-| Manus                | Manus                   | `manus`          | signature from `api.manus.im`; user agent `Manus-User`                                                       |
-| Muse                 | Meta                    | `muse`           | page: `muse.cloud-browser.password-manager`                                                                  |
-| Nova Act             | Amazon                  | `agent-novaact`  | user agent `Agent-NovaAct`                                                                                   |
+| Agent                 | Vendor                  | `agent_name`     | Evidence                                                                                                     |
+| --------------------- | ----------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------ |
+| ChatGPT               | OpenAI                  | `chatgpt`        | signature from `chatgpt.com`                                                                                 |
+| ChatGPT for Chrome    | OpenAI                  | `chatgpt-chrome` | page: `chatgpt.badge.active`                                                                                 |
+| Claude for Chrome     | Anthropic               | `claude-chrome`  | page: `claude.marker.active`                                                                                 |
+| Codex in-app browser  | OpenAI                  | `codex-browser`  | page: two of `codex.prompt.anonymous-native`, `codex.keyboard.empty-layout-map`, `codex.overlay.shadow-root` |
+| Cursor in-app browser | Anysphere               | `cursor-browser` | user agent `Cursor`; page: user agent `Cursor/`                                                              |
+| Devin                 | Cognition               | `devin`          | user agent `Devin`                                                                                           |
+| Google-Agent          | Google                  | `google-agent`   | user agent `Google-Agent`                                                                                    |
+| Grok Bot              | Anysphere               | `grok-bot`       | signature from `cursorusercontent.com`; page: `grok.cloud-computer.environment`                              |
+| Instinct              | Spear Street Technology | `instinct`       | page: `instinct.credentials.wrappers` with `instinct.geetest.accessor-pair`                                  |
+| Manus                 | Manus                   | `manus`          | signature from `api.manus.im`; user agent `Manus-User`                                                       |
+| Muse                  | Meta                    | `muse`           | page: `muse.cloud-browser.password-manager`                                                                  |
+| Nova Act              | Amazon                  | `agent-novaact`  | user agent `Agent-NovaAct`                                                                                   |
 
 **Browser automation**
 

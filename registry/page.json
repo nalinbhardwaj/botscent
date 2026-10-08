@@ -1,5 +1,6 @@
 {
-  "$comment": "What a page's own navigator can declare: a product token at the start of navigator.userAgent, or a navigator.platform that names a hosting runtime.",
+  "$comment": "What a page's own navigator can declare: a product token at the start of navigator.userAgent; a product token anywhere in it, matched as a versioned token (Name/version, contract section 6), for an agent's in-app browser whose user agent is its app's default; or a navigator.platform that names a hosting runtime. Each user-agent token here is also in tokens.json with the same name, so both halves agree.",
   "user_agent_prefixes": { "Kitesurf/": "cloudflare-browser-run" },
+  "user_agent_tokens": { "Cursor": "cursor-browser" },
   "platforms": { "Cloudflare Workers": "cloudflare-browser-run" }
 }

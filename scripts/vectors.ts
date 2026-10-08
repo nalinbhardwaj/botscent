@@ -486,6 +486,22 @@ const cases: Case[] = [
     verdict: human,
   },
   {
+    // Electron's default user agent names the app; Cursor's is its in-app browser's (issue #3).
+    name: "Cursor's in-app browser declares Cursor",
+    headers: [
+      [
+        'user-agent',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Cursor/3.22.12 Chrome/148.0.7778.280 Electron/42.10.0 Safari/537.36',
+      ],
+    ],
+    verdict: agent(['ua.declared-agent-token'], 'cursor-browser'),
+  },
+  {
+    name: 'Cursor as a word, or inside a longer name, is not the token',
+    headers: [['user-agent', 'Mozilla/5.0 (compatible; Cursor; +https://example.com) MyCursor/2.0 Cursors/1.0']],
+    verdict: human,
+  },
+  {
     name: 'PetalBot without a space after compatible;',
     headers: [['user-agent', 'Mozilla/5.0 (compatible;PetalBot;+https://webmaster.petalsearch.com/site/petalbot)']],
     verdict: agent(['ua.declared-agent-token'], 'petalbot'),

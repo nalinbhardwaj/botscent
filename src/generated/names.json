@@ -39,6 +39,11 @@
     "vendor": "OpenAI",
     "kind": "computer-use-agent"
   },
+  "cursor-browser": {
+    "display": "Cursor in-app browser",
+    "vendor": "Anysphere",
+    "kind": "computer-use-agent"
+  },
   "chatgpt-chrome": {
     "display": "ChatGPT for Chrome",
     "vendor": "OpenAI",

@@ -2,7 +2,7 @@
 // in later passes, on DOM changes where agents draw, on trusted input, and in a
 // slow sample while the page is visible. Every reader is guarded; a failure is
 // a probe status and no evidence.
-import { PAGE_PLATFORMS, PAGE_USER_AGENT_PREFIXES } from '../generated/page.ts'
+import { PAGE_PLATFORMS, PAGE_USER_AGENTS } from '../generated/page.ts'
 import {
   R,
   isCodexOverlay,
@@ -53,7 +53,7 @@ export function observe(sink: Sink): () => void {
     run('navigator', () => {
       if (navigator.webdriver === true) sink.hold(R.webdriver)
       const ua = navigator.userAgent
-      for (const [prefix, name] of Object.entries(PAGE_USER_AGENT_PREFIXES)) if (ua.startsWith(prefix)) declare(name)
+      for (const [pattern, name] of PAGE_USER_AGENTS) if (pattern.test(ua)) declare(name)
       if (Object.hasOwn(PAGE_PLATFORMS, navigator.platform)) declare(PAGE_PLATFORMS[navigator.platform]!)
     })
   const declare = (name: string) => {

@@ -109,6 +109,7 @@ if (!since) {
     Object.fromEntries((r?.reasons ?? []).map((x, i) => [x.id, { ...x, rank: i }]))
   const page = (p: Record<string, Record<string, string>> | null) => ({
     ...p?.['user_agent_prefixes'],
+    ...p?.['user_agent_tokens'],
     ...p?.['platforms'],
   })
   const registry = lines.length

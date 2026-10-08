@@ -34,6 +34,7 @@ export type KnownAgentName =
   | "muse"
   | "instinct"
   | "codex-browser"
+  | "cursor-browser"
   | "chatgpt-chrome"
   | "claude-chrome"
   | "botscent-check"

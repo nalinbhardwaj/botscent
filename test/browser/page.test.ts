@@ -271,6 +271,25 @@ describe('chromium', () => {
     await page.context().close()
   })
 
+  // Electron's default user agent names the app. Cursor's in-app browser keeps it (issue #3); Slack's
+  // desktop app, another Electron app, is a person's.
+  test("Cursor's in-app browser declares Cursor in its user agent; another Electron app's is a person", async () => {
+    const electron = (app: string) =>
+      `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) ${app} Chrome/148.0.7778.280 Electron/42.10.0 Safari/537.36`
+    for (const [app, expected] of [
+      ['Cursor/3.22.12', { type: 'agent', agent_name: 'cursor-browser', reasons: ['ua.page-declared-engine'] }],
+      ['Slack/4.52.162', { type: 'human', reasons: [] }],
+    ] as const) {
+      const context = await browsers.get('chromium-clean')!.newContext({ userAgent: electron(app) })
+      const page = await context.newPage()
+      await page.goto(server.origin + '/plain')
+      await page.waitForFunction(() => (window as any).botscent !== undefined)
+      await page.waitForTimeout(400)
+      assert.deepEqual(await verdict(page), expected, app)
+      await context.close()
+    }
+  })
+
   test('ChatGPT for Chrome: the badge drawn on the favicon two seconds in, seen through DOM observation', async () => {
     const { page } = await open(
       'chromium-clean',

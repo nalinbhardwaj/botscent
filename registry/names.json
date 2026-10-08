@@ -55,6 +55,12 @@
         "page two of codex.prompt.anonymous-native, codex.keyboard.empty-layout-map, codex.overlay.shadow-root"
       ]
     },
+    "cursor-browser": {
+      "display": "Cursor in-app browser",
+      "vendor": "Anysphere",
+      "kind": "computer-use-agent",
+      "sources": ["token Cursor", "page user agent Cursor/"]
+    },
     "chatgpt-chrome": {
       "display": "ChatGPT for Chrome",
       "vendor": "OpenAI",

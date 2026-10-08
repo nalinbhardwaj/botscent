@@ -32,19 +32,19 @@
       "id": "ua.declared-agent-token",
       "half": "request",
       "names": "token",
-      "summary": "The user agent contains a token that declares software: an agent, fetcher, crawler, link previewer or HTTP client.",
-      "collision_kind": "none-known",
-      "collisions": "No person's browser sends these tokens. Anyone can, so it is a declaration, never authentication.",
-      "tested": "2026-10-02: replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
+      "summary": "The user agent contains a token that declares software: an agent or an agent's in-app browser, a fetcher, crawler, link previewer or HTTP client.",
+      "collision_kind": "agent-surface",
+      "collisions": "One token comes from a browser a person can also use: Cursor's in-app browser sends Cursor/<version>, Cursor's own default, so a person browsing it by hand is reported as cursor-browser by design. It identifies the browser, not who acts in it. No other person's browser sends these tokens. Anyone can send any of them, so it is a declaration, never authentication.",
+      "tested": "2026-10-08: Cursor 3.23.12 on macOS, 2 of 2 documents named cursor-browser, and Safari on the same Mac human; the Windows user agent of issue #3; Cursor/ occurs in no request on any benchmark sheet, so the token changes no recorded verdict. Every other token: 2026-10-02, replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
     },
     {
       "id": "ua.page-declared-engine",
       "half": "page",
       "names": "page-declaration",
-      "summary": "The page's own navigator declares a hosted browser engine.",
-      "collision_kind": "none-known",
-      "collisions": "No person's browser declares these engines. Forgeable like any declaration.",
-      "tested": "2026-10-02: replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
+      "summary": "The page's own navigator declares an agent's browser: a hosted browser engine, or an agent's in-app browser by its user-agent token.",
+      "collision_kind": "agent-surface",
+      "collisions": "A person browsing Cursor's in-app browser by hand is reported as cursor-browser by design: it identifies the browser, not who acts in it. No person's browser declares the hosted engines. Forgeable like any declaration.",
+      "tested": "2026-10-08: Cursor 3.23.12 on macOS, 2 of 2 documents named cursor-browser; Cursor/ occurs in no document on any benchmark sheet. The hosted engines: 2026-10-02, replayed on every benchmark sheet (rule set 1.6.0), with 57 human control documents"
     },
     {
       "id": "browser.webdriver-flag",

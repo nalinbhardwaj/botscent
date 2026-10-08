@@ -17,6 +17,7 @@ const { names } = read('registry/names.json') as {
 const { tokens } = read('registry/tokens.json') as { tokens: { token: string; name: string; match?: string }[] }
 const page = read('registry/page.json') as {
   user_agent_prefixes: Record<string, string>
+  user_agent_tokens: Record<string, string>
   platforms: Record<string, string>
 }
 const keys = read('registry/keys.json') as {
@@ -79,9 +80,17 @@ export const KEYS: Readonly<Record<string, readonly SignerKey[]>> = ${json(keyEn
 export type SignerKey = { x: string; thumbprint: string; kid: string | null; nbf: number | null; exp: number | null }
 `
 
+// The page's user-agent declarations as patterns: a prefix at the start, or a token anywhere as
+// Name/version with contract item 18's boundary before it. Patterns keep the page script small.
+const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')
+const userAgents = [
+  ...Object.entries(page.user_agent_prefixes).map(([prefix, name]) => [`^${escape(prefix)}`, name]),
+  ...Object.entries(page.user_agent_tokens).map(([token, name]) => [`(?:^|[ \\t;(,+])${escape(token)}\\/`, name]),
+]
+
 const pageData = `${header}
-/** What a page's own navigator can declare (registry/page.json). */
-export const PAGE_USER_AGENT_PREFIXES: Readonly<Record<string, string>> = ${json(page.user_agent_prefixes)}
+/** What a page's own navigator can declare (registry/page.json): user-agent patterns, and platforms. */
+export const PAGE_USER_AGENTS: readonly (readonly [RegExp, string])[] = [${userAgents.map(([pattern, name]) => `[/${pattern}/, ${json(name)}]`).join(', ')}]
 export const PAGE_PLATFORMS: Readonly<Record<string, string>> = ${json(page.platforms)}
 `
 

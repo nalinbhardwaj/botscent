@@ -10,6 +10,7 @@ const { signers } = read('registry/signers.json') as { signers: Record<string, s
 const { tokens } = read('registry/tokens.json') as { tokens: { token: string; name: string; match?: string }[] }
 const page = read('registry/page.json') as {
   user_agent_prefixes: Record<string, string>
+  user_agent_tokens: Record<string, string>
   platforms: Record<string, string>
 }
 const keys = read('registry/keys.json') as {
@@ -40,6 +41,7 @@ test('every name is well formed, has a kind, and is reachable from some source',
     ...Object.values(signers),
     ...tokens.map((t) => t.name),
     ...Object.values(page.user_agent_prefixes),
+    ...Object.values(page.user_agent_tokens),
     ...Object.values(page.platforms),
     ...reasons.map((r) => r.names).filter((n): n is string => n !== null && n in names),
   ])
@@ -59,6 +61,15 @@ test('tokens are unique and contain no boundary character', () => {
   for (const token of list) assert.match(token, /^[^\s/;(),+]+$/, token)
   for (const t of tokens)
     assert.ok(t.match === undefined || t.match === 'versioned' || t.match === 'exact', `${t.token}: match ${t.match}`)
+})
+
+test("the page's user-agent tokens are registry tokens with the same name, so both halves agree", () => {
+  for (const [token, name] of Object.entries(page.user_agent_tokens)) {
+    const entry = tokens.find((t) => t.token === token)
+    assert.ok(entry, `${token} is not in tokens.json`)
+    assert.equal(entry.name, name, token)
+    assert.equal(entry.match, 'versioned', `${token}: the page matches it as a versioned token`)
+  }
 })
 
 test('every signer has a bundled directory of Ed25519 keys', () => {

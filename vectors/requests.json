@@ -1291,6 +1291,35 @@
    }
   },
   {
+   "name": "Cursor's in-app browser declares Cursor",
+   "headers": [
+    [
+     "user-agent",
+     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Cursor/3.22.12 Chrome/148.0.7778.280 Electron/42.10.0 Safari/537.36"
+    ]
+   ],
+   "verdict": {
+    "type": "agent",
+    "agent_name": "cursor-browser",
+    "reasons": [
+     "ua.declared-agent-token"
+    ]
+   }
+  },
+  {
+   "name": "Cursor as a word, or inside a longer name, is not the token",
+   "headers": [
+    [
+     "user-agent",
+     "Mozilla/5.0 (compatible; Cursor; +https://example.com) MyCursor/2.0 Cursors/1.0"
+    ]
+   ],
+   "verdict": {
+    "type": "human",
+    "reasons": []
+   }
+  },
+  {
    "name": "PetalBot without a space after compatible;",
    "headers": [
     [
