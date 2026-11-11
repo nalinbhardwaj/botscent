@@ -1,5 +1,11 @@
 # botscent
 
+## 1.2.0
+
+### Minor Changes
+
+- 1e9acfa: - `api.manus.im`: new key `HF5TYZyT5eGNdD_eMYcRNL7KWNUm2lxZmGQrRSbFEP8`
+
 ## 1.1.0
 
 ### Minor Changes
