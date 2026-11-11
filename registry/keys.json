@@ -1,6 +1,6 @@
 {
   "$comment": "Key directories fetched from each signer's /.well-known/http-message-signatures-directory and frozen into the release. Only Ed25519 OKP keys are used. A key whose published expiry only rolls forward (the directory answers every fetch with exp = fetch time + rolling_expiry_s) is bundled without exp: that expiry is a refresh hint, and bundling it would end verification a few days after each release. The scheduled key-watching job refreshes this file.",
-  "fetched_at": "2026-10-01T14:10:00Z",
+  "fetched_at": "2026-11-11T14:13:58Z",
   "directories": {
     "chatgpt.com": [
       {
@@ -27,6 +27,11 @@
         "crv": "Ed25519",
         "kty": "OKP",
         "x": "KcGM6sqzNes25V0hn96KsrIwL6pbut1KQMGmyFwpboM"
+      },
+      {
+        "kty": "OKP",
+        "crv": "Ed25519",
+        "x": "HF5TYZyT5eGNdD_eMYcRNL7KWNUm2lxZmGQrRSbFEP8"
       }
     ],
     "web-bot-auth.cloudflare-browser-rendering-085.workers.dev": [

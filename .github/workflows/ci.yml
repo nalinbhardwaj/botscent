@@ -111,7 +111,9 @@ jobs:
         with:
           python-version: '3.12'
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      # Without --with-deps: that fetches system packages from the Ubuntu mirrors, which the
+      # runner sometimes cannot reach, and the runner image already has what Chromium needs.
+      - run: npx playwright install chromium
       - run: npm run test:examples
 
   runtimes:
