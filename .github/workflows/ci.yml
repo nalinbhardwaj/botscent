@@ -101,18 +101,21 @@ jobs:
   examples:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # In Playwright's image, as the browsers job is: installing Chromium with --with-deps
+    # fetches system packages from the Ubuntu mirrors, and the runner sometimes cannot reach them.
+    container: mcr.microsoft.com/playwright:v1.63.0-noble
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
           node-version: '24'
-          cache: npm
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: '3.12'
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
       - run: npm run test:examples
+        env:
+          HOME: /root
 
   runtimes:
     runs-on: ubuntu-latest
